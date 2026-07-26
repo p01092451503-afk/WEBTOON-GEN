@@ -179,6 +179,8 @@ export type Database = {
           mode: string
           options: Json
           panel_id: string | null
+          prompt_edited: boolean
+          raw_prompt: string | null
           seed: number | null
           status: string
           tenant_id: string
@@ -201,6 +203,8 @@ export type Database = {
           mode?: string
           options?: Json
           panel_id?: string | null
+          prompt_edited?: boolean
+          raw_prompt?: string | null
           seed?: number | null
           status?: string
           tenant_id: string
@@ -223,6 +227,8 @@ export type Database = {
           mode?: string
           options?: Json
           panel_id?: string | null
+          prompt_edited?: boolean
+          raw_prompt?: string | null
           seed?: number | null
           status?: string
           tenant_id?: string

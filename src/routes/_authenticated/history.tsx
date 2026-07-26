@@ -26,6 +26,8 @@ type Row = {
   api_model: string | null;
   seed: number | null;
   final_prompt: string | null;
+  raw_prompt: string | null;
+  prompt_edited: boolean;
   compiled_prompt: string | null;
   options: any;
   figure_map: any;
@@ -46,7 +48,7 @@ function useHistory(tenantId: string | null) {
       const { data, error } = await supabase
         .from("generations")
         .select(
-          "id, status, mode, work_label, aspect_ratio, api_model, seed, final_prompt, compiled_prompt, options, figure_map, warnings, batch_count, error_message, created_at, completed_at, generation_results(id, seq, storage_path, thumb_path)",
+          "id, status, mode, work_label, aspect_ratio, api_model, seed, final_prompt, raw_prompt, prompt_edited, compiled_prompt, options, figure_map, warnings, batch_count, error_message, created_at, completed_at, generation_results(id, seq, storage_path, thumb_path)",
         )
         .order("created_at", { ascending: false })
         .limit(100);
@@ -194,6 +196,11 @@ function DetailCard({ row, onClose, locale }: { row: Row; onClose: () => void; l
         <div className="flex min-w-0 items-center gap-2">
           <h3 className="truncate text-base font-bold">{row.work_label}</h3>
           <StatusPill status={row.status} />
+          {row.prompt_edited && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
+              {t("history.edited_badge", "Edited")}
+            </span>
+          )}
         </div>
         <div className="flex shrink-0 gap-2">
           <Button size="sm" variant="outline" asChild className="rounded-full">
@@ -254,9 +261,25 @@ function DetailCard({ row, onClose, locale }: { row: Row; onClose: () => void; l
 
         {row.final_prompt && (
           <div>
-            <div className="mb-1 text-[11px] font-semibold text-muted-foreground">{t("history.final_prompt")}</div>
+            <div className="mb-1 flex items-center gap-2 text-[11px] font-semibold text-muted-foreground">
+              <span>{t("history.final_prompt")}</span>
+              {row.prompt_edited && (
+                <span className="text-amber-700">· {t("history.edited_badge", "Edited")}</span>
+              )}
+            </div>
             <pre className="max-h-64 overflow-auto whitespace-pre-wrap rounded-xl bg-muted/60 p-3 text-xs">
               {row.final_prompt}
+            </pre>
+          </div>
+        )}
+
+        {row.prompt_edited && row.raw_prompt && (
+          <div>
+            <div className="mb-1 text-[11px] font-semibold text-muted-foreground">
+              {t("history.raw_prompt", "Original auto-prompt")}
+            </div>
+            <pre className="max-h-48 overflow-auto whitespace-pre-wrap rounded-xl border border-dashed border-border bg-muted/30 p-3 text-xs text-muted-foreground">
+              {row.raw_prompt}
             </pre>
           </div>
         )}

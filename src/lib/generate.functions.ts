@@ -1,13 +1,23 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { sanitizePrompt, checkFigureN, checkActionMissing } from "@/lib/promptEngine";
+import {
+  sanitizePrompt,
+  checkFigureN,
+  checkActionMissing,
+  validateFinalPrompt,
+  PROMPT_MAX_CHARS,
+} from "@/lib/promptEngine";
 
 const inputSchema = z.object({
   workLabel: z.string().default("W1"),
   mode: z.enum(["new", "edit"]).default("new"),
   aspectRatio: z.string().optional(),
-  finalPrompt: z.string().min(1),
+  finalPrompt: z.string().min(1).max(PROMPT_MAX_CHARS),
+  /** Auto-built prompt before user edits (for auditing). */
+  rawPrompt: z.string().max(PROMPT_MAX_CHARS).optional(),
+  /** True when the user manually edited the auto-generated prompt. */
+  promptEdited: z.boolean().default(false),
   compiledPrompt: z.string().optional(),
   imagePaths: z.array(z.string()).default([]),
   figureMap: z.array(z.any()).default([]),
@@ -37,14 +47,21 @@ export const generate = createServerFn({ method: "POST" })
     }
     const tenantId = profile.tenant_id;
 
-    // 2) 프롬프트 정리 및 가드
+    // 2) 프롬프트 정리 및 가드 (편집된 프롬프트도 반드시 통과)
     const cleanPrompt = sanitizePrompt(data.finalPrompt);
+    const v = validateFinalPrompt(cleanPrompt);
+    if (!v.ok) {
+      throw new Error(v.detail ? `${v.code}: ${v.detail}` : v.code);
+    }
     if (checkFigureN(cleanPrompt)) {
       throw new Error("FIGURE_N_NOT_REPLACED");
     }
-    const actionText = (data.options as Record<string, unknown>).actionText;
-    if (typeof actionText === "string" && checkActionMissing(cleanPrompt, actionText)) {
-      throw new Error("ACTION_TEXT_MISSING");
+    // 편집되지 않은 경우에만 원본 action 텍스트 포함 여부를 강제한다.
+    if (!data.promptEdited) {
+      const actionText = (data.options as Record<string, unknown>).actionText;
+      if (typeof actionText === "string" && checkActionMissing(cleanPrompt, actionText)) {
+        throw new Error("ACTION_TEXT_MISSING");
+      }
     }
 
     // 3) generations row 생성
@@ -81,6 +98,8 @@ export const generate = createServerFn({ method: "POST" })
         seed,
         compiled_prompt: data.compiledPrompt ?? null,
         final_prompt: cleanPrompt,
+        raw_prompt: data.rawPrompt ? sanitizePrompt(data.rawPrompt) : null,
+        prompt_edited: data.promptEdited === true,
         options: data.options,
         figure_map: data.figureMap,
         batch_count: slotSeeds.length,

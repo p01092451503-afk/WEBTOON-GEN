@@ -213,6 +213,13 @@
       "choose_image": "이미지 선택",
       "select": "선택",
       "empty": "(비어있음)",
+      "edit_prompt": "편집",
+      "done_editing": "완료",
+      "reset_prompt": "초기화",
+      "edited_badge": "편집됨",
+      "auto_generated": "자동 생성",
+      "edit_hint": "수동 편집 상태에서는 옵션 변경이 반영되지 않습니다. 초기화 후 다시 조합해 주세요.",
+      "prompt_too_long": "프롬프트가 {{max}}자를 초과했습니다. 줄여 주세요.",
       "no_presets_loaded": "로드된 프리셋이 없습니다.",
       "none": "(없음)",
       "translation": "번역",
@@ -245,6 +252,8 @@
       "warnings": "경고"
     },
     "final_prompt": "최종 프롬프트",
+    "raw_prompt": "원본 자동 프롬프트",
+    "edited_badge": "편집됨",
     "failed": "실패"
   },
   "not_found": {
