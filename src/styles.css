@@ -122,6 +122,11 @@
   --sidebar-accent-foreground: oklch(0.42 0.22 277);
   --sidebar-border: oklch(0.92 0.012 280);
   --sidebar-ring: oklch(0.545 0.253 275);
+
+  --panel-step-1: var(--card);
+  --panel-step-2: oklch(0.975 0.012 285);
+  --panel-step-3: oklch(0.95 0.012 285);
+  --panel-step-4: oklch(0.925 0.012 285);
 }
 
 .dark {
