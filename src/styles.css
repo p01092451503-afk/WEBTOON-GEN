@@ -74,11 +74,11 @@
   --shadow-toss-lg: 0 24px 60px oklch(0.4 0.22 277 / 0.16);
   --shadow-brix-glow: 0 20px 50px -12px oklch(0.55 0.24 277 / 0.35);
 
-  /* Step-by-step panel depth: deeper shadow as the workflow progresses */
-  --shadow-panel-step-1: 0 6px 18px -4px oklch(0.55 0.25 277 / 0.10);
-  --shadow-panel-step-2: 0 12px 32px -6px oklch(0.55 0.25 277 / 0.14);
-  --shadow-panel-step-3: 0 20px 48px -8px oklch(0.55 0.25 277 / 0.18);
-  --shadow-panel-step-4: 0 28px 70px -10px oklch(0.55 0.25 277 / 0.24);
+  /* 3D lifted panel shadows: outer drop shadow + top highlight for thickness */
+  --shadow-panel-3d-1: 0 8px 24px -6px oklch(0.4 0.2 277 / 0.18), 0 2px 6px -2px oklch(0.4 0.2 277 / 0.10), inset 0 1px 0 oklch(1 0 0 / 0.55);
+  --shadow-panel-3d-2: 0 16px 40px -8px oklch(0.4 0.2 277 / 0.26), 0 4px 10px -3px oklch(0.4 0.2 277 / 0.14), inset 0 1px 0 oklch(1 0 0 / 0.50);
+  --shadow-panel-3d-3: 0 24px 56px -10px oklch(0.4 0.2 277 / 0.34), 0 6px 14px -4px oklch(0.4 0.2 277 / 0.18), inset 0 1px 0 oklch(1 0 0 / 0.45);
+  --shadow-panel-3d-4: 0 32px 72px -12px oklch(0.4 0.2 277 / 0.44), 0 8px 20px -5px oklch(0.4 0.2 277 / 0.22), inset 0 1px 0 oklch(1 0 0 / 0.40);
 }
 
 :root {
