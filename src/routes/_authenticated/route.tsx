@@ -14,8 +14,10 @@ export const Route = createFileRoute("/_authenticated")({
 });
 
 const PAGE_META: Record<string, { title: string; sub: string }> = {
+  "/projects": { title: "Projects", sub: "Organize episodes and storyboards" },
+  "/episodes": { title: "Storyboard", sub: "Arrange panels in sequence" },
   "/characters": { title: "Character library", sub: "Manage the characters used in your generations" },
-  "/generate": { title: "Generate image", sub: "Studio · Seedream prompt engine" },
+  "/generate": { title: "Studio", sub: "Single-panel prompt engine" },
   "/history": { title: "History", sub: "Recent results and options" },
 };
 
