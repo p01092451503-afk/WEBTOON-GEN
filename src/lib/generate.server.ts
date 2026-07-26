@@ -27,22 +27,12 @@ export function aspectRatioToSize(ar?: string): string {
 
 export type ArkResult = { url: string; width?: number; height?: number };
 
-// 512px 롱에지 webp 썸네일 생성 (Cloudflare Workers 호환 WASM)
+// 썸네일은 Worker 환경 호환 이슈로 원본 바이트를 그대로 반환한다.
+// (별도 리사이즈 라이브러리 도입 전까지 원본을 thumb 로 재사용)
 export async function makeThumbnailWebp(bytes: Uint8Array): Promise<Uint8Array> {
-  const { PhotonImage, resize, SamplingFilter } = await import("@cf-wasm/photon");
-  const img = PhotonImage.new_from_byteslice(bytes);
-  const w = img.get_width();
-  const h = img.get_height();
-  const long = Math.max(w, h);
-  const scale = long > 512 ? 512 / long : 1;
-  const tw = Math.max(1, Math.round(w * scale));
-  const th = Math.max(1, Math.round(h * scale));
-  const resized = scale < 1 ? resize(img, tw, th, SamplingFilter.Lanczos3) : img;
-  const out = resized.get_bytes_webp();
-  img.free();
-  if (resized !== img) resized.free();
-  return out;
+  return bytes;
 }
+
 
 
 export async function callArk(params: {
