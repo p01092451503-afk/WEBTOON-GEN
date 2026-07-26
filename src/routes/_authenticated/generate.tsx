@@ -66,6 +66,9 @@ function GeneratePage() {
   const [restoredNote, setRestoredNote] = useState<string | null>(null);
   const [panelId, setPanelId] = useState<string | null>(null);
   const [backEpisodeId, setBackEpisodeId] = useState<string | null>(null);
+  const [lockedSeeds, setLockedSeeds] = useState<Record<number, number>>({});
+  const [compareIds, setCompareIds] = useState<string[]>([]);
+  const updatePanelFn = useServerFn(updatePanel);
 
   // Read query params: panel / charA / charB / back
   useEffect(() => {
