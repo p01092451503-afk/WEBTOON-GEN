@@ -697,10 +697,20 @@ function Panel({
   className?: string;
   children: React.ReactNode;
 }) {
+  const stepBg =
+    {
+      1: "bg-panel-step-1",
+      2: "bg-panel-step-2",
+      3: "bg-panel-step-3",
+      4: "bg-panel-step-4",
+    }[step] ?? "bg-card";
+
   return (
     <section
       className={
-        "flex flex-col rounded-3xl border border-border bg-card shadow-toss-sm lg:h-[calc(100vh-13rem)] lg:min-h-[520px] " +
+        "flex flex-col rounded-3xl border border-border shadow-toss-sm lg:h-[calc(100vh-13rem)] lg:min-h-[520px] " +
+        stepBg +
+        " " +
         (className ?? "")
       }
     >
