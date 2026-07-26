@@ -1,7 +1,5 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { z } from "zod";
-import { zodValidator } from "@tanstack/zod-adapter";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/hooks/useTenant";
 import { SignedImage } from "@/components/SignedImage";
@@ -10,13 +8,11 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
-const searchSchema = z.object({
-  id: z.string().optional(),
-});
-
 export const Route = createFileRoute("/_authenticated/history")({
   component: HistoryPage,
-  validateSearch: zodValidator(searchSchema),
+  validateSearch: (s: Record<string, unknown>) => ({
+    id: typeof s.id === "string" ? s.id : undefined,
+  }),
   head: () => ({ meta: [{ title: "히스토리 · toonpilot" }] }),
 });
 
