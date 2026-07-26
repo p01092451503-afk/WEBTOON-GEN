@@ -314,7 +314,7 @@ function GeneratePage() {
         </div>
       )}
 
-      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-12">
+      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-12 lg:items-start">
         {/* Panel 1: References */}
         <Panel step={1} title={t("studio.panels.references")} className="lg:col-span-3">
           <div className="space-y-4">
