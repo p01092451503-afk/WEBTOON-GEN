@@ -214,7 +214,13 @@
       "select": "선택",
       "empty": "(비어있음)",
       "no_presets_loaded": "로드된 프리셋이 없습니다.",
-      "none": "(없음)"
+      "none": "(없음)",
+      "translation": "번역",
+      "translating": "번역 중…",
+      "translate_to_en": "영어로 번역",
+      "translate_to_ko": "한국어로 번역",
+      "show_translation": "번역 보기",
+      "hide_translation": "번역 숨기기"
     }
   },
   "history": {

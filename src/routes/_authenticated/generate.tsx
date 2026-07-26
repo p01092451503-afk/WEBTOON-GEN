@@ -11,6 +11,8 @@ import { useGeneration } from "@/hooks/useGeneration";
 import { SignedImage } from "@/components/SignedImage";
 import { buildFigureMap, buildPrompt, WARN, type WorkInput, type PresetItem } from "@/lib/promptEngine";
 import { updatePanel } from "@/lib/projects.functions";
+import { translatePrompt } from "@/lib/translate.functions";
+import { Languages, Loader2 } from "lucide-react";
 import {
   ArrowLeft, Lock, Unlock, GitCompare, Check, Sparkles, ImagePlus, X,
   Smile, Meh, Frown, Angry, Laugh, Annoyed, Heart, AlertCircle,
@@ -87,6 +89,10 @@ function GeneratePage() {
   const [lockedSeeds, setLockedSeeds] = useState<Record<number, number>>({});
   const [compareIds, setCompareIds] = useState<string[]>([]);
   const updatePanelFn = useServerFn(updatePanel);
+  const translateFn = useServerFn(translatePrompt);
+  const [translated, setTranslated] = useState<string | null>(null);
+  const [translating, setTranslating] = useState(false);
+  const [showTranslated, setShowTranslated] = useState(false);
 
   // Read query params: panel / charA / charB / back
   useEffect(() => {
@@ -146,6 +152,34 @@ function GeneratePage() {
   );
 
   const built = useMemo(() => buildPrompt(work, figureMap, cfg), [work, figureMap, cfg]);
+
+  // Reset translation whenever the source prompt changes
+  useEffect(() => {
+    setTranslated(null);
+    setShowTranslated(false);
+  }, [built.prompt]);
+
+  async function handleTranslate() {
+    if (!built.prompt) return;
+    // If we already have a translation, just toggle
+    if (translated) {
+      setShowTranslated((v) => !v);
+      return;
+    }
+    setTranslating(true);
+    try {
+      // Detect Korean characters -> translate to English, else to Korean
+      const hasKorean = /[\u3131-\uD79D]/.test(built.prompt);
+      const target: "ko" | "en" = hasKorean ? "en" : "ko";
+      const res = await translateFn({ data: { text: built.prompt, target } });
+      setTranslated(res.translated);
+      setShowTranslated(true);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Translation failed");
+    } finally {
+      setTranslating(false);
+    }
+  }
 
   const uploadRef = useCallback(
     async (file: File, kind: "bg" | "pose" | "style") => {
@@ -439,6 +473,30 @@ function GeneratePage() {
               value={built.prompt}
               className="resize-none rounded-xl bg-muted/50 font-mono text-xs leading-relaxed"
             />
+            {showTranslated && translated && (
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-semibold text-primary">
+                    {t("studio.labels.translation", "Translation")}
+                    {" · "}
+                    {/[\u3131-\uD79D]/.test(built.prompt) ? "EN" : "KO"}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => navigator.clipboard.writeText(translated).then(() => toast.success(t("common.copied", "Copied")))}
+                    className="text-[11px] text-muted-foreground hover:text-foreground"
+                  >
+                    {t("common.copy", "Copy")}
+                  </button>
+                </div>
+                <Textarea
+                  rows={8}
+                  readOnly
+                  value={translated}
+                  className="resize-none rounded-xl border-primary/30 bg-primary/5 font-mono text-xs leading-relaxed"
+                />
+              </div>
+            )}
             <div className="flex items-center justify-between text-xs">
               <span className="text-muted-foreground">{t("studio.labels.words", { count: built.wordCount })}</span>
               {built.warnings.length > 0 && (
@@ -449,6 +507,28 @@ function GeneratePage() {
                 </div>
               )}
             </div>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleTranslate}
+              disabled={translating || !built.prompt}
+              className="h-10 w-full rounded-xl text-sm font-semibold"
+            >
+              {translating ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Languages className="mr-2 h-4 w-4" />
+              )}
+              {translating
+                ? t("studio.labels.translating", "Translating…")
+                : translated
+                ? showTranslated
+                  ? t("studio.labels.hide_translation", "Hide translation")
+                  : t("studio.labels.show_translation", "Show translation")
+                : /[\u3131-\uD79D]/.test(built.prompt)
+                ? t("studio.labels.translate_to_en", "Translate to English")
+                : t("studio.labels.translate_to_ko", "Translate to Korean")}
+            </Button>
             <Button
               onClick={() => handleGenerate()}
               disabled={gen.running}

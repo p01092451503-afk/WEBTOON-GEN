@@ -214,7 +214,13 @@
       "select": "Select",
       "empty": "(empty)",
       "no_presets_loaded": "No presets loaded.",
-      "none": "(none)"
+      "none": "(none)",
+      "translation": "Translation",
+      "translating": "Translating…",
+      "translate_to_en": "Translate to English",
+      "translate_to_ko": "Translate to Korean",
+      "show_translation": "Show translation",
+      "hide_translation": "Hide translation"
     }
   },
   "history": {
