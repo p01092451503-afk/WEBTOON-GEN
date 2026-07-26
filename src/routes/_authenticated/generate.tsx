@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -63,6 +63,34 @@ function GeneratePage() {
   const [aspectRatio, setAspectRatio] = useState<string>("1:1");
   const [batchCount, setBatchCount] = useState<number>(1);
   const [work, setWork] = useState<WorkInput>(DEFAULT_WORK);
+  const [restoredNote, setRestoredNote] = useState<string | null>(null);
+
+  // 히스토리에서 넘어온 설정 복원 (sessionStorage: toonpilot:restore)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const raw = sessionStorage.getItem("toonpilot:restore");
+    if (!raw) return;
+    sessionStorage.removeItem("toonpilot:restore");
+    try {
+      const r = JSON.parse(raw);
+      if (r.options && typeof r.options === "object") {
+        setWork((prev) => {
+          const merged: WorkInput = { ...prev };
+          for (const k of Object.keys(prev) as (keyof WorkInput)[]) {
+            if (r.options[k] !== undefined) (merged as any)[k] = r.options[k];
+          }
+          return merged;
+        });
+        if (typeof r.options.aspectRatio === "string") setAspectRatio(r.options.aspectRatio);
+      }
+      if (typeof r.aspectRatio === "string") setAspectRatio(r.aspectRatio);
+      if (typeof r.batchCount === "number") setBatchCount(Math.max(1, Math.min(4, r.batchCount)));
+      setRestoredNote(`이전 생성(${r.workLabel ?? "W1"}) 설정을 불러왔습니다.`);
+      toast.success("이전 설정이 복원되었습니다.");
+    } catch {
+      // ignore
+    }
+  }, []);
 
   const charA = characters.find((c) => c.id === charAId) || null;
   const charB = characters.find((c) => c.id === charBId) || null;
@@ -147,6 +175,20 @@ function GeneratePage() {
         <Alert>
           <AlertDescription className="text-sm">
             프리셋 데이터가 비어 있습니다. presets 테이블에 시드가 필요합니다. (기본 스타일 문장만 사용됨)
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {restoredNote && (
+        <Alert>
+          <AlertDescription className="text-sm flex items-center justify-between gap-2">
+            <span>{restoredNote} (참조 이미지와 캐릭터는 다시 선택해주세요.)</span>
+            <button
+              onClick={() => setRestoredNote(null)}
+              className="text-xs underline text-muted-foreground"
+            >
+              닫기
+            </button>
           </AlertDescription>
         </Alert>
       )}
