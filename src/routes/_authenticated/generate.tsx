@@ -295,18 +295,39 @@ function GeneratePage() {
 
         {/* Panel 2: Prompt Controls */}
         <Panel step={2} title="Prompt Controls" className="lg:col-span-4">
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-2">
-              <PresetSelect label="Pose Strength" sheet="PoseStrength" cfg={cfg} value={work.poseStrengthId} onChange={(v) => setWork({ ...work, poseStrengthId: v })} />
+          <div className="space-y-5">
+            <PresetGallery
+              label="Pose Strength" sheet="PoseStrength" cfg={cfg}
+              value={work.poseStrengthId} onChange={(v) => setWork({ ...work, poseStrengthId: v })}
+              variant="chip"
+            />
+            <PresetGallery
+              label="Camera Angle" sheet="CameraAngle" cfg={cfg}
+              value={work.cameraAngleId} onChange={(v) => setWork({ ...work, cameraAngleId: v })}
+              variant="card"
+            />
+            <PresetGallery
+              label="Camera Distance" sheet="CameraDistance" cfg={cfg}
+              value={work.cameraDistanceId} onChange={(v) => setWork({ ...work, cameraDistanceId: v })}
+              variant="card"
+            />
+            <PresetGallery
+              label="Camera Position" sheet="CameraPosition" cfg={cfg}
+              value={work.cameraPositionId} onChange={(v) => setWork({ ...work, cameraPositionId: v })}
+              variant="card"
+            />
+            <PresetGallery
+              label="Emotion" sheet="Emotion" cfg={cfg}
+              value={work.emotionId} onChange={(v) => setWork({ ...work, emotionId: v })}
+              variant="face"
+            />
+
+            <div className="grid grid-cols-2 gap-2 pt-1">
               <PresetSelect label="Bg Strength" sheet="BgStrength" cfg={cfg} value={work.bgStrengthId} onChange={(v) => setWork({ ...work, bgStrengthId: v })} />
               <PresetSelect label="Body Source" sheet="BodySource" cfg={cfg} value={work.bodySourceId} onChange={(v) => setWork({ ...work, bodySourceId: v })} />
-              <PresetSelect label="Camera Angle" sheet="CameraAngle" cfg={cfg} value={work.cameraAngleId} onChange={(v) => setWork({ ...work, cameraAngleId: v })} />
-              <PresetSelect label="Camera Distance" sheet="CameraDistance" cfg={cfg} value={work.cameraDistanceId} onChange={(v) => setWork({ ...work, cameraDistanceId: v })} />
-              <PresetSelect label="Camera Position" sheet="CameraPosition" cfg={cfg} value={work.cameraPositionId} onChange={(v) => setWork({ ...work, cameraPositionId: v })} />
               <PresetSelect label="Focus" sheet="FocusTarget" cfg={cfg} value={work.focusTargetId} onChange={(v) => setWork({ ...work, focusTargetId: v })} />
               <PresetSelect label="Bg Style" sheet="BgStyle" cfg={cfg} value={work.bgStyleId} onChange={(v) => setWork({ ...work, bgStyleId: v })} />
               <PresetSelect label="Costume" sheet="CostumeMode" cfg={cfg} value={work.costumeModeId} onChange={(v) => setWork({ ...work, costumeModeId: v })} />
-              <PresetSelect label="Emotion" sheet="Emotion" cfg={cfg} value={work.emotionId} onChange={(v) => setWork({ ...work, emotionId: v })} />
               <PresetSelect label="Style Finish" sheet="StyleFinish" cfg={cfg} value={work.styleFinishId} onChange={(v) => setWork({ ...work, styleFinishId: v })} />
             </div>
 
@@ -352,7 +373,7 @@ function GeneratePage() {
                   </SelectContent>
                 </Select>
               </FieldGroup>
-              <FieldGroup label="Batch">
+              <FieldGroup label="Batch (variants)">
                 <Input
                   type="number"
                   min={1}
