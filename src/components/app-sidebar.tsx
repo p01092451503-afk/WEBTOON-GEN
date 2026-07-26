@@ -2,7 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { Users, Sparkles, History, FolderKanban, Search } from "lucide-react";
 import { useEffect, useState } from "react";
-import { LogoIcon } from "@/components/logo";
+
 import {
   Sidebar,
   SidebarContent,
@@ -53,7 +53,7 @@ export function AppSidebar() {
             to="/"
             className="flex items-center gap-2 hover:opacity-80 transition-opacity"
           >
-            <LogoIcon size={collapsed ? 28 : 40} />
+            
             {!collapsed && (
               <span className="text-[37px] font-black tracking-tighter text-foreground leading-none">
                 {t("brand.name")}
