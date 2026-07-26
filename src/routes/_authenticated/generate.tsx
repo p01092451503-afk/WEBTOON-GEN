@@ -565,11 +565,13 @@ function PresetSelect({
 }: {
   label: string;
   sheet: string;
-  cfg: Record<string, { id: string; label_ko: string }[]>;
+  cfg: Record<string, { id: string; label_ko: string; label_en?: string }[]>;
   value: string;
   onChange: (v: string) => void;
 }) {
   const items = cfg[sheet] ?? [];
+  const displayLabel = (it: { label_en?: string; label_ko: string }) =>
+    (it.label_en && it.label_en.trim()) || it.label_ko;
   return (
     <div className="space-y-1.5">
       <Label className="text-[11px] font-semibold text-muted-foreground">{label}</Label>
@@ -585,7 +587,7 @@ function PresetSelect({
           ) : (
             items.map((it) => (
               <SelectItem key={it.id} value={it.id}>
-                {it.label_ko}
+                {displayLabel(it)}
               </SelectItem>
             ))
           )}
