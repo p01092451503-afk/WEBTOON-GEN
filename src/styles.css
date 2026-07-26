@@ -5,24 +5,28 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * toonpilot — Toss-inspired design tokens.
- * Palette anchored on Toss Blue (#3182F6), Pretendard typography,
- * generous radius, soft neutral surfaces.
+ * toonpilot — Saasplex X / Brix Templates inspired language.
+ * Bold geometric sans, vivid indigo, pale lilac canvas, pill buttons,
+ * generous rounded corners, soft indigo-tinted shadows, dotted accents.
  */
 
 @theme inline {
   --font-sans:
-    "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont,
-    system-ui, Roboto, "Helvetica Neue", "Segoe UI", "Apple SD Gothic Neo",
-    "Noto Sans KR", "Malgun Gothic", sans-serif;
+    "Plus Jakarta Sans", "Pretendard Variable", Pretendard, -apple-system,
+    BlinkMacSystemFont, system-ui, "Apple SD Gothic Neo", "Noto Sans KR",
+    sans-serif;
+  --font-display:
+    "Sora", "Plus Jakarta Sans", "Pretendard Variable", Pretendard,
+    -apple-system, BlinkMacSystemFont, system-ui, "Apple SD Gothic Neo",
+    "Noto Sans KR", sans-serif;
 
-  --radius-sm: calc(var(--radius) - 6px);
-  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 8px);
+  --radius-md: calc(var(--radius) - 4px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
-  --radius-2xl: calc(var(--radius) + 10px);
-  --radius-3xl: calc(var(--radius) + 18px);
-  --radius-4xl: calc(var(--radius) + 28px);
+  --radius-2xl: calc(var(--radius) + 12px);
+  --radius-3xl: calc(var(--radius) + 20px);
+  --radius-4xl: calc(var(--radius) + 32px);
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -59,58 +63,60 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  --shadow-toss-sm: 0 1px 2px oklch(0.2 0.03 277 / 0.04), 0 1px 3px oklch(0.2 0.03 277 / 0.05);
-  --shadow-toss: 0 6px 24px oklch(0.2 0.03 277 / 0.06);
-  --shadow-toss-lg: 0 20px 48px oklch(0.2 0.03 277 / 0.10);
+  /* Saasplex-style soft indigo shadows */
+  --shadow-toss-sm: 0 1px 2px oklch(0.4 0.15 277 / 0.06), 0 2px 6px oklch(0.4 0.15 277 / 0.05);
+  --shadow-toss: 0 10px 30px oklch(0.4 0.18 277 / 0.10);
+  --shadow-toss-lg: 0 24px 60px oklch(0.4 0.22 277 / 0.16);
+  --shadow-brix-glow: 0 20px 50px -12px oklch(0.55 0.24 277 / 0.35);
 }
 
 :root {
-  --radius: 1.25rem;
+  --radius: 1.5rem;
 
-  /* Caleican-inspired off-white canvas */
-  --background: oklch(0.985 0.004 270);
-  --foreground: oklch(0.21 0.03 265);
+  /* Saasplex X pale lilac canvas */
+  --background: oklch(0.98 0.012 285);
+  --foreground: oklch(0.16 0.04 275);
 
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.21 0.03 265);
+  --card-foreground: oklch(0.16 0.04 275);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.21 0.03 265);
+  --popover-foreground: oklch(0.16 0.04 275);
 
-  /* Indigo #4F46E5 primary + soft lilac */
-  --primary: oklch(0.511 0.238 277);
+  /* Vivid Brix indigo #4B5CFF */
+  --primary: oklch(0.545 0.253 275);
   --primary-foreground: oklch(1 0 0);
-  --primary-soft: oklch(0.965 0.024 277);
+  --primary-soft: oklch(0.955 0.03 280);
 
-  --secondary: oklch(0.968 0.006 270);
-  --secondary-foreground: oklch(0.28 0.03 265);
+  --secondary: oklch(0.965 0.014 280);
+  --secondary-foreground: oklch(0.22 0.04 275);
 
-  --muted: oklch(0.968 0.006 270);
-  --muted-foreground: oklch(0.55 0.02 265);
+  --muted: oklch(0.965 0.014 280);
+  --muted-foreground: oklch(0.52 0.03 275);
 
-  --accent: oklch(0.965 0.024 277);
-  --accent-foreground: oklch(0.44 0.2 277);
+  --accent: oklch(0.955 0.03 280);
+  --accent-foreground: oklch(0.42 0.22 277);
 
   --destructive: oklch(0.62 0.22 22);
   --destructive-foreground: oklch(1 0 0);
 
-  --border: oklch(0.93 0.006 270);
-  --input: oklch(0.93 0.006 270);
-  --ring: oklch(0.511 0.238 277);
+  --border: oklch(0.92 0.012 280);
+  --input: oklch(0.92 0.012 280);
+  --ring: oklch(0.545 0.253 275);
 
-  --chart-1: oklch(0.511 0.238 277);
+  --chart-1: oklch(0.545 0.253 275);
   --chart-2: oklch(0.72 0.14 165);
   --chart-3: oklch(0.7 0.18 55);
   --chart-4: oklch(0.65 0.2 340);
   --chart-5: oklch(0.55 0.16 290);
 
-  --sidebar: oklch(0.985 0.004 270);
-  --sidebar-foreground: oklch(0.21 0.03 265);
-  --sidebar-primary: oklch(0.511 0.238 277);
+  --sidebar: oklch(0.985 0.012 285);
+  --sidebar-foreground: oklch(0.16 0.04 275);
+  --sidebar-primary: oklch(0.545 0.253 275);
   --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(0.965 0.024 277);
-  --sidebar-accent-foreground: oklch(0.44 0.2 277);
-  --sidebar-border: oklch(0.93 0.006 270);
-  --sidebar-ring: oklch(0.511 0.238 277);
+  --sidebar-accent: oklch(0.955 0.03 280);
+  --sidebar-accent-foreground: oklch(0.42 0.22 277);
+  --sidebar-border: oklch(0.92 0.012 280);
+  --sidebar-ring: oklch(0.545 0.253 275);
 }
 
 .dark {
@@ -165,4 +171,28 @@
     color: var(--color-foreground);
     font-feature-settings: "ss01", "ss02";
   }
+
+  h1, h2, h3, h4, .font-display {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+  }
 }
+
+/* Brix-style dotted background accent */
+@utility bg-dots {
+  background-image: radial-gradient(
+    var(--color-border) 1px,
+    transparent 1px
+  );
+  background-size: 18px 18px;
+}
+
+/* Soft lilac hero panel used by Saasplex X sections */
+@utility bg-lilac {
+  background-color: color-mix(in oklch, var(--color-primary) 8%, white);
+}
+
+@utility shadow-brix {
+  box-shadow: var(--shadow-brix-glow);
+}
+
