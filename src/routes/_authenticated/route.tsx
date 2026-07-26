@@ -88,6 +88,13 @@ function AuthenticatedLayout() {
             >
               생성
             </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate({ to: "/history" })}
+            >
+              히스토리
+            </Button>
             <Button variant="ghost" size="sm" onClick={handleSignOut}>
               로그아웃
             </Button>
