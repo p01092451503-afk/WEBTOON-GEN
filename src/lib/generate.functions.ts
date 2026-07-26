@@ -75,6 +75,10 @@ export const generate = createServerFn({ method: "POST" })
     if (genErr || !genRow) throw new Error(`DB_INSERT_GENERATION_FAILED: ${genErr?.message ?? ""}`);
     const generationId = genRow.id as string;
 
+    if (data.panelId) {
+      await supabase.from("panels").update({ status: "generating", generation_id: generationId }).eq("id", data.panelId);
+    }
+
     try {
       // 4) character-refs 서명 URL 발급 (ARK가 fetch 가능한 공인 URL)
       const inputPaths = [...data.imagePaths];
