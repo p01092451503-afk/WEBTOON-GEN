@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Library, LayoutGrid, History } from "lucide-react";
 import { LanguageToggle } from "@/components/language-toggle";
+import { LogoIcon } from "@/components/logo";
 
 export const Route = createFileRoute("/")({
   ssr: false,
@@ -39,6 +40,7 @@ function Index() {
         <LanguageToggle />
       </div>
       <div className="mx-auto flex min-h-screen max-w-5xl flex-col items-center justify-center px-6 py-16 text-center">
+        <LogoIcon size={48} className="mb-4" />
         <span className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-1.5 text-xs font-semibold tracking-wide text-foreground/80">
           <span className="relative flex h-1.5 w-1.5">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-60" />
