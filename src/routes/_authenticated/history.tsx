@@ -196,6 +196,11 @@ function DetailCard({ row, onClose, locale }: { row: Row; onClose: () => void; l
         <div className="flex min-w-0 items-center gap-2">
           <h3 className="truncate text-base font-bold">{row.work_label}</h3>
           <StatusPill status={row.status} />
+          {row.prompt_edited && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
+              {t("history.edited_badge", "Edited")}
+            </span>
+          )}
         </div>
         <div className="flex shrink-0 gap-2">
           <Button size="sm" variant="outline" asChild className="rounded-full">
