@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback, type ReactNode } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -10,7 +10,13 @@ import { useGeneration } from "@/hooks/useGeneration";
 import { SignedImage } from "@/components/SignedImage";
 import { buildFigureMap, buildPrompt, WARN, type WorkInput, type PresetItem } from "@/lib/promptEngine";
 import { updatePanel } from "@/lib/projects.functions";
-import { ArrowLeft, Lock, Unlock, GitCompare, Check, Sparkles, ImagePlus, X } from "lucide-react";
+import {
+  ArrowLeft, Lock, Unlock, GitCompare, Check, Sparkles, ImagePlus, X,
+  Smile, Meh, Frown, Angry, Laugh, Annoyed, Heart, AlertCircle,
+  Moon, Zap, Snowflake, Brain, Ghost, Drama,
+  Triangle, Camera, Video, Focus, Move, PersonStanding,
+  Aperture, Scan, Ruler, Compass, Eye, ArrowUp, ArrowDown,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -806,9 +812,14 @@ function PresetGallery({
               ) : (
                 <span
                   aria-hidden
-                  className="absolute inset-0 grid place-items-center text-2xl opacity-40"
+                  className={
+                    "absolute inset-0 grid place-items-center opacity-40 " +
+                    (active ? "text-primary opacity-70" : "text-muted-foreground")
+                  }
                 >
-                  {variant === "face" ? emojiForEmotion(it.id) : iconForCamera(sheet, it.id)}
+                  {variant === "face"
+                    ? iconForEmotion(it.id)
+                    : iconForCamera(sheet, it.id)}
                 </span>
               )}
               <span className="relative z-10 max-w-full truncate rounded bg-background/80 px-1 text-[10px] leading-tight text-foreground shadow-sm backdrop-blur">
@@ -825,20 +836,35 @@ function PresetGallery({
   );
 }
 
-function emojiForEmotion(id: string): string {
-  const m: Record<string, string> = {
-    EMO_000: "😐", EMO_001: "🙂", EMO_002: "😊", EMO_003: "😄", EMO_004: "😢",
-    EMO_005: "😠", EMO_006: "😳", EMO_007: "😲", EMO_008: "😌", EMO_009: "😍",
-    EMO_010: "😴", EMO_011: "😤", EMO_012: "🥺", EMO_013: "😏", EMO_014: "😱",
+function iconForEmotion(id: string) {
+  const cls = "h-7 w-7";
+  const m: Record<string, ReactNode> = {
+    EMO_000: <Meh className={cls} />,
+    EMO_001: <Smile className={cls} />,
+    EMO_002: <Smile className={cls} />,
+    EMO_003: <Laugh className={cls} />,
+    EMO_004: <Frown className={cls} />,
+    EMO_005: <Angry className={cls} />,
+    EMO_006: <Annoyed className={cls} />,
+    EMO_007: <AlertCircle className={cls} />,
+    EMO_008: <Smile className={cls} />,
+    EMO_009: <Heart className={cls} />,
+    EMO_010: <Moon className={cls} />,
+    EMO_011: <Zap className={cls} />,
+    EMO_012: <Frown className={cls} />,
+    EMO_013: <Brain className={cls} />,
+    EMO_014: <Ghost className={cls} />,
+    EMO_015: <Snowflake className={cls} />,
   };
-  return m[id] ?? "🎭";
+  return m[id] ?? <Drama className={cls} />;
 }
-function iconForCamera(sheet: string, _id: string): string {
-  if (sheet.startsWith("CameraAngle")) return "📐";
-  if (sheet.startsWith("CameraDistance")) return "🔭";
-  if (sheet.startsWith("CameraPosition")) return "🎥";
-  if (sheet.startsWith("Pose")) return "🕺";
-  return "✨";
+function iconForCamera(sheet: string, _id: string) {
+  const cls = "h-7 w-7";
+  if (sheet.startsWith("CameraAngle")) return <Triangle className={cls} />;
+  if (sheet.startsWith("CameraDistance")) return <Focus className={cls} />;
+  if (sheet.startsWith("CameraPosition")) return <Video className={cls} />;
+  if (sheet.startsWith("Pose")) return <PersonStanding className={cls} />;
+  return <Sparkles className={cls} />;
 }
 
 /* ---------- S4: Variation grid + compare + set-as-panel ---------- */
