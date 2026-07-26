@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, useCallback, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -58,6 +59,7 @@ const DEFAULT_WORK: WorkInput = {
 };
 
 function GeneratePage() {
+  const { t } = useTranslation();
   const { tenantId } = useTenant();
   const { data: characters = [] } = useCharacters();
   const { data: cfg = {} } = usePresets(tenantId);
@@ -111,8 +113,8 @@ function GeneratePage() {
       }
       if (typeof r.aspectRatio === "string") setAspectRatio(r.aspectRatio);
       if (typeof r.batchCount === "number") setBatchCount(Math.max(1, Math.min(4, r.batchCount)));
-      setRestoredNote(`Restored settings from previous generation (${r.workLabel ?? "W1"}).`);
-      toast.success("Previous settings restored.");
+      setRestoredNote(t("studio.restored_prefix", { label: r.workLabel ?? "W1" }));
+      toast.success(t("studio.restored_toast"));
     } catch {
       // ignore
     }
