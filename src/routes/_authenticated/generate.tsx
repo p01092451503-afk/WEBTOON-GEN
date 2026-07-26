@@ -705,11 +705,21 @@ function Panel({
       4: "bg-panel-step-4",
     }[step] ?? "bg-card";
 
+  const stepShadow =
+    {
+      1: "shadow-panel-step-1",
+      2: "shadow-panel-step-2",
+      3: "shadow-panel-step-3",
+      4: "shadow-panel-step-4",
+    }[step] ?? "shadow-toss-sm";
+
   return (
     <section
       className={
-        "flex flex-col rounded-3xl border border-border shadow-toss-sm lg:h-[calc(100vh-13rem)] lg:min-h-[520px] " +
+        "flex flex-col rounded-3xl border border-border lg:h-[calc(100vh-13rem)] lg:min-h-[520px] " +
         stepBg +
+        " " +
+        stepShadow +
         " " +
         (className ?? "")
       }
