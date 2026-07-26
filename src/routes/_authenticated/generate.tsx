@@ -786,7 +786,7 @@ function PresetGallery({
                 className={
                   "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-bold transition " +
                   (active
-                    ? "border-primary bg-primary text-primary-foreground shadow-toss-sm"
+                    ? "border-primary bg-muted/50 text-foreground"
                     : "border-border bg-muted/50 text-foreground hover:border-primary/40")
                 }
               >
@@ -824,7 +824,7 @@ function PresetGallery({
               className={
                 "group relative flex aspect-square flex-col items-center justify-between gap-1 overflow-hidden rounded-xl border p-2 text-[10px] font-semibold transition " +
                 (active
-                  ? "border-primary bg-primary/5 ring-2 ring-primary"
+                  ? "border-primary bg-muted/40"
                   : "border-border bg-muted/40 hover:border-primary/40 hover:bg-muted/60")
               }
             >
@@ -842,9 +842,7 @@ function PresetGallery({
                   "relative z-10 inline-grid h-9 w-9 place-items-center rounded-xl transition " +
                   (hasPreview
                     ? "bg-background/85 text-foreground shadow-sm backdrop-blur"
-                    : active
-                      ? "bg-primary text-primary-foreground shadow-toss-sm"
-                      : "bg-primary-soft text-primary group-hover:bg-primary-soft/80")
+                    : "bg-primary-soft text-primary group-hover:bg-primary-soft/80")
                 }
                 aria-hidden
               >
@@ -862,10 +860,6 @@ function PresetGallery({
               >
                 {displayLabel(it)}
               </span>
-
-              {active && (
-                <Check className="absolute right-1 top-1 z-10 h-3.5 w-3.5 rounded-full bg-primary p-0.5 text-primary-foreground" />
-              )}
             </button>
           );
         })}
