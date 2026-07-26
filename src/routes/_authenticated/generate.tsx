@@ -568,8 +568,8 @@ function NoticeBar({
     <div className={`flex items-start justify-between gap-2 rounded-2xl border px-4 py-3 text-sm ${cls}`}>
       <span>{children}</span>
       {onClose && (
-        <IconTooltip label="Dismiss">
-          <button onClick={onClose} aria-label="Dismiss" className="shrink-0 rounded-full p-1 hover:bg-black/5">
+        <IconTooltip label={t("common.dismiss")}>
+          <button onClick={onClose} aria-label={t("common.dismiss")} className="shrink-0 rounded-full p-1 hover:bg-black/5">
             <X className="h-3.5 w-3.5" aria-hidden="true" />
           </button>
         </IconTooltip>
