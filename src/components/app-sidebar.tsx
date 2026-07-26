@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Users, Sparkles, History, LogOut } from "lucide-react";
+import { Users, Sparkles, History, LogOut, FolderKanban } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -17,8 +17,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "@tanstack/react-router";
 
 const items = [
+  { title: "Projects", url: "/projects", icon: FolderKanban, desc: "Episodes & storyboards" },
   { title: "Characters", url: "/characters", icon: Users, desc: "Library" },
-  { title: "Generate", url: "/generate", icon: Sparkles, desc: "Studio" },
+  { title: "Studio", url: "/generate", icon: Sparkles, desc: "Single panel" },
   { title: "History", url: "/history", icon: History, desc: "Past results" },
 ] as const;
 
