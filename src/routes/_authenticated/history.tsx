@@ -207,10 +207,10 @@ function DetailCard({ row, onClose }: { row: Row; onClose: () => void }) {
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             {row.results.map((res) => (
               <div key={res.id} className="overflow-hidden rounded-xl border border-border bg-muted">
-                {res.storage_path && (
+                {(res.thumb_path || res.storage_path) && (
                   <SignedImage
                     bucket="generation-outputs"
-                    path={res.storage_path}
+                    path={(res.thumb_path ?? res.storage_path) as string}
                     alt={`result-${res.seq}`}
                     className="aspect-square w-full object-cover"
                   />
