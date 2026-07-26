@@ -1,27 +1,36 @@
 import { createFileRoute, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { bootstrapTenant } from "@/lib/onboarding.functions";
 import { Button } from "@/components/ui/button";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/app-sidebar";
+import { Bell, Search } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
   component: AuthenticatedLayout,
 });
 
-const NAV: { to: "/characters" | "/generate" | "/history"; label: string }[] = [
-  { to: "/characters", label: "캐릭터" },
-  { to: "/generate", label: "생성" },
-  { to: "/history", label: "히스토리" },
-];
+const PAGE_META: Record<string, { title: string; sub: string }> = {
+  "/characters": { title: "캐릭터 라이브러리", sub: "생성에 사용할 캐릭터를 관리하세요" },
+  "/generate": { title: "이미지 생성", sub: "Studio · Seedream 프롬프트 엔진" },
+  "/history": { title: "히스토리", sub: "최근 생성 결과 및 옵션" },
+};
 
 function AuthenticatedLayout() {
   const navigate = useNavigate();
   const [status, setStatus] = useState<"checking" | "onboarding" | "ready" | "error">("checking");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [email, setEmail] = useState<string>("");
   const bootstrap = useServerFn(bootstrapTenant);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+
+  const meta = useMemo(() => {
+    const key = Object.keys(PAGE_META).find((k) => pathname === k || pathname.startsWith(k + "/"));
+    return key ? PAGE_META[key] : { title: "toonpilot", sub: "" };
+  }, [pathname]);
 
   useEffect(() => {
     let cancelled = false;
@@ -31,6 +40,7 @@ function AuthenticatedLayout() {
         navigate({ to: "/auth", replace: true });
         return;
       }
+      setEmail(data.user.email ?? "");
       setStatus("onboarding");
       try {
         await bootstrap();
@@ -77,47 +87,52 @@ function AuthenticatedLayout() {
     );
   }
 
+  const initials = (email.split("@")[0] || "U").slice(0, 2).toUpperCase();
+
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <header className="sticky top-0 z-30 border-b border-border bg-background/85 backdrop-blur">
-        <div className="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-5 py-3 sm:flex sm:flex-wrap sm:justify-between">
-          <button
-            onClick={() => navigate({ to: "/characters" })}
-            className="flex min-w-0 items-center gap-2"
-          >
-            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-primary text-sm font-black text-primary-foreground">
-              t
-            </span>
-            <span className="truncate text-base font-extrabold tracking-tight">toonpilot</span>
-          </button>
-          <nav className="flex items-center gap-1 rounded-full bg-muted p-1">
-            {NAV.map((n) => {
-              const active = pathname === n.to || pathname.startsWith(n.to + "/");
-              return (
-                <button
-                  key={n.to}
-                  onClick={() => navigate({ to: n.to })}
-                  className={
-                    "rounded-full px-3.5 py-1.5 text-sm font-semibold transition " +
-                    (active
-                      ? "bg-card text-foreground shadow-toss-sm"
-                      : "text-muted-foreground hover:text-foreground")
-                  }
-                >
-                  {n.label}
-                </button>
-              );
-            })}
+    <SidebarProvider>
+      <div className="flex min-h-screen w-full bg-muted/40 text-foreground">
+        <AppSidebar />
+
+        <div className="flex min-w-0 flex-1 flex-col">
+          <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border bg-background/85 px-4 backdrop-blur sm:px-6">
+            <SidebarTrigger className="h-9 w-9 rounded-lg hover:bg-muted" />
+            <div className="hidden h-6 w-px bg-border sm:block" />
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-[15px] font-bold tracking-tight">{meta.title}</div>
+              {meta.sub && (
+                <div className="truncate text-xs text-muted-foreground">{meta.sub}</div>
+              )}
+            </div>
+
+            <div className="hidden items-center gap-2 rounded-xl border border-border bg-card px-3 py-1.5 text-sm text-muted-foreground md:flex">
+              <Search className="h-4 w-4" />
+              <span className="text-xs">검색…</span>
+              <kbd className="ml-3 rounded bg-muted px-1.5 py-0.5 text-[10px] font-semibold">⌘K</kbd>
+            </div>
+
             <button
-              onClick={handleSignOut}
-              className="ml-1 rounded-full px-3 py-1.5 text-sm font-semibold text-muted-foreground hover:text-foreground"
+              className="grid h-9 w-9 place-items-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
+              aria-label="알림"
             >
-              로그아웃
+              <Bell className="h-4 w-4" />
             </button>
-          </nav>
+
+            <div className="flex items-center gap-2 rounded-full border border-border bg-card py-1 pl-1 pr-3">
+              <span className="grid h-7 w-7 place-items-center rounded-full bg-primary text-[11px] font-black text-primary-foreground">
+                {initials}
+              </span>
+              <span className="hidden max-w-[140px] truncate text-xs font-semibold text-foreground sm:inline">
+                {email || "user"}
+              </span>
+            </div>
+          </header>
+
+          <main className="flex-1">
+            <Outlet />
+          </main>
         </div>
-      </header>
-      <Outlet />
-    </div>
+      </div>
+    </SidebarProvider>
   );
 }
