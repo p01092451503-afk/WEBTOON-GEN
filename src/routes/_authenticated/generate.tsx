@@ -89,6 +89,10 @@ function GeneratePage() {
   const [lockedSeeds, setLockedSeeds] = useState<Record<number, number>>({});
   const [compareIds, setCompareIds] = useState<string[]>([]);
   const updatePanelFn = useServerFn(updatePanel);
+  const translateFn = useServerFn(translatePrompt);
+  const [translated, setTranslated] = useState<string | null>(null);
+  const [translating, setTranslating] = useState(false);
+  const [showTranslated, setShowTranslated] = useState(false);
 
   // Read query params: panel / charA / charB / back
   useEffect(() => {
