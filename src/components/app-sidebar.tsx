@@ -1,6 +1,6 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { Users, Sparkles, History, LogOut, FolderKanban, Search, ChevronsUpDown } from "lucide-react";
+import { Users, Sparkles, History, LogOut, FolderKanban, Search, PanelLeft } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
   Sidebar,
@@ -10,6 +10,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
 import { supabase } from "@/integrations/supabase/client";
