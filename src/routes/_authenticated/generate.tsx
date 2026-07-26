@@ -699,28 +699,23 @@ function Panel({
 }) {
   const stepBg = "bg-panel-step-4";
 
-  // 4개 영역에 동일한 입체감을 부여합니다.
-  const stepShadow = "shadow-panel-3d-4";
-  const stepLift = "-translate-y-3";
-  const stepZ = "z-10";
-
   return (
-    <div className={"rounded-3xl " + stepShadow + " " + stepLift + " " + stepZ + " " + (className ?? "")}>
-      <section
-        className={
-          "relative flex flex-col overflow-hidden rounded-3xl transition-all duration-300 ease-out lg:h-[calc(100vh-13rem)] lg:min-h-[520px] " +
-          stepBg
-        }
-      >
-        <div className="flex items-center gap-2 rounded-t-3xl border-b border-border/60 bg-gradient-to-b from-white/45 to-transparent px-5 py-4">
-          <IconBadge size="sm">{step}</IconBadge>
-          <h2 className="text-sm font-bold">{title}</h2>
-        </div>
-        <div className="flex-1 overflow-y-auto overscroll-contain px-5 py-4 [scrollbar-width:thin]">
-          {children}
-        </div>
-      </section>
-    </div>
+    <section
+      className={
+        "relative flex flex-col overflow-hidden rounded-3xl transition-all duration-300 ease-out lg:h-[calc(100vh-13rem)] lg:min-h-[520px] " +
+        stepBg +
+        " " +
+        (className ?? "")
+      }
+    >
+      <div className="flex items-center gap-2 rounded-t-3xl border-b border-border/60 bg-gradient-to-b from-white/45 to-transparent px-5 py-4">
+        <IconBadge size="sm">{step}</IconBadge>
+        <h2 className="text-sm font-bold">{title}</h2>
+      </div>
+      <div className="flex-1 overflow-y-auto overscroll-contain px-5 py-4 [scrollbar-width:thin]">
+        {children}
+      </div>
+    </section>
   );
 }
 
