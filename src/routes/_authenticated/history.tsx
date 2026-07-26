@@ -32,7 +32,7 @@ type Row = {
   error_message: string | null;
   created_at: string;
   completed_at: string | null;
-  results: { id: string; seq: number; storage_path: string | null }[];
+  results: { id: string; seq: number; storage_path: string | null; thumb_path: string | null }[];
 };
 
 function useHistory(tenantId: string | null) {
