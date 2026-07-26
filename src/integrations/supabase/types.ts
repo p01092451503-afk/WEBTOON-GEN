@@ -81,6 +81,38 @@ export type Database = {
           },
         ]
       }
+      episodes: {
+        Row: {
+          created_at: string
+          id: string
+          order_index: number
+          project_id: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          order_index?: number
+          project_id: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          order_index?: number
+          project_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "episodes_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       generation_results: {
         Row: {
           created_at: string
@@ -143,6 +175,7 @@ export type Database = {
           id: string
           mode: string
           options: Json
+          panel_id: string | null
           seed: number | null
           status: string
           tenant_id: string
@@ -164,6 +197,7 @@ export type Database = {
           id?: string
           mode?: string
           options?: Json
+          panel_id?: string | null
           seed?: number | null
           status?: string
           tenant_id: string
@@ -185,6 +219,7 @@ export type Database = {
           id?: string
           mode?: string
           options?: Json
+          panel_id?: string | null
           seed?: number | null
           status?: string
           tenant_id?: string
@@ -194,10 +229,72 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "generations_panel_id_fkey"
+            columns: ["panel_id"]
+            isOneToOne: false
+            referencedRelation: "panels"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "generations_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      panels: {
+        Row: {
+          caption: string | null
+          chosen_result_id: string | null
+          created_at: string
+          episode_id: string
+          generation_id: string | null
+          id: string
+          order_index: number
+          status: string
+        }
+        Insert: {
+          caption?: string | null
+          chosen_result_id?: string | null
+          created_at?: string
+          episode_id: string
+          generation_id?: string | null
+          id?: string
+          order_index?: number
+          status?: string
+        }
+        Update: {
+          caption?: string | null
+          chosen_result_id?: string | null
+          created_at?: string
+          episode_id?: string
+          generation_id?: string | null
+          id?: string
+          order_index?: number
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "panels_chosen_result_id_fkey"
+            columns: ["chosen_result_id"]
+            isOneToOne: false
+            referencedRelation: "generation_results"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "panels_episode_id_fkey"
+            columns: ["episode_id"]
+            isOneToOne: false
+            referencedRelation: "episodes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "panels_generation_id_fkey"
+            columns: ["generation_id"]
+            isOneToOne: false
+            referencedRelation: "generations"
             referencedColumns: ["id"]
           },
         ]
@@ -277,6 +374,71 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "profiles_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_cast: {
+        Row: {
+          character_id: string
+          project_id: string
+          role_label: string | null
+        }
+        Insert: {
+          character_id: string
+          project_id: string
+          role_label?: string | null
+        }
+        Update: {
+          character_id?: string
+          project_id?: string
+          role_label?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_cast_character_id_fkey"
+            columns: ["character_id"]
+            isOneToOne: false
+            referencedRelation: "characters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_cast_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          tenant_id: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          tenant_id: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          tenant_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projects_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
