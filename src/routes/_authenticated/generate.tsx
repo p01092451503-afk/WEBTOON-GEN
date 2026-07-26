@@ -720,7 +720,7 @@ function PresetSelect({
         <SelectContent>
           {items.length === 0 ? (
             <SelectItem value={value} disabled>
-              (no presets)
+              {t("studio.labels.no_presets_loaded")}
             </SelectItem>
           ) : (
             items.map((it) => (
@@ -748,6 +748,7 @@ function PresetGallery({
   /** chip = compact pill row, card = rectangle w/ preview, face = emoji-first square */
   variant: "chip" | "card" | "face";
 }) {
+  const { t } = useTranslation();
   const items = cfg[sheet] ?? [];
   const displayLabel = (it: PresetItem) => (it.label_en && it.label_en.trim()) || it.label_ko;
 
@@ -756,7 +757,7 @@ function PresetGallery({
       <div className="space-y-1.5">
         <Label className="text-[11px] font-semibold text-muted-foreground">{label}</Label>
         <div className="rounded-xl border border-dashed border-border p-3 text-center text-[11px] text-muted-foreground">
-          No presets loaded.
+          {t("studio.labels.no_presets_loaded")}
         </div>
       </div>
     );
