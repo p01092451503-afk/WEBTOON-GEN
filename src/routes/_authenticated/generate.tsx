@@ -706,6 +706,7 @@ function PresetSelect({
   value: string;
   onChange: (v: string) => void;
 }) {
+  const { t } = useTranslation();
   const items = cfg[sheet] ?? [];
   const displayLabel = (it: { label_en?: string; label_ko: string }) =>
     (it.label_en && it.label_en.trim()) || it.label_ko;
