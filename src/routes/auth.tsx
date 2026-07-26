@@ -20,27 +20,30 @@ export const Route = createFileRoute("/auth")({
   }),
 });
 
+const DEV_EMAIL = "test@test.co.kr";
+const DEV_PASSWORD = "test1111";
+
 function AuthPage() {
   const navigate = useNavigate();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState(DEV_EMAIL);
+  const [password, setPassword] = useState(DEV_PASSWORD);
   const [loading, setLoading] = useState(false);
+  const [autoTried, setAutoTried] = useState(false);
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function submit(currentMode: "signin" | "signup", em: string, pw: string) {
     setLoading(true);
     try {
-      if (mode === "signup") {
+      if (currentMode === "signup") {
         const { error } = await supabase.auth.signUp({
-          email,
-          password,
+          email: em,
+          password: pw,
           options: { emailRedirectTo: `${window.location.origin}/characters` },
         });
         if (error) throw error;
         toast.success("가입 완료. 로그인 중…");
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { error } = await supabase.auth.signInWithPassword({ email: em, password: pw });
         if (error) throw error;
       }
       navigate({ to: "/characters", replace: true });
@@ -50,6 +53,18 @@ function AuthPage() {
       setLoading(false);
     }
   }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    await submit(mode, email, password);
+  }
+
+  useEffect(() => {
+    if (autoTried) return;
+    setAutoTried(true);
+    void submit("signin", DEV_EMAIL, DEV_PASSWORD);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-background p-6">
