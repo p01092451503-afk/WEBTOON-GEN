@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Users, Wand2 } from "lucide-react";
+import { Library, LayoutGrid, History } from "lucide-react";
 import { LanguageToggle } from "@/components/language-toggle";
 
 export const Route = createFileRoute("/")({
