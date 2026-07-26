@@ -6,7 +6,8 @@ import { toast } from "sonner";
 import { listProjects, createProject, deleteProject } from "@/lib/projects.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { FolderPlus, Trash2, ArrowRight } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { FolderPlus, Trash2, ArrowRight, FolderKanban } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/projects/")({
   component: ProjectsIndex,
@@ -34,53 +35,101 @@ function ProjectsIndex() {
   });
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 p-6">
-      <form
-        onSubmit={(e) => { e.preventDefault(); if (title.trim()) createMut.mutate(title.trim()); }}
-        className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 shadow-toss"
-      >
-        <FolderPlus className="h-5 w-5 text-primary" />
-        <Input
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="New project title"
-          className="h-11 rounded-xl border-border"
-        />
-        <Button type="submit" disabled={createMut.isPending} className="h-11 rounded-xl">Create</Button>
-      </form>
+    <main className="mx-auto max-w-6xl px-5 py-8 sm:py-10">
+      <header className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-4 sm:flex sm:flex-wrap sm:justify-between">
+        <div className="min-w-0">
+          <div className="text-xs font-semibold text-primary">Workspace</div>
+          <h1 className="mt-1 truncate text-3xl font-extrabold tracking-tight">Projects</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Group episodes and storyboards under a single production.
+          </p>
+        </div>
+        <Link
+          to="/characters"
+          className="inline-flex h-10 shrink-0 items-center justify-center rounded-full bg-primary-soft px-4 text-sm font-semibold text-primary hover:bg-primary-soft/70"
+        >
+          Manage cast →
+        </Link>
+      </header>
 
-      {isLoading ? (
-        <div className="text-sm text-muted-foreground">Loading…</div>
-      ) : data.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border bg-card p-10 text-center text-sm text-muted-foreground">
-          No projects yet. Create your first project above.
+      <section className="mt-6 rounded-3xl border border-border bg-card p-6 shadow-toss-sm">
+        <div className="mb-4 flex items-center gap-2 text-sm font-bold">
+          <FolderPlus className="h-4 w-4 text-primary" />New project
         </div>
-      ) : (
-        <div className="grid gap-3 sm:grid-cols-2">
-          {data.map((p) => (
-            <div key={p.id} className="group flex items-center justify-between rounded-2xl border border-border bg-card p-4 shadow-toss transition hover:border-primary/40">
-              <div className="min-w-0">
-                <div className="truncate text-base font-bold">{p.title}</div>
-                <div className="text-xs text-muted-foreground">{new Date(p.created_at).toLocaleString()}</div>
-              </div>
-              <div className="flex items-center gap-1">
-                <Button asChild variant="ghost" size="sm" className="rounded-lg">
-                  <Link to="/projects/$id" params={{ id: p.id }}>
-                    Open <ArrowRight className="ml-1 h-4 w-4" />
-                  </Link>
-                </Button>
-                <Button
-                  size="sm" variant="ghost"
-                  onClick={() => { if (confirm(`Delete "${p.title}"?`)) delMut.mutate(p.id); }}
-                  className="rounded-lg text-muted-foreground hover:text-destructive"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
+        <form
+          onSubmit={(e) => { e.preventDefault(); if (title.trim()) createMut.mutate(title.trim()); }}
+          className="grid grid-cols-1 items-end gap-3 md:grid-cols-[1fr_auto]"
+        >
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold text-muted-foreground">Title</Label>
+            <Input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="e.g. Seoul Nights — Season 1"
+              className="h-11 rounded-xl bg-muted/50 px-4"
+            />
+          </div>
+          <Button
+            type="submit"
+            disabled={createMut.isPending}
+            className="h-11 rounded-xl px-6 font-bold"
+          >
+            {createMut.isPending ? "Creating…" : "Create"}
+          </Button>
+        </form>
+      </section>
+
+      <section className="mt-8">
+        {isLoading ? (
+          <p className="text-sm text-muted-foreground">Loading…</p>
+        ) : data.length === 0 ? (
+          <div className="flex flex-col items-center rounded-3xl border border-dashed border-border bg-card p-12 text-center">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-soft text-primary">
+              <FolderKanban className="h-6 w-6" />
             </div>
-          ))}
-        </div>
-      )}
-    </div>
+            <p className="mt-4 text-sm font-semibold">No projects yet</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Create your first project using the form above.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {data.map((p) => (
+              <div
+                key={p.id}
+                className="group overflow-hidden rounded-2xl border border-border bg-card shadow-toss-sm transition hover:shadow-toss"
+              >
+                <div className="flex aspect-[16/9] items-center justify-center bg-gradient-to-br from-primary-soft to-muted/60">
+                  <FolderKanban className="h-10 w-10 text-primary/70" />
+                </div>
+                <div className="space-y-3 p-4">
+                  <div className="min-w-0">
+                    <div className="truncate text-base font-bold">{p.title}</div>
+                    <div className="mt-0.5 text-xs text-muted-foreground">
+                      {new Date(p.created_at).toLocaleDateString()}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Button asChild variant="ghost" size="sm" className="flex-1 rounded-lg text-xs font-semibold text-primary hover:bg-primary-soft">
+                      <Link to="/projects/$id" params={{ id: p.id }}>
+                        Open <ArrowRight className="ml-1 h-3.5 w-3.5" />
+                      </Link>
+                    </Button>
+                    <Button
+                      size="sm" variant="ghost"
+                      disabled={delMut.isPending}
+                      onClick={() => { if (confirm(`Delete "${p.title}"?`)) delMut.mutate(p.id); }}
+                      className="h-8 rounded-lg text-xs font-semibold text-destructive hover:bg-destructive/10 hover:text-destructive"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+    </main>
   );
 }
