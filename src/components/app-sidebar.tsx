@@ -6,7 +6,6 @@ import { LogoIcon } from "@/components/logo";
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
