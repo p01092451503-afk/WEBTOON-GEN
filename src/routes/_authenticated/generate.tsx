@@ -838,7 +838,7 @@ function PresetGallery({
 
 function iconForEmotion(id: string) {
   const cls = "h-7 w-7";
-  const m: Record<string, JSX.Element> = {
+  const m: Record<string, React.ReactNode> = {
     EMO_000: <Meh className={cls} />,
     EMO_001: <Smile className={cls} />,
     EMO_002: <Smile className={cls} />,
