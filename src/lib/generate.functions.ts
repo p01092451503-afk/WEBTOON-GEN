@@ -47,14 +47,21 @@ export const generate = createServerFn({ method: "POST" })
     }
     const tenantId = profile.tenant_id;
 
-    // 2) 프롬프트 정리 및 가드
+    // 2) 프롬프트 정리 및 가드 (편집된 프롬프트도 반드시 통과)
     const cleanPrompt = sanitizePrompt(data.finalPrompt);
+    const v = validateFinalPrompt(cleanPrompt);
+    if (!v.ok) {
+      throw new Error(v.detail ? `${v.code}: ${v.detail}` : v.code);
+    }
     if (checkFigureN(cleanPrompt)) {
       throw new Error("FIGURE_N_NOT_REPLACED");
     }
-    const actionText = (data.options as Record<string, unknown>).actionText;
-    if (typeof actionText === "string" && checkActionMissing(cleanPrompt, actionText)) {
-      throw new Error("ACTION_TEXT_MISSING");
+    // 편집되지 않은 경우에만 원본 action 텍스트 포함 여부를 강제한다.
+    if (!data.promptEdited) {
+      const actionText = (data.options as Record<string, unknown>).actionText;
+      if (typeof actionText === "string" && checkActionMissing(cleanPrompt, actionText)) {
+        throw new Error("ACTION_TEXT_MISSING");
+      }
     }
 
     // 3) generations row 생성
