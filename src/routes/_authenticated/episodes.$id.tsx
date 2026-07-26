@@ -200,6 +200,7 @@ function PanelCard({
   onCaptionSave: (caption: string) => void;
   onChoose: (resultId: string) => void;
 }) {
+  const { t } = useTranslation();
   const [caption, setCaption] = useState(panel.caption ?? "");
   const [showResults, setShowResults] = useState(false);
   useEffect(() => { setCaption(panel.caption ?? ""); }, [panel.caption]);
@@ -255,7 +256,7 @@ function PanelCard({
           value={caption}
           onChange={(e) => setCaption(e.target.value)}
           onBlur={() => { if ((panel.caption ?? "") !== caption) onCaptionSave(caption); }}
-          placeholder="Caption / dialogue"
+          placeholder={t("episodes.caption_placeholder")}
           className="h-9 rounded-lg border-border text-sm"
         />
         <div className="mt-auto flex flex-wrap items-center justify-between gap-2">
@@ -300,6 +301,7 @@ function PanelCard({
 function PanelResultsPicker({
   panelId, chosenId, onChoose,
 }: { panelId: string; chosenId: string | null; onChoose: (id: string) => void }) {
+  const { t } = useTranslation();
   const list = useServerFn(listPanelGenerations);
   const { data = [], isLoading } = useQuery({
     queryKey: ["panel-gens", panelId],
@@ -313,8 +315,8 @@ function PanelResultsPicker({
     }
   }
 
-  if (isLoading) return <div className="text-xs text-muted-foreground">Loading variants…</div>;
-  if (allResults.length === 0) return <div className="text-xs text-muted-foreground">No variants yet.</div>;
+  if (isLoading) return <div className="text-xs text-muted-foreground">{t("episodes.loading_variants")}</div>;
+  if (allResults.length === 0) return <div className="text-xs text-muted-foreground">{t("episodes.no_variants")}</div>;
 
   return (
     <div className="mt-1 grid grid-cols-4 gap-2 rounded-xl bg-muted/40 p-2">
