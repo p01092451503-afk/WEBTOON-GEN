@@ -15,6 +15,7 @@ const inputSchema = z.object({
   batchCount: z.number().int().min(1).max(4).default(1),
   editImagePath: z.string().optional(),
   seed: z.number().int().nullable().optional(),
+  panelId: z.string().uuid().nullable().optional(),
 });
 
 export const generate = createServerFn({ method: "POST" })
@@ -67,11 +68,16 @@ export const generate = createServerFn({ method: "POST" })
         options: data.options,
         figure_map: data.figureMap,
         batch_count: data.batchCount,
+        panel_id: data.panelId ?? null,
       })
       .select("id")
       .single();
     if (genErr || !genRow) throw new Error(`DB_INSERT_GENERATION_FAILED: ${genErr?.message ?? ""}`);
     const generationId = genRow.id as string;
+
+    if (data.panelId) {
+      await supabase.from("panels").update({ status: "generating", generation_id: generationId }).eq("id", data.panelId);
+    }
 
     try {
       // 4) character-refs 서명 URL 발급 (ARK가 fetch 가능한 공인 URL)
@@ -179,6 +185,15 @@ export const generate = createServerFn({ method: "POST" })
         .update({ status: "done", completed_at: new Date().toISOString() })
         .eq("id", generationId);
 
+      if (data.panelId) {
+        const firstResultId = savedResults.length > 0
+          ? (await supabaseAdmin.from("generation_results").select("id").eq("generation_id", generationId).order("seq").limit(1).maybeSingle()).data?.id ?? null
+          : null;
+        const panelPatch: { status: string; chosen_result_id?: string | null } = { status: "done" };
+        if (firstResultId) panelPatch.chosen_result_id = firstResultId;
+        await supabaseAdmin.from("panels").update(panelPatch).eq("id", data.panelId);
+      }
+
       return { generationId, status: "done" as const };
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
@@ -188,6 +203,9 @@ export const generate = createServerFn({ method: "POST" })
         .from("generations")
         .update({ status: "error", error_message: message.slice(0, 1000), completed_at: new Date().toISOString() })
         .eq("id", generationId);
+      if (data.panelId) {
+        await supabaseAdmin.from("panels").update({ status: "empty" }).eq("id", data.panelId);
+      }
       throw new Error(message);
     }
   });
