@@ -110,7 +110,7 @@ function EpisodeStoryboard() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl space-y-5 p-6">
+    <div className="max-w-4xl space-y-5 p-6">
       <div className="flex items-center justify-between">
         <div>
           <div className="text-xs uppercase tracking-wider text-muted-foreground">{t("episodes.eyebrow")}</div>

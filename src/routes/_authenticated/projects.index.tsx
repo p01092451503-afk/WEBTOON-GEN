@@ -39,7 +39,7 @@ function ProjectsIndex() {
   });
 
   return (
-    <main className="mx-auto max-w-6xl px-5 py-8 sm:py-10">
+    <main className="max-w-6xl px-5 py-8 sm:py-10">
       <header className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-4 sm:flex sm:flex-wrap sm:justify-between">
         <div className="min-w-0">
           <div className="text-xs font-semibold text-primary">{t("projects.eyebrow")}</div>
