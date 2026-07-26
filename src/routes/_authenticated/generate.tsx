@@ -786,7 +786,7 @@ function PresetGallery({
                 className={
                   "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-bold transition " +
                   (active
-                    ? "border-primary bg-primary text-primary-foreground shadow-toss-sm"
+                    ? "border-primary bg-muted/50 text-foreground"
                     : "border-border bg-muted/50 text-foreground hover:border-primary/40")
                 }
               >
