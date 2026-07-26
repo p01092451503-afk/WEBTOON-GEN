@@ -701,24 +701,44 @@ function Panel({
 
   const stepShadow =
     {
-      1: "shadow-panel-step-1",
-      2: "shadow-panel-step-2",
-      3: "shadow-panel-step-3",
-      4: "shadow-panel-step-4",
+      1: "shadow-panel-3d-1",
+      2: "shadow-panel-3d-2",
+      3: "shadow-panel-3d-3",
+      4: "shadow-panel-3d-4",
     }[step] ?? "shadow-toss-sm";
+
+  const stepLift =
+    {
+      1: "translate-y-0",
+      2: "-translate-y-1",
+      3: "-translate-y-2",
+      4: "-translate-y-3",
+    }[step] ?? "translate-y-0";
+
+  const stepZ =
+    {
+      1: "z-10",
+      2: "z-20",
+      3: "z-30",
+      4: "z-40",
+    }[step] ?? "z-10";
 
   return (
     <section
       className={
-        "flex flex-col rounded-3xl border border-border lg:h-[calc(100vh-13rem)] lg:min-h-[520px] " +
+        "relative flex flex-col rounded-3xl border border-border/80 transition-all duration-300 ease-out lg:h-[calc(100vh-13rem)] lg:min-h-[520px] " +
         stepBg +
         " " +
         stepShadow +
         " " +
+        stepLift +
+        " " +
+        stepZ +
+        " " +
         (className ?? "")
       }
     >
-      <div className="flex items-center gap-2 border-b border-border/60 px-5 py-4">
+      <div className="flex items-center gap-2 rounded-t-3xl border-b border-border/60 bg-gradient-to-b from-white/45 to-transparent px-5 py-4">
         <IconBadge size="sm">{step}</IconBadge>
         <h2 className="text-sm font-bold">{title}</h2>
       </div>
