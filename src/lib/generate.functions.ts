@@ -15,6 +15,8 @@ const inputSchema = z.object({
   batchCount: z.number().int().min(1).max(4).default(1),
   editImagePath: z.string().optional(),
   seed: z.number().int().nullable().optional(),
+  /** Explicit per-slot seeds. When provided, batchCount is derived from length. Used for lock-one/vary-rest. */
+  seeds: z.array(z.number().int()).max(4).optional(),
   panelId: z.string().uuid().nullable().optional(),
 });
 
@@ -48,7 +50,21 @@ export const generate = createServerFn({ method: "POST" })
     // 3) generations row 생성
     const { aspectRatioToSize, callArk, makeThumbnailWebp } = await import("@/lib/generate.server");
     const size = aspectRatioToSize(data.aspectRatio);
-    const seed = data.seed ?? Math.floor(Math.random() * 2_000_000_000);
+
+    // Build per-slot seed list (explicit seeds win; else derive from batchCount)
+    const slotSeeds: number[] = (() => {
+      if (data.seeds && data.seeds.length > 0) return data.seeds.slice(0, 4);
+      const n = Math.max(1, Math.min(4, data.batchCount ?? 1));
+      const base = data.seed ?? Math.floor(Math.random() * 2_000_000_000);
+      // If a single seed was passed and batch > 1, still fan out with derived distinct seeds
+      // so each slot actually varies.
+      if (n === 1) return [base];
+      return Array.from({ length: n }, (_, i) =>
+        i === 0 ? base : Math.floor(Math.random() * 2_000_000_000),
+      );
+    })();
+
+    const seed = slotSeeds[0];
     const apiModel = process.env.ARK_ENDPOINT_ID ?? "unknown";
 
     const { data: genRow, error: genErr } = await supabase
@@ -67,7 +83,7 @@ export const generate = createServerFn({ method: "POST" })
         final_prompt: cleanPrompt,
         options: data.options,
         figure_map: data.figureMap,
-        batch_count: data.batchCount,
+        batch_count: slotSeeds.length,
         panel_id: data.panelId ?? null,
       })
       .select("id")
