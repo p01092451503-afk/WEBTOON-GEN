@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { LanguageToggle } from "@/components/language-toggle";
+import { IconTooltip } from "@/components/icon-tooltip";
 import { Bell, Search } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated")({
@@ -120,12 +121,14 @@ function AuthenticatedLayout() {
 
             <LanguageToggle />
 
-            <button
-              className="grid h-9 w-9 place-items-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
-              aria-label={t("common.notifications")}
-            >
-              <Bell className="h-4 w-4" />
-            </button>
+            <IconTooltip label={t("common.notifications")}>
+              <button
+                className="grid h-9 w-9 place-items-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
+                aria-label={t("common.notifications")}
+              >
+                <Bell className="h-4 w-4" aria-hidden="true" />
+              </button>
+            </IconTooltip>
 
             <div className="flex items-center rounded-full border border-border bg-card px-3 py-1.5">
               <span className="max-w-[180px] truncate text-xs font-semibold text-foreground">

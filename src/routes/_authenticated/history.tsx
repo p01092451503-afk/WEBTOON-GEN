@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/hooks/useTenant";
 import { SignedImage } from "@/components/SignedImage";
 import { Button } from "@/components/ui/button";
+import { IconTooltip } from "@/components/icon-tooltip";
 import { toast } from "sonner";
 import { Clock, X } from "lucide-react";
 
@@ -200,9 +201,11 @@ function DetailCard({ row, onClose, locale }: { row: Row; onClose: () => void; l
               {t("history.load_settings")}
             </Link>
           </Button>
-          <Button size="sm" variant="ghost" className="rounded-full" onClick={onClose}>
-            <X className="h-4 w-4" />
-          </Button>
+          <IconTooltip label={t("common.close_details")}>
+            <Button size="sm" variant="ghost" className="rounded-full" onClick={onClose}>
+              <X className="h-4 w-4" aria-hidden="true" />
+            </Button>
+          </IconTooltip>
         </div>
       </header>
 
