@@ -600,6 +600,7 @@ function CharacterPicker({
   onChange: (id: string | null) => void;
   characters: { id: string; display_name: string; primary_path: string | null }[];
 }) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-2">
       <Select
@@ -607,10 +608,10 @@ function CharacterPicker({
         onValueChange={(v) => onChange(v === "__none" ? null : v)}
       >
         <SelectTrigger className="h-10 rounded-xl bg-muted/50">
-          <SelectValue placeholder="Select" />
+          <SelectValue placeholder={t("studio.labels.select")} />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="__none">(none)</SelectItem>
+          <SelectItem value="__none">{t("studio.labels.none")}</SelectItem>
           {characters.map((c) => (
             <SelectItem key={c.id} value={c.id}>
               {c.display_name}
@@ -620,11 +621,11 @@ function CharacterPicker({
       </Select>
       {characters.length === 0 && (
         <p className="text-[11px] leading-tight text-muted-foreground">
-          No characters yet. Add one on the{" "}
+          {t("studio.labels.no_characters_hint")}{" "}
           <Link to="/characters" className="font-semibold text-primary underline">
-            characters
+            {t("studio.labels.characters_link")}
           </Link>{" "}
-          page.
+          {t("studio.labels.page_suffix")}
         </p>
       )}
       {value && (
@@ -650,6 +651,7 @@ function RefUpload({
   onFile: (f: File) => void;
   onClear: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-1.5">
       <Label className="text-[11px] font-semibold text-muted-foreground">{label}</Label>
@@ -667,13 +669,13 @@ function RefUpload({
             className="h-8 w-full rounded-lg text-xs font-semibold text-muted-foreground hover:text-destructive"
             onClick={onClear}
           >
-            <X className="mr-1 h-3.5 w-3.5" /> Remove
+            <X className="mr-1 h-3.5 w-3.5" /> {t("common.remove")}
           </Button>
         </div>
       ) : (
         <label className="flex h-24 cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-border bg-muted/40 text-xs text-muted-foreground hover:bg-muted">
           <ImagePlus className="mb-1 h-4 w-4" />
-          Choose image
+          {t("studio.labels.choose_image")}
           <input
             type="file"
             accept="image/*"
