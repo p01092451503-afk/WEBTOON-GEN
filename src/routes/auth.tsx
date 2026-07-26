@@ -25,6 +25,7 @@ const DEV_EMAIL = "test@test.co.kr";
 const DEV_PASSWORD = "test1111";
 
 function AuthPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState(DEV_EMAIL);
@@ -42,7 +43,7 @@ function AuthPage() {
           options: { emailRedirectTo: `${window.location.origin}/characters` },
         });
         if (error) throw error;
-        toast.success("Account created. Signing you in…");
+        toast.success(t("auth.account_created"));
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email: em, password: pw });
         if (error) throw error;
@@ -74,31 +75,34 @@ function AuthPage() {
 
   return (
     <main className="min-h-screen bg-background">
+      <div className="absolute right-5 top-5">
+        <LanguageToggle />
+      </div>
       <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-5 py-10">
         <div className="mb-8 flex flex-col items-center">
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-2xl font-black text-primary-foreground shadow-toss">
             t
           </div>
           <h1 className="mt-5 text-2xl font-extrabold tracking-tight text-foreground">
-            Welcome to toonpilot
+            {t("auth.welcome")}
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            {mode === "signin" ? "Sign in with your email" : "Create a new account"}
+            {mode === "signin" ? t("auth.signin_sub") : t("auth.signup_sub")}
           </p>
         </div>
 
         <div className="rounded-3xl border border-border bg-card p-6 shadow-toss">
           <div className="mb-5 grid grid-cols-2 gap-1 rounded-xl bg-muted p-1">
             <TabButton active={mode === "signin"} onClick={() => setMode("signin")}>
-              Sign in
+              {t("auth.sign_in")}
             </TabButton>
             <TabButton active={mode === "signup"} onClick={() => setMode("signup")}>
-              Sign up
+              {t("auth.sign_up")}
             </TabButton>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <Field label="Email">
+            <Field label={t("auth.email")}>
               <Input
                 id="email"
                 type="email"
@@ -109,7 +113,7 @@ function AuthPage() {
                 className="h-12 rounded-xl border-border bg-muted/50 px-4 text-[15px] focus-visible:bg-card"
               />
             </Field>
-            <Field label="Password">
+            <Field label={t("auth.password")}>
               <Input
                 id="password"
                 type="password"
@@ -128,13 +132,13 @@ function AuthPage() {
               className="h-13 w-full rounded-xl bg-primary py-3 text-[15px] font-bold text-primary-foreground shadow-toss hover:bg-primary/90"
               style={{ height: "52px" }}
             >
-              {loading ? "Please wait…" : mode === "signup" ? "Create account" : "Sign in"}
+              {loading ? t("common.please_wait") : mode === "signup" ? t("auth.create_account") : t("auth.sign_in")}
             </Button>
           </form>
         </div>
 
         <p className="mt-6 text-center text-xs text-muted-foreground">
-          By continuing, you agree to the terms of service.
+          {t("auth.terms")}
         </p>
       </div>
     </main>
