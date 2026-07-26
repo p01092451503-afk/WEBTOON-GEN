@@ -329,7 +329,7 @@ function GeneratePage() {
         </div>
       )}
 
-      <div className="mt-6 grid grid-cols-1 gap-5 lg:grid-cols-12 lg:items-start overflow-visible pt-4">
+      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-start overflow-visible pt-4">
         {/* Panel 1: References */}
         <Panel step={1} title={t("studio.panels.references")} className="lg:col-span-3">
           <div className="space-y-4">
@@ -726,7 +726,7 @@ function Panel({
   return (
     <section
       className={
-        "relative flex flex-col rounded-3xl border border-border/80 transition-all duration-300 ease-out lg:h-[calc(100vh-13rem)] lg:min-h-[520px] " +
+        "relative flex flex-col rounded-3xl border-2 border-foreground/30 transition-all duration-300 ease-out lg:h-[calc(100vh-13rem)] lg:min-h-[520px] " +
         stepBg +
         " " +
         stepShadow +
