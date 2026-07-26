@@ -20,6 +20,16 @@ export const bootstrapTenant = createServerFn({ method: "POST" })
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
+    // RLS 우회하여 다시 한 번 확인 (SSR/세션 지연으로 첫 select 가 null 이 되는 경우 대비)
+    const { data: adminExisting } = await supabaseAdmin
+      .from("profiles")
+      .select("tenant_id")
+      .eq("id", userId)
+      .maybeSingle();
+    if (adminExisting?.tenant_id) {
+      return { tenantId: adminExisting.tenant_id, created: false };
+    }
+
     const email = (claims as { email?: string })?.email ?? "";
     const displayName = email ? email.split("@")[0] : "New user";
     const tenantName = `${displayName}'s workspace`;
@@ -33,15 +43,19 @@ export const bootstrapTenant = createServerFn({ method: "POST" })
       throw new Error(`TENANT_CREATE_FAILED: ${tErr?.message ?? "unknown"}`);
     }
 
-    const { error: pErr } = await supabaseAdmin.from("profiles").insert({
-      id: userId,
-      tenant_id: tenant.id,
-      role: "owner",
-      display_name: displayName,
-    });
+    const { error: pErr } = await supabaseAdmin.from("profiles").upsert(
+      {
+        id: userId,
+        tenant_id: tenant.id,
+        role: "owner",
+        display_name: displayName,
+      },
+      { onConflict: "id" },
+    );
     if (pErr) {
       throw new Error(`PROFILE_CREATE_FAILED: ${pErr.message}`);
     }
+
 
     return { tenantId: tenant.id, created: true };
   });
