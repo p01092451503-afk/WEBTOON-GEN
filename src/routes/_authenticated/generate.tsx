@@ -10,7 +10,13 @@ import { useGeneration } from "@/hooks/useGeneration";
 import { SignedImage } from "@/components/SignedImage";
 import { buildFigureMap, buildPrompt, WARN, type WorkInput, type PresetItem } from "@/lib/promptEngine";
 import { updatePanel } from "@/lib/projects.functions";
-import { ArrowLeft, Lock, Unlock, GitCompare, Check, Sparkles, ImagePlus, X } from "lucide-react";
+import {
+  ArrowLeft, Lock, Unlock, GitCompare, Check, Sparkles, ImagePlus, X,
+  Smile, Meh, Frown, Angry, Laugh, Annoyed, Heart, AlertCircle,
+  Moon, Zap, Snowflake, Brain, Ghost, Drama,
+  Triangle, Camera, Video, Focus, Move, PersonStanding,
+  Aperture, Scan, Ruler, Compass, Eye, ArrowUp, ArrowDown,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
