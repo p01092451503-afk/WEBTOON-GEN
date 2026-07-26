@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { IconTooltip } from "@/components/icon-tooltip";
+import { IconBadge, SectionIcon } from "@/components/icon-badge";
 import {
   Plus, Trash2, GripVertical, Wand2, Check, ImageIcon, Loader2, ChevronDown,
 } from "lucide-react";
@@ -142,7 +143,7 @@ function EpisodeStoryboard() {
         onSubmit={(e) => { e.preventDefault(); addMut.mutate(); }}
         className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 shadow-toss"
       >
-        <Plus className="h-5 w-5 text-primary" />
+        <SectionIcon icon={Plus} size="lg" />
         <Input
           value={newCaption} onChange={(e) => setNewCaption(e.target.value)}
           placeholder={t("episodes.panel_placeholder")} className="h-11 rounded-xl border-border"
@@ -232,9 +233,7 @@ function PanelCard({
     >
       <div className="flex flex-col items-center gap-2 pt-1 text-muted-foreground">
         <GripVertical className="h-4 w-4 cursor-grab" aria-label={t("common.drag_to_reorder")} />
-        <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary-soft text-xs font-bold text-primary">
-          {index + 1}
-        </span>
+        <IconBadge size="md">{index + 1}</IconBadge>
       </div>
 
       <div className="grid h-32 w-32 shrink-0 place-items-center overflow-hidden rounded-xl bg-muted">

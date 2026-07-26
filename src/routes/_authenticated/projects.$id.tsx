@@ -12,6 +12,7 @@ import { useCharacters } from "@/hooks/useCharacters";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { IconTooltip } from "@/components/icon-tooltip";
+import { IconBadge, SectionIcon } from "@/components/icon-badge";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -84,7 +85,7 @@ function ProjectDetail() {
           onSubmit={(e) => { e.preventDefault(); if (epTitle.trim()) addEpMut.mutate(epTitle.trim()); }}
           className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 shadow-toss"
         >
-          <Plus className="h-5 w-5 text-primary" />
+          <SectionIcon icon={Plus} size="lg" />
           <Input
             value={epTitle} onChange={(e) => setEpTitle(e.target.value)}
             placeholder={t("project_detail.new_episode_placeholder")} className="h-11 rounded-xl border-border"
@@ -101,9 +102,7 @@ function ProjectDetail() {
             {data.episodes.map((ep: any) => (
               <li key={ep.id} className="flex items-center justify-between rounded-2xl border border-border bg-card p-4 shadow-toss">
                 <div className="flex min-w-0 items-center gap-3">
-                  <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary-soft text-xs font-bold text-primary">
-                    {ep.order_index + 1}
-                  </span>
+                  <IconBadge size="md">{ep.order_index + 1}</IconBadge>
                   <div className="truncate text-base font-semibold">{ep.title}</div>
                 </div>
                 <div className="flex items-center gap-1">

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { IconTooltip } from "@/components/icon-tooltip";
+import { IconBadge, SectionIcon } from "@/components/icon-badge";
 import { FolderPlus, Trash2, ArrowRight, FolderKanban } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/projects/")({
@@ -55,7 +56,7 @@ function ProjectsIndex() {
 
       <section className="mt-6 rounded-3xl border border-border bg-card p-6 shadow-toss-sm">
         <div className="mb-4 flex items-center gap-2 text-sm font-bold">
-          <FolderPlus className="h-4 w-4 text-primary" />{t("projects.new_project")}
+          <SectionIcon icon={FolderPlus} />{t("projects.new_project")}
         </div>
         <form
           onSubmit={(e) => { e.preventDefault(); if (title.trim()) createMut.mutate(title.trim()); }}
@@ -85,9 +86,7 @@ function ProjectsIndex() {
           <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
         ) : data.length === 0 ? (
           <div className="flex flex-col items-center rounded-3xl border border-dashed border-border bg-card p-12 text-center">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-soft text-primary">
-              <FolderKanban className="h-6 w-6" />
-            </div>
+            <IconBadge icon={FolderKanban} size="xl" />
             <p className="mt-4 text-sm font-semibold">{t("projects.empty_title")}</p>
             <p className="mt-1 text-xs text-muted-foreground">{t("projects.empty_hint")}</p>
           </div>

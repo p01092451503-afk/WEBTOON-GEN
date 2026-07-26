@@ -20,6 +20,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { IconTooltip } from "@/components/icon-tooltip";
+import { IconBadge } from "@/components/icon-badge";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -531,9 +532,7 @@ function Panel({
       }
     >
       <div className="mb-4 flex items-center gap-2">
-        <span className="grid h-6 w-6 place-items-center rounded-md bg-primary-soft text-[11px] font-black text-primary">
-          {step}
-        </span>
+        <IconBadge size="sm">{step}</IconBadge>
         <h2 className="text-sm font-bold">{title}</h2>
       </div>
       {children}
