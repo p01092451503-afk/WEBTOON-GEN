@@ -560,6 +560,7 @@ function NoticeBar({
   children: React.ReactNode;
   onClose?: () => void;
 }) {
+  const { t } = useTranslation();
   const cls =
     tone === "warn"
       ? "border-amber-300/50 bg-amber-50 text-amber-800"
@@ -713,7 +714,7 @@ function PresetSelect({
       <Label className="text-[11px] font-semibold text-muted-foreground">{label}</Label>
       <Select value={value} onValueChange={onChange}>
         <SelectTrigger className="h-10 rounded-xl bg-muted/50">
-          <SelectValue placeholder={items.length === 0 ? "(empty)" : "Select"} />
+          <SelectValue placeholder={items.length === 0 ? t("studio.labels.empty") : t("studio.labels.select")} />
         </SelectTrigger>
         <SelectContent>
           {items.length === 0 ? (
