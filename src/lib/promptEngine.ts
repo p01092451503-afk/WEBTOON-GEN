@@ -44,6 +44,46 @@ export const WARN = {
   WRN_005: '⚠ 사진 포즈 레퍼런스는 인물 정체성 오염 위험. 선화/스케치 권장.',
 };
 
+// 편집된 최종 프롬프트에 대한 서버측 안전성 가드
+export const PROMPT_MAX_CHARS = 4000;
+export const PROMPT_MIN_CHARS = 10;
+
+const BANNED_TOKENS = [
+  /\bchild(?:ren)?\b/i,
+  /\bminor(?:s)?\b/i,
+  /\bunderage\b/i,
+  /\bloli\b/i,
+  /\bshota\b/i,
+  /\bnude\b/i,
+  /\bnsfw\b/i,
+  /\bexplicit sexual\b/i,
+  /\bgore\b/i,
+];
+
+export type PromptValidationError =
+  | 'PROMPT_EMPTY'
+  | 'PROMPT_TOO_SHORT'
+  | 'PROMPT_TOO_LONG'
+  | 'PROMPT_FIGURE_N_UNRESOLVED'
+  | 'PROMPT_POLICY_VIOLATION';
+
+export type PromptValidationResult =
+  | { ok: true }
+  | { ok: false; code: PromptValidationError; detail?: string };
+
+export function validateFinalPrompt(text: string): PromptValidationResult {
+  const s = String(text ?? '').trim();
+  if (!s) return { ok: false, code: 'PROMPT_EMPTY' };
+  if (s.length < PROMPT_MIN_CHARS) return { ok: false, code: 'PROMPT_TOO_SHORT' };
+  if (s.length > PROMPT_MAX_CHARS) return { ok: false, code: 'PROMPT_TOO_LONG' };
+  if (checkFigureN(s)) return { ok: false, code: 'PROMPT_FIGURE_N_UNRESOLVED' };
+  for (const re of BANNED_TOKENS) {
+    const m = s.match(re);
+    if (m) return { ok: false, code: 'PROMPT_POLICY_VIOLATION', detail: m[0] };
+  }
+  return { ok: true };
+}
+
 export function wordCount(t: string) {
   return String(t || '')
     .trim()
