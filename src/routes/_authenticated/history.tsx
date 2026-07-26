@@ -48,7 +48,7 @@ function useHistory(tenantId: string | null) {
       const { data, error } = await supabase
         .from("generations")
         .select(
-          "id, status, mode, work_label, aspect_ratio, api_model, seed, final_prompt, compiled_prompt, options, figure_map, warnings, batch_count, error_message, created_at, completed_at, generation_results(id, seq, storage_path, thumb_path)",
+          "id, status, mode, work_label, aspect_ratio, api_model, seed, final_prompt, raw_prompt, prompt_edited, compiled_prompt, options, figure_map, warnings, batch_count, error_message, created_at, completed_at, generation_results(id, seq, storage_path, thumb_path)",
         )
         .order("created_at", { ascending: false })
         .limit(100);
