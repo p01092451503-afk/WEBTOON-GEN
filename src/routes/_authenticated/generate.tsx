@@ -153,6 +153,34 @@ function GeneratePage() {
 
   const built = useMemo(() => buildPrompt(work, figureMap, cfg), [work, figureMap, cfg]);
 
+  // Reset translation whenever the source prompt changes
+  useEffect(() => {
+    setTranslated(null);
+    setShowTranslated(false);
+  }, [built.prompt]);
+
+  async function handleTranslate() {
+    if (!built.prompt) return;
+    // If we already have a translation, just toggle
+    if (translated) {
+      setShowTranslated((v) => !v);
+      return;
+    }
+    setTranslating(true);
+    try {
+      // Detect Korean characters -> translate to English, else to Korean
+      const hasKorean = /[\u3131-\uD79D]/.test(built.prompt);
+      const target: "ko" | "en" = hasKorean ? "en" : "ko";
+      const res = await translateFn({ data: { text: built.prompt, target } });
+      setTranslated(res.translated);
+      setShowTranslated(true);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Translation failed");
+    } finally {
+      setTranslating(false);
+    }
+  }
+
   const uploadRef = useCallback(
     async (file: File, kind: "bg" | "pose" | "style") => {
       if (!tenantId) return;
