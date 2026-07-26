@@ -19,7 +19,6 @@ export function AppSidebar() {
   const { t } = useTranslation();
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
-  const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isActive = (path: string) =>
     pathname === path || pathname.startsWith(path + "/");
@@ -36,23 +35,6 @@ export function AppSidebar() {
     { title: t("sidebar.history"), url: "/history", icon: History },
   ] as const;
 
-  async function handleSignOut() {
-    if (typeof window !== "undefined")
-      sessionStorage.setItem("toonpilot:signedOut", "1");
-    try {
-      await supabase.auth.signOut();
-    } catch (e) {
-      console.error("signOut failed", e);
-    }
-    if (typeof window !== "undefined") {
-      window.location.replace("/auth");
-    } else {
-      navigate({ to: "/auth", replace: true });
-    }
-  }
-
-
-  const initial = (email?.[0] || "T").toUpperCase();
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border bg-sidebar">
