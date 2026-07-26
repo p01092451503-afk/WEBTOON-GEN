@@ -43,7 +43,7 @@ function AuthPage() {
           options: { emailRedirectTo: `${window.location.origin}/characters` },
         });
         if (error) throw error;
-        toast.success(t("auth.account_created"));
+        toast.success(t("auth.created_toast"));
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email: em, password: pw });
         if (error) throw error;
@@ -87,17 +87,17 @@ function AuthPage() {
             {t("auth.welcome")}
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            {mode === "signin" ? t("auth.signin_sub") : t("auth.signup_sub")}
+            {mode === "signin" ? t("auth.sign_in_hint") : t("auth.sign_up_hint")}
           </p>
         </div>
 
         <div className="rounded-3xl border border-border bg-card p-6 shadow-toss">
           <div className="mb-5 grid grid-cols-2 gap-1 rounded-xl bg-muted p-1">
             <TabButton active={mode === "signin"} onClick={() => setMode("signin")}>
-              {t("auth.sign_in")}
+              {t("auth.tab_sign_in")}
             </TabButton>
             <TabButton active={mode === "signup"} onClick={() => setMode("signup")}>
-              {t("auth.sign_up")}
+              {t("auth.tab_sign_up")}
             </TabButton>
           </div>
 
