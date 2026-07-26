@@ -876,7 +876,7 @@ function PresetGallery({
 
 function iconForPreset(sheet: string, id: string, cls = "h-4 w-4") {
   if (sheet.startsWith("Emotion")) return iconForEmotion(id, cls);
-  return iconForCamera(sheet, cls);
+  return iconForCamera(sheet, id, cls);
 }
 
 function iconForEmotion(id: string, cls = "h-7 w-7") {
@@ -900,11 +900,127 @@ function iconForEmotion(id: string, cls = "h-7 w-7") {
   };
   return m[id] ?? <Drama className={cls} />;
 }
-function iconForCamera(sheet: string, cls = "h-7 w-7") {
-  if (sheet.startsWith("CameraAngle")) return <Triangle className={cls} />;
-  if (sheet.startsWith("CameraDistance")) return <Focus className={cls} />;
-  if (sheet.startsWith("CameraPosition")) return <Video className={cls} />;
-  if (sheet.startsWith("Pose")) return <PersonStanding className={cls} />;
+
+const CAMERA_ANGLE_ICONS: Record<string, (cls: string) => ReactNode> = {
+  CAM_A_000: (c) => <Sparkles className={c} />,          // auto
+  CAM_A_001: (c) => <Eye className={c} />,               // eye
+  CAM_A_002: (c) => <ArrowUpFromLine className={c} />,   // low
+  CAM_A_003: (c) => <ArrowDownFromLine className={c} />, // high
+  CAM_A_004: (c) => <RotateCw className={c} />,          // dutch
+  CAM_A_005: (c) => <ArrowDown className={c} />,         // birdseye
+  CAM_A_006: (c) => <ArrowUp className={c} />,           // wormseye
+  CAM_A_007: (c) => <ArrowDownRight className={c} />,    // slight-high
+  CAM_A_008: (c) => <ArrowUpRight className={c} />,      // slight-low
+};
+
+const CAMERA_DISTANCE_ICONS: Record<string, (cls: string) => ReactNode> = {
+  CAM_D_000: (c) => <Sparkles className={c} />,      // auto
+  CAM_D_001: (c) => <Focus className={c} />,         // close
+  CAM_D_002: (c) => <Scan className={c} />,          // medium
+  CAM_D_003: (c) => <Expand className={c} />,        // full
+  CAM_D_004: (c) => <Aperture className={c} />,      // extreme-close
+  CAM_D_005: (c) => <UserCircle2 className={c} />,   // bust
+  CAM_D_006: (c) => <User className={c} />,          // cowboy
+  CAM_D_007: (c) => <Maximize2 className={c} />,     // wide
+  CAM_D_008: (c) => <Ruler className={c} />,         // extreme-wide
+};
+
+const CAMERA_POSITION_ICONS: Record<string, (cls: string) => ReactNode> = {
+  CAM_P_000: (c) => <Sparkles className={c} />,       // auto
+  CAM_P_001: (c) => <Video className={c} />,          // front
+  CAM_P_002: (c) => <ArrowLeftRight className={c} />, // side
+  CAM_P_003: (c) => <RotateCcw className={c} />,      // back
+  CAM_P_004: (c) => <ArrowUpRight className={c} />,   // 3q-front
+  CAM_P_005: (c) => <ArrowDownRight className={c} />, // 3q-back
+  CAM_P_006: (c) => <Users className={c} />,          // ots-a
+  CAM_P_007: (c) => <Users className={c} />,          // ots-b
+  CAM_P_008: (c) => <Eye className={c} />,            // pov
+};
+
+const POSE_STRENGTH_ICONS: Record<string, (cls: string) => ReactNode> = {
+  POS_000: (c) => <Sparkles className={c} />,   // auto
+  POS_001: (c) => <ChevronDown className={c} />,// loose
+  POS_002: (c) => <Sliders className={c} />,    // balanced
+  POS_003: (c) => <ChevronUp className={c} />,  // strict
+  POS_004: (c) => <Target className={c} />,     // exact
+};
+
+const BG_STRENGTH_ICONS: Record<string, (cls: string) => ReactNode> = {
+  BGS_000: (c) => <Sparkles className={c} />,
+  BGS_001: (c) => <Cloud className={c} />,
+  BGS_002: (c) => <Sliders className={c} />,
+  BGS_003: (c) => <Target className={c} />,
+};
+
+const BODY_SOURCE_ICONS: Record<string, (cls: string) => ReactNode> = {
+  BOD_000: (c) => <Sparkles className={c} />,
+  BOD_001: (c) => <ImageIcon className={c} />,
+  BOD_002: (c) => <PersonStanding className={c} />,
+  BOD_003: (c) => <Minimize2 className={c} />,
+  BOD_004: (c) => <User className={c} />,
+  BOD_005: (c) => <Gauge className={c} />,
+  BOD_006: (c) => <ChevronDown className={c} />,
+  BOD_007: (c) => <ChevronUp className={c} />,
+};
+
+const BG_STYLE_ICONS: Record<string, (cls: string) => ReactNode> = {
+  BGST_000: (c) => <Sparkles className={c} />,
+  BGST_001: (c) => <Home className={c} />,
+  BGST_002: (c) => <TreePine className={c} />,
+  BGST_003: (c) => <Square className={c} />,
+  BGST_004: (c) => <Building2 className={c} />,
+  BGST_005: (c) => <Moon className={c} />,
+  BGST_006: (c) => <Coffee className={c} />,
+  BGST_007: (c) => <GraduationCap className={c} />,
+  BGST_008: (c) => <Bed className={c} />,
+  BGST_009: (c) => <TreePine className={c} />,
+  BGST_010: (c) => <Waves className={c} />,
+  BGST_011: (c) => <Sun className={c} />,
+  BGST_012: (c) => <Castle className={c} />,
+  BGST_013: (c) => <Cpu className={c} />,
+  BGST_014: (c) => <Flower2 className={c} />,
+  BGST_015: (c) => <CloudRain className={c} />,
+  BGST_016: (c) => <CloudSnow className={c} />,
+  BGST_017: (c) => <Camera className={c} />,
+};
+
+const STYLE_FINISH_ICONS: Record<string, (cls: string) => ReactNode> = {
+  STY_000: (c) => <Sparkles className={c} />,
+  STY_001: (c) => <Layers className={c} />,
+  STY_002: (c) => <Palette className={c} />,
+  STY_003: (c) => <Brush className={c} />,
+  STY_004: (c) => <Brush className={c} />,
+  STY_005: (c) => <Palette className={c} />,
+  STY_006: (c) => <ImageIcon className={c} />,
+  STY_007: (c) => <PenTool className={c} />,
+  STY_008: (c) => <Pencil className={c} />,
+  STY_009: (c) => <Grid3x3 className={c} />,
+  STY_010: (c) => <Film className={c} />,
+  STY_011: (c) => <Circle className={c} />,
+  STY_012: (c) => <Compass className={c} />,
+};
+
+function iconForCamera(sheet: string, id: string, cls = "h-7 w-7") {
+  const pick = (m: Record<string, (c: string) => ReactNode>, fallback: ReactNode) =>
+    (m[id] ? m[id](cls) : fallback);
+  if (sheet.startsWith("CameraAngle"))
+    return pick(CAMERA_ANGLE_ICONS, <Triangle className={cls} />);
+  if (sheet.startsWith("CameraDistance"))
+    return pick(CAMERA_DISTANCE_ICONS, <Focus className={cls} />);
+  if (sheet.startsWith("CameraPosition"))
+    return pick(CAMERA_POSITION_ICONS, <Video className={cls} />);
+  if (sheet.startsWith("PoseStrength"))
+    return pick(POSE_STRENGTH_ICONS, <PersonStanding className={cls} />);
+  if (sheet.startsWith("BgStrength"))
+    return pick(BG_STRENGTH_ICONS, <Sliders className={cls} />);
+  if (sheet.startsWith("BgStyle"))
+    return pick(BG_STYLE_ICONS, <ImageIcon className={cls} />);
+  if (sheet.startsWith("BodySource"))
+    return pick(BODY_SOURCE_ICONS, <PersonStanding className={cls} />);
+  if (sheet.startsWith("StyleFinish"))
+    return pick(STYLE_FINISH_ICONS, <Palette className={cls} />);
+  if (sheet.startsWith("Pose"))
+    return <PersonStanding className={cls} />;
   return <Sparkles className={cls} />;
 }
 
