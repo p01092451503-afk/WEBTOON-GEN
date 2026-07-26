@@ -61,9 +61,14 @@ function AuthPage() {
   useEffect(() => {
     if (autoTried) return;
     setAutoTried(true);
+    if (typeof window !== "undefined" && sessionStorage.getItem("toonpilot:signedOut") === "1") {
+      sessionStorage.removeItem("toonpilot:signedOut");
+      return;
+    }
     void submit("signin", DEV_EMAIL, DEV_PASSWORD);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
 
   return (
     <main className="min-h-screen bg-background">
