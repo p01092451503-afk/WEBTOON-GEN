@@ -12,12 +12,13 @@ export function IconTooltip({
 }: {
   label: string;
   side?: "top" | "bottom" | "left" | "right";
-  children: React.ReactElement;
+  children: React.ReactElement<any>;
 }) {
+  const existing = (children.props ?? {}) as { "aria-label"?: string; title?: string };
   const child = React.cloneElement(children, {
-    "aria-label": children.props["aria-label"] ?? label,
-    title: children.props.title ?? label,
-  });
+    "aria-label": existing["aria-label"] ?? label,
+    title: existing.title ?? label,
+  } as any);
   return (
     <Tooltip>
       <TooltipTrigger asChild>{child}</TooltipTrigger>
