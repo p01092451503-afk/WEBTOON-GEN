@@ -93,6 +93,9 @@ function GeneratePage() {
   const [translated, setTranslated] = useState<string | null>(null);
   const [translating, setTranslating] = useState(false);
   const [showTranslated, setShowTranslated] = useState(false);
+  // 편집 가능한 최종 프롬프트: null 이면 자동 생성값(built.prompt)을 그대로 사용
+  const [editedPrompt, setEditedPrompt] = useState<string | null>(null);
+  const [promptEditMode, setPromptEditMode] = useState(false);
 
   // Read query params: panel / charA / charB / back
   useEffect(() => {
