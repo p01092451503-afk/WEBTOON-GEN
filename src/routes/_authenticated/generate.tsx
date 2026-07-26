@@ -886,7 +886,7 @@ function PresetSelect({
     (it.label_en && it.label_en.trim()) || it.label_ko;
   return (
     <div className="space-y-2">
-      <Label className="text-[13px] font-semibold text-foreground">{label}</Label>
+      <Label className="text-[15px] font-bold text-foreground">{label}</Label>
       <Select value={value} onValueChange={onChange}>
         <SelectTrigger className="h-10 rounded-xl bg-muted/50">
           <SelectValue placeholder={items.length === 0 ? t("studio.labels.empty") : t("studio.labels.select")} />
@@ -929,7 +929,7 @@ function PresetGallery({
   if (items.length === 0) {
     return (
       <div className="space-y-2">
-        <Label className="text-[13px] font-semibold text-foreground">{label}</Label>
+        <Label className="text-[15px] font-bold text-foreground">{label}</Label>
         <div className="rounded-xl border border-dashed border-border p-3 text-center text-[12px] text-muted-foreground">
           {t("studio.labels.no_presets_loaded")}
         </div>
@@ -940,7 +940,7 @@ function PresetGallery({
   if (variant === "chip") {
     return (
       <div className="space-y-2">
-        <Label className="text-[13px] font-semibold text-foreground">{label}</Label>
+        <Label className="text-[15px] font-bold text-foreground">{label}</Label>
         <div className="flex flex-wrap gap-2">
           {items.map((it) => {
             const active = it.id === value;
@@ -972,7 +972,7 @@ function PresetGallery({
   const cols = variant === "face" ? "grid-cols-5" : "grid-cols-4";
   return (
     <div className="space-y-2">
-      <Label className="text-[13px] font-semibold text-foreground">{label}</Label>
+      <Label className="text-[15px] font-bold text-foreground">{label}</Label>
       <div className={`grid ${cols} gap-2`}>
         {items.map((it) => {
           const active = it.id === value;
