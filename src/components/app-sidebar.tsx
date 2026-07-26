@@ -1,6 +1,6 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { Users, Sparkles, History, LogOut, FolderKanban, Search, PanelLeft } from "lucide-react";
+import { Users, Sparkles, History, LogOut, FolderKanban, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
   Sidebar,
