@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import {
   getProject, createEpisode, deleteEpisode,
   addCastMember, removeCastMember,
@@ -21,6 +22,7 @@ export const Route = createFileRoute("/_authenticated/projects/$id")({
 });
 
 function ProjectDetail() {
+  const { t } = useTranslation();
   const { id } = useParams({ from: "/_authenticated/projects/$id" });
   const get = useServerFn(getProject);
   const addEp = useServerFn(createEpisode);
@@ -39,8 +41,8 @@ function ProjectDetail() {
   const invalidate = () => qc.invalidateQueries({ queryKey: ["project", id] });
 
   const addEpMut = useMutation({
-    mutationFn: (t: string) => addEp({ data: { project_id: id, title: t } }),
-    onSuccess: () => { invalidate(); setEpTitle(""); toast.success("Episode added"); },
+    mutationFn: (v: string) => addEp({ data: { project_id: id, title: v } }),
+    onSuccess: () => { invalidate(); setEpTitle(""); toast.success(t("project_detail.episode_added_toast")); },
     onError: (e: Error) => toast.error(e.message),
   });
   const delEpMut = useMutation({
@@ -50,7 +52,7 @@ function ProjectDetail() {
   });
   const addCastMut = useMutation({
     mutationFn: () => addCast({ data: { project_id: id, character_id: pickChar, role_label: roleLabel || undefined } }),
-    onSuccess: () => { invalidate(); setPickChar(""); setRoleLabel(""); toast.success("Cast added"); },
+    onSuccess: () => { invalidate(); setPickChar(""); setRoleLabel(""); toast.success(t("project_detail.cast_added_toast")); },
     onError: (e: Error) => toast.error(e.message),
   });
   const rmCastMut = useMutation({
@@ -59,7 +61,7 @@ function ProjectDetail() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  if (isLoading || !data) return <div className="p-6 text-sm text-muted-foreground">Loading…</div>;
+  if (isLoading || !data) return <div className="p-6 text-sm text-muted-foreground">{t("common.loading")}</div>;
 
   const castIds = new Set(data.cast.map((c: any) => c.character_id));
   const available = characters.filter((c) => !castIds.has(c.id));
@@ -69,11 +71,11 @@ function ProjectDetail() {
       <section className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-xs uppercase tracking-wider text-muted-foreground">Project</div>
+            <div className="text-xs uppercase tracking-wider text-muted-foreground">{t("project_detail.eyebrow")}</div>
             <h1 className="text-2xl font-extrabold tracking-tight">{data.project.title}</h1>
           </div>
           <Button asChild variant="ghost" className="rounded-xl">
-            <Link to="/projects">← All projects</Link>
+            <Link to="/projects">{t("project_detail.all_projects")}</Link>
           </Button>
         </div>
 
@@ -84,14 +86,14 @@ function ProjectDetail() {
           <Plus className="h-5 w-5 text-primary" />
           <Input
             value={epTitle} onChange={(e) => setEpTitle(e.target.value)}
-            placeholder="New episode title" className="h-11 rounded-xl border-border"
+            placeholder={t("project_detail.new_episode_placeholder")} className="h-11 rounded-xl border-border"
           />
-          <Button type="submit" disabled={addEpMut.isPending} className="h-11 rounded-xl">Add episode</Button>
+          <Button type="submit" disabled={addEpMut.isPending} className="h-11 rounded-xl">{t("project_detail.add_episode")}</Button>
         </form>
 
         {data.episodes.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-border bg-card p-10 text-center text-sm text-muted-foreground">
-            No episodes yet. Add one above.
+            {t("project_detail.no_episodes")}
           </div>
         ) : (
           <ol className="space-y-2">
@@ -106,12 +108,12 @@ function ProjectDetail() {
                 <div className="flex items-center gap-1">
                   <Button asChild size="sm" variant="ghost" className="rounded-lg">
                     <Link to="/episodes/$id" params={{ id: ep.id }}>
-                      Open <ArrowRight className="ml-1 h-4 w-4" />
+                      {t("common.open")} <ArrowRight className="ml-1 h-4 w-4" />
                     </Link>
                   </Button>
                   <Button
                     size="sm" variant="ghost"
-                    onClick={() => { if (confirm(`Delete "${ep.title}"?`)) delEpMut.mutate(ep.id); }}
+                    onClick={() => { if (confirm(t("common.confirm_delete", { name: ep.title }))) delEpMut.mutate(ep.id); }}
                     className="rounded-lg text-muted-foreground hover:text-destructive"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -126,13 +128,13 @@ function ProjectDetail() {
       <aside className="space-y-3">
         <div className="rounded-2xl border border-border bg-card p-4 shadow-toss">
           <div className="mb-3 flex items-center justify-between">
-            <div className="text-sm font-bold">Cast</div>
+            <div className="text-sm font-bold">{t("project_detail.cast")}</div>
             <div className="text-xs text-muted-foreground">{data.cast.length}</div>
           </div>
 
           <div className="space-y-2">
             {data.cast.length === 0 && (
-              <div className="text-xs text-muted-foreground">No cast yet.</div>
+              <div className="text-xs text-muted-foreground">{t("project_detail.no_cast")}</div>
             )}
             {data.cast.map((c: any) => (
               <div key={c.character_id} className="flex items-center justify-between rounded-xl border border-border p-2">
@@ -149,10 +151,10 @@ function ProjectDetail() {
           </div>
 
           <div className="mt-4 space-y-2 border-t border-border pt-3">
-            <div className="text-xs font-semibold text-muted-foreground">Add character</div>
+            <div className="text-xs font-semibold text-muted-foreground">{t("project_detail.add_character")}</div>
             <Select value={pickChar} onValueChange={setPickChar}>
               <SelectTrigger className="h-10 rounded-xl border-border">
-                <SelectValue placeholder={available.length === 0 ? "No characters" : "Choose character"} />
+                <SelectValue placeholder={available.length === 0 ? t("project_detail.no_characters") : t("project_detail.choose_character")} />
               </SelectTrigger>
               <SelectContent>
                 {available.map((c) => (
@@ -162,17 +164,17 @@ function ProjectDetail() {
             </Select>
             <Input
               value={roleLabel} onChange={(e) => setRoleLabel(e.target.value)}
-              placeholder="Role (e.g. Protagonist)" className="h-10 rounded-xl border-border"
+              placeholder={t("project_detail.role_placeholder")} className="h-10 rounded-xl border-border"
             />
             <Button
               className="h-10 w-full rounded-xl" disabled={!pickChar || addCastMut.isPending}
               onClick={() => addCastMut.mutate()}
             >
-              <UserPlus className="mr-1 h-4 w-4" /> Add to cast
+              <UserPlus className="mr-1 h-4 w-4" /> {t("project_detail.add_to_cast")}
             </Button>
             {characters.length === 0 && (
               <Link to="/characters" className="block pt-1 text-xs text-primary hover:underline">
-                Create a character first →
+                {t("project_detail.create_character_first")}
               </Link>
             )}
           </div>

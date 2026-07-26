@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import {
   getEpisode, createPanel, deletePanel, updatePanel,
   reorderPanels, listPanelGenerations,
@@ -21,6 +22,7 @@ export const Route = createFileRoute("/_authenticated/episodes/$id")({
 });
 
 function EpisodeStoryboard() {
+  const { t } = useTranslation();
   const { id } = useParams({ from: "/_authenticated/episodes/$id" });
   const navigate = useNavigate();
   const qc = useQueryClient();
@@ -48,7 +50,7 @@ function EpisodeStoryboard() {
 
   const addMut = useMutation({
     mutationFn: () => addPanelFn({ data: { episode_id: id, caption: newCaption || undefined } }),
-    onSuccess: () => { invalidate(); setNewCaption(""); toast.success("Panel added"); },
+    onSuccess: () => { invalidate(); setNewCaption(""); toast.success(t("episodes.panel_added_toast")); },
     onError: (e: Error) => toast.error(e.message),
   });
   const delMut = useMutation({
@@ -70,7 +72,7 @@ function EpisodeStoryboard() {
   }, [data, localOrder]);
 
   if (isLoading || !data) {
-    return <div className="p-6 text-sm text-muted-foreground">Loading…</div>;
+    return <div className="p-6 text-sm text-muted-foreground">{t("common.loading")}</div>;
   }
 
   const cast = (data as any).cast as Array<{
@@ -109,21 +111,21 @@ function EpisodeStoryboard() {
     <div className="mx-auto max-w-4xl space-y-5 p-6">
       <div className="flex items-center justify-between">
         <div>
-          <div className="text-xs uppercase tracking-wider text-muted-foreground">Storyboard</div>
+          <div className="text-xs uppercase tracking-wider text-muted-foreground">{t("episodes.eyebrow")}</div>
           <h1 className="text-2xl font-extrabold tracking-tight">{data.episode.title}</h1>
           <Link
             to="/projects/$id" params={{ id: (data.episode as any).project_id }}
             className="text-xs text-primary hover:underline"
           >
-            ← Back to project
+            {t("episodes.back_to_project")}
           </Link>
         </div>
         <div className="text-right">
-          <div className="text-xs font-semibold text-muted-foreground">Cast in this episode</div>
+          <div className="text-xs font-semibold text-muted-foreground">{t("episodes.cast_in_episode")}</div>
           <div className="mt-1 flex flex-wrap justify-end gap-1">
             {cast.length === 0 && (
               <Link to="/projects/$id" params={{ id: (data.episode as any).project_id }}
-                className="text-xs text-primary hover:underline">Add cast in project →</Link>
+                className="text-xs text-primary hover:underline">{t("episodes.add_cast_prompt")}</Link>
             )}
             {cast.map((c, i) => (
               <span key={c.character_id}
@@ -142,14 +144,14 @@ function EpisodeStoryboard() {
         <Plus className="h-5 w-5 text-primary" />
         <Input
           value={newCaption} onChange={(e) => setNewCaption(e.target.value)}
-          placeholder="Panel caption / dialogue (optional)" className="h-11 rounded-xl border-border"
+          placeholder={t("episodes.panel_placeholder")} className="h-11 rounded-xl border-border"
         />
-        <Button type="submit" disabled={addMut.isPending} className="h-11 rounded-xl">Add panel</Button>
+        <Button type="submit" disabled={addMut.isPending} className="h-11 rounded-xl">{t("episodes.add_panel")}</Button>
       </form>
 
       {panels.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border bg-card p-10 text-center text-sm text-muted-foreground">
-          Empty storyboard. Add the first panel above to start building this scene.
+          {t("episodes.empty")}
         </div>
       ) : (
         <ol className="space-y-3">
@@ -163,13 +165,13 @@ function EpisodeStoryboard() {
               onDragOver={(e) => onDragOver(e, panel.id)}
               onDrop={onDrop}
               onOpen={() => openEditor(panel.id)}
-              onDelete={() => { if (confirm("Delete this panel?")) delMut.mutate(panel.id); }}
+              onDelete={() => { if (confirm(t("episodes.confirm_delete_panel"))) delMut.mutate(panel.id); }}
               onCaptionSave={(caption) =>
                 updatePanelFn({ data: { id: panel.id, caption } }).then(invalidate).catch((e: Error) => toast.error(e.message))
               }
               onChoose={(rid) =>
                 updatePanelFn({ data: { id: panel.id, chosen_result_id: rid, status: "done" } })
-                  .then(() => { invalidate(); toast.success("Panel updated"); })
+                  .then(() => { invalidate(); toast.success(t("episodes.panel_updated_toast")); })
                   .catch((e: Error) => toast.error(e.message))
               }
             />
@@ -198,6 +200,7 @@ function PanelCard({
   onCaptionSave: (caption: string) => void;
   onChoose: (resultId: string) => void;
 }) {
+  const { t } = useTranslation();
   const [caption, setCaption] = useState(panel.caption ?? "");
   const [showResults, setShowResults] = useState(false);
   useEffect(() => { setCaption(panel.caption ?? ""); }, [panel.caption]);
@@ -253,7 +256,7 @@ function PanelCard({
           value={caption}
           onChange={(e) => setCaption(e.target.value)}
           onBlur={() => { if ((panel.caption ?? "") !== caption) onCaptionSave(caption); }}
-          placeholder="Caption / dialogue"
+          placeholder={t("episodes.caption_placeholder")}
           className="h-9 rounded-lg border-border text-sm"
         />
         <div className="mt-auto flex flex-wrap items-center justify-between gap-2">
@@ -270,12 +273,12 @@ function PanelCard({
               <Button size="sm" variant="ghost" className="rounded-lg"
                 onClick={() => setShowResults((v) => !v)}>
                 <ChevronDown className={"mr-1 h-4 w-4 transition " + (showResults ? "rotate-180" : "")} />
-                Variants
+                {t("episodes.variants")}
               </Button>
             )}
             <Button size="sm" variant="ghost" className="rounded-lg" onClick={onOpen}>
               <Wand2 className="mr-1 h-4 w-4" />
-              {panel.chosen ? "Regenerate" : "Generate"}
+              {panel.chosen ? t("episodes.regenerate") : t("episodes.generate")}
             </Button>
             <Button size="sm" variant="ghost"
               onClick={onDelete}
@@ -298,6 +301,7 @@ function PanelCard({
 function PanelResultsPicker({
   panelId, chosenId, onChoose,
 }: { panelId: string; chosenId: string | null; onChoose: (id: string) => void }) {
+  const { t } = useTranslation();
   const list = useServerFn(listPanelGenerations);
   const { data = [], isLoading } = useQuery({
     queryKey: ["panel-gens", panelId],
@@ -311,8 +315,8 @@ function PanelResultsPicker({
     }
   }
 
-  if (isLoading) return <div className="text-xs text-muted-foreground">Loading variants…</div>;
-  if (allResults.length === 0) return <div className="text-xs text-muted-foreground">No variants yet.</div>;
+  if (isLoading) return <div className="text-xs text-muted-foreground">{t("episodes.loading_variants")}</div>;
+  if (allResults.length === 0) return <div className="text-xs text-muted-foreground">{t("episodes.no_variants")}</div>;
 
   return (
     <div className="mt-1 grid grid-cols-4 gap-2 rounded-xl bg-muted/40 p-2">
