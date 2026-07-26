@@ -33,7 +33,8 @@
     "remove_from_cast": "Remove from cast",
     "lock_seed": "Lock this seed",
     "unlock_seed": "Unlock this seed",
-    "close_compare": "Close compare"
+    "close_compare": "Close compare",
+    "toggle_sidebar": "Toggle sidebar"
   },
   "language": {
     "label": "Language",
