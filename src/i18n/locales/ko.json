@@ -25,7 +25,15 @@
     "sign_out": "로그아웃",
     "confirm_delete": "\"{{name}}\"을(를) 삭제할까요?",
     "yes": "예",
-    "no": "아니오"
+    "no": "아니오",
+    "dismiss": "닫기",
+    "drag_to_reorder": "드래그로 순서 변경",
+    "close_details": "상세 닫기",
+    "delete_item": "삭제",
+    "remove_from_cast": "캐스트에서 제거",
+    "lock_seed": "시드 고정",
+    "unlock_seed": "시드 잠금 해제",
+    "close_compare": "비교 닫기"
   },
   "language": {
     "label": "언어",

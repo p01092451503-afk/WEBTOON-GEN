@@ -25,7 +25,15 @@
     "sign_out": "Sign out",
     "confirm_delete": "Delete \"{{name}}\"?",
     "yes": "Yes",
-    "no": "No"
+    "no": "No",
+    "dismiss": "Dismiss",
+    "drag_to_reorder": "Drag to reorder",
+    "close_details": "Close details",
+    "delete_item": "Delete",
+    "remove_from_cast": "Remove from cast",
+    "lock_seed": "Lock this seed",
+    "unlock_seed": "Unlock this seed",
+    "close_compare": "Close compare"
   },
   "language": {
     "label": "Language",
