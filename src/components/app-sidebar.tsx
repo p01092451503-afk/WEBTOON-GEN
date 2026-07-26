@@ -67,17 +67,18 @@ export function AppSidebar() {
       )}
 
       <SidebarHeader className="border-none pt-3 pb-2">
-        <div className="flex items-center px-2">
-          {!collapsed && (
-            <div className="min-w-0">
-              <Link
-                to="/"
-                className="truncate text-[37px] font-black tracking-tighter text-foreground leading-none hover:opacity-80 transition-opacity"
-              >
+        <div className={`flex items-center ${collapsed ? "justify-center" : "gap-2 px-2"}`}>
+          <Link
+            to="/"
+            className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+          >
+            <LogoIcon size={collapsed ? 28 : 40} />
+            {!collapsed && (
+              <span className="text-[37px] font-black tracking-tighter text-foreground leading-none">
                 {t("brand.name")}
-              </Link>
-            </div>
-          )}
+              </span>
+            )}
+          </Link>
         </div>
 
         {!collapsed && (
