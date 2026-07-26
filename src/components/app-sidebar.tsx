@@ -56,12 +56,14 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border bg-sidebar">
-      <div className={`flex items-center px-2 pt-2 ${collapsed ? "justify-center" : "justify-end"}`}>
-        <SidebarTrigger
-          aria-label={t("common.toggle_sidebar")}
-          className="h-7 w-7 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
-        />
-      </div>
+      {collapsed && (
+        <div className="flex items-center justify-center px-2 pt-2">
+          <SidebarTrigger
+            aria-label={t("common.toggle_sidebar")}
+            className="h-7 w-7 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
+          />
+        </div>
+      )}
 
       <SidebarHeader className="border-none pt-3 pb-2">
         <div className="flex items-center px-2">
@@ -78,16 +80,23 @@ export function AppSidebar() {
         </div>
 
         {!collapsed && (
-          <div className="relative mt-5 px-2">
-            <Search className="pointer-events-none absolute left-5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <input
-              type="text"
-              placeholder={t("common.search_placeholder")}
-              className="h-10 w-full rounded-2xl border border-border bg-card pl-10 pr-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/15"
+          <div className="mt-5 flex items-center gap-2 px-2">
+            <div className="relative flex-1">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder={t("common.search_placeholder")}
+                className="h-10 w-full rounded-2xl border border-border bg-card pl-10 pr-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/15"
+              />
+            </div>
+            <SidebarTrigger
+              aria-label={t("common.toggle_sidebar")}
+              className="h-10 w-10 shrink-0 rounded-2xl border border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground"
             />
           </div>
         )}
       </SidebarHeader>
+
 
       <SidebarContent className="px-2 pt-4">
         <SidebarMenu className="gap-1.5">
