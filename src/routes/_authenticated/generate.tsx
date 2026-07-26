@@ -8,6 +8,7 @@ import { usePresets } from "@/hooks/usePresets";
 import { useGeneration } from "@/hooks/useGeneration";
 import { SignedImage } from "@/components/SignedImage";
 import { buildFigureMap, buildPrompt, WARN, type WorkInput } from "@/lib/promptEngine";
+import { ArrowLeft } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -62,6 +63,22 @@ function GeneratePage() {
   const [batchCount, setBatchCount] = useState<number>(1);
   const [work, setWork] = useState<WorkInput>(DEFAULT_WORK);
   const [restoredNote, setRestoredNote] = useState<string | null>(null);
+  const [panelId, setPanelId] = useState<string | null>(null);
+  const [backEpisodeId, setBackEpisodeId] = useState<string | null>(null);
+
+  // Read query params: panel / charA / charB / back
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const q = new URLSearchParams(window.location.search);
+    const panel = q.get("panel");
+    const chA = q.get("charA");
+    const chB = q.get("charB");
+    const back = q.get("back");
+    if (panel) setPanelId(panel);
+    if (back) setBackEpisodeId(back);
+    if (chA) setCharAId(chA);
+    if (chB) setCharBId(chB);
+  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
