@@ -11,10 +11,10 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
   head: () => ({
     meta: [
-      { title: "로그인 · toonpilot" },
-      { name: "description", content: "toonpilot 로그인 또는 회원가입" },
-      { property: "og:title", content: "toonpilot 로그인" },
-      { property: "og:description", content: "toonpilot 로그인 또는 회원가입" },
+      { title: "Sign in · toonpilot" },
+      { name: "description", content: "Sign in or create your toonpilot account" },
+      { property: "og:title", content: "toonpilot sign in" },
+      { property: "og:description", content: "Sign in or create your toonpilot account" },
     ],
   }),
 });
@@ -40,7 +40,7 @@ function AuthPage() {
           options: { emailRedirectTo: `${window.location.origin}/characters` },
         });
         if (error) throw error;
-        toast.success("가입 완료. 로그인 중…");
+        toast.success("Account created. Signing you in…");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email: em, password: pw });
         if (error) throw error;
@@ -78,25 +78,25 @@ function AuthPage() {
             t
           </div>
           <h1 className="mt-5 text-2xl font-extrabold tracking-tight text-foreground">
-            toonpilot에 오신 걸 환영해요
+            Welcome to toonpilot
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            {mode === "signin" ? "이메일로 로그인" : "새 계정 만들기"}
+            {mode === "signin" ? "Sign in with your email" : "Create a new account"}
           </p>
         </div>
 
         <div className="rounded-3xl border border-border bg-card p-6 shadow-toss">
           <div className="mb-5 grid grid-cols-2 gap-1 rounded-xl bg-muted p-1">
             <TabButton active={mode === "signin"} onClick={() => setMode("signin")}>
-              로그인
+              Sign in
             </TabButton>
             <TabButton active={mode === "signup"} onClick={() => setMode("signup")}>
-              회원가입
+              Sign up
             </TabButton>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <Field label="이메일">
+            <Field label="Email">
               <Input
                 id="email"
                 type="email"
@@ -107,7 +107,7 @@ function AuthPage() {
                 className="h-12 rounded-xl border-border bg-muted/50 px-4 text-[15px] focus-visible:bg-card"
               />
             </Field>
-            <Field label="비밀번호">
+            <Field label="Password">
               <Input
                 id="password"
                 type="password"
@@ -126,13 +126,13 @@ function AuthPage() {
               className="h-13 w-full rounded-xl bg-primary py-3 text-[15px] font-bold text-primary-foreground shadow-toss hover:bg-primary/90"
               style={{ height: "52px" }}
             >
-              {loading ? "처리 중…" : mode === "signup" ? "가입하고 시작하기" : "로그인"}
+              {loading ? "Please wait…" : mode === "signup" ? "Create account" : "Sign in"}
             </Button>
           </form>
         </div>
 
         <p className="mt-6 text-center text-xs text-muted-foreground">
-          계속 진행하면 서비스 약관에 동의한 것으로 간주됩니다.
+          By continuing, you agree to the terms of service.
         </p>
       </div>
     </main>

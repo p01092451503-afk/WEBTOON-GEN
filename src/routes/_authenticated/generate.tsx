@@ -25,7 +25,7 @@ import { ImagePlus, Sparkles, X } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/generate")({
   component: GeneratePage,
-  head: () => ({ meta: [{ title: "생성 · toonpilot" }] }),
+  head: () => ({ meta: [{ title: "Studio · toonpilot" }] }),
 });
 
 type RefState = { path: string; url?: string } | null;
@@ -82,8 +82,8 @@ function GeneratePage() {
       }
       if (typeof r.aspectRatio === "string") setAspectRatio(r.aspectRatio);
       if (typeof r.batchCount === "number") setBatchCount(Math.max(1, Math.min(4, r.batchCount)));
-      setRestoredNote(`이전 생성(${r.workLabel ?? "W1"}) 설정을 불러왔습니다.`);
-      toast.success("이전 설정이 복원되었습니다.");
+      setRestoredNote(`Restored settings from previous generation (${r.workLabel ?? "W1"}).`);
+      toast.success("Previous settings restored.");
     } catch {
       // ignore
     }
@@ -117,7 +117,7 @@ function GeneratePage() {
         .from("character-refs")
         .upload(path, file, { contentType: file.type });
       if (error) {
-        toast.error(`업로드 실패: ${error.message}`);
+        toast.error(`Upload failed: ${error.message}`);
         return;
       }
       const setter = kind === "bg" ? setBgRef : kind === "pose" ? setPoseRef : setStyleRef;
@@ -128,7 +128,7 @@ function GeneratePage() {
 
   async function handleGenerate() {
     if (!charA?.primary_path && !charB?.primary_path) {
-      toast.error("Character A 또는 B 를 최소 1개 선택하세요.");
+      toast.error("Please select at least Character A or B.");
       return;
     }
     const imagePaths: string[] = [];
@@ -149,7 +149,7 @@ function GeneratePage() {
         options: { ...work, aspectRatio },
         batchCount,
       });
-      toast.success("생성 요청이 접수됐어요");
+      toast.success("Generation request submitted");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : String(e));
     }
@@ -162,16 +162,16 @@ function GeneratePage() {
       <header className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-4 sm:flex sm:flex-wrap sm:justify-between">
         <div className="min-w-0">
           <div className="text-xs font-semibold text-primary">Studio</div>
-          <h1 className="mt-1 truncate text-3xl font-extrabold tracking-tight">이미지 생성</h1>
+          <h1 className="mt-1 truncate text-3xl font-extrabold tracking-tight">Generate image</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            레퍼런스와 옵션을 선택하면 프롬프트가 자동으로 조립돼요.
+            Pick references and options — the prompt assembles itself.
           </p>
         </div>
         <Link
           to="/characters"
           className="inline-flex h-10 shrink-0 items-center justify-center rounded-full bg-primary-soft px-4 text-sm font-semibold text-primary hover:bg-primary-soft/70"
         >
-          캐릭터 관리
+          Manage characters
         </Link>
       </header>
 
@@ -179,12 +179,12 @@ function GeneratePage() {
         <div className="mt-4 space-y-2">
           {!hasPresets && (
             <NoticeBar tone="warn">
-              프리셋 데이터가 비어 있어요. presets 테이블에 시드가 필요합니다.
+              No preset data found. Seed data is required in the presets table.
             </NoticeBar>
           )}
           {restoredNote && (
             <NoticeBar tone="info" onClose={() => setRestoredNote(null)}>
-              {restoredNote} 참조 이미지와 캐릭터는 다시 선택해주세요.
+              {restoredNote} Please re-select reference images and characters.
             </NoticeBar>
           )}
         </div>
@@ -243,7 +243,7 @@ function GeneratePage() {
                 rows={2}
                 value={work.actionText}
                 onChange={(e) => setWork({ ...work, actionText: e.target.value })}
-                placeholder="예: they hold hands and walk toward the camera"
+                placeholder="e.g. they hold hands and walk toward the camera"
                 className="resize-none rounded-xl bg-muted/50"
               />
             </FieldGroup>
@@ -259,7 +259,7 @@ function GeneratePage() {
             <div className="flex items-center justify-between rounded-xl bg-muted/50 px-4 py-3">
               <div>
                 <div className="text-sm font-semibold">Photopose</div>
-                <div className="text-xs text-muted-foreground">실사 포즈 사용</div>
+                <div className="text-xs text-muted-foreground">Use photorealistic pose</div>
               </div>
               <Switch
                 checked={work.isPhotopose}
@@ -300,7 +300,7 @@ function GeneratePage() {
         <Panel step={3} title="Figure Map" className="lg:col-span-2">
           {figureMap.length === 0 ? (
             <div className="rounded-xl border border-dashed border-border p-4 text-center text-xs text-muted-foreground">
-              참조를 추가하면 자동으로 매핑돼요.
+              Add references and they'll map automatically.
             </div>
           ) : (
             <div className="space-y-2">
@@ -329,7 +329,7 @@ function GeneratePage() {
               className="resize-none rounded-xl bg-muted/50 font-mono text-xs leading-relaxed"
             />
             <div className="flex items-center justify-between text-xs">
-              <span className="text-muted-foreground">단어수 {built.wordCount}</span>
+              <span className="text-muted-foreground">{built.wordCount} words</span>
               {built.warnings.length > 0 && (
                 <div className="text-right text-amber-600">
                   {built.warnings.map((w) => (
@@ -344,7 +344,7 @@ function GeneratePage() {
               className="h-12 w-full rounded-xl bg-primary text-[15px] font-bold text-primary-foreground shadow-toss hover:bg-primary/90"
             >
               <Sparkles className="mr-2 h-4 w-4" />
-              {gen.running ? "요청 중…" : "Generate"}
+              {gen.running ? "Requesting…" : "Generate"}
             </Button>
 
             {gen.row && (
@@ -473,10 +473,10 @@ function CharacterPicker({
         onValueChange={(v) => onChange(v === "__none" ? null : v)}
       >
         <SelectTrigger className="h-10 rounded-xl bg-muted/50">
-          <SelectValue placeholder="선택" />
+          <SelectValue placeholder="Select" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="__none">(없음)</SelectItem>
+          <SelectItem value="__none">(none)</SelectItem>
           {characters.map((c) => (
             <SelectItem key={c.id} value={c.id}>
               {c.display_name}
@@ -486,11 +486,11 @@ function CharacterPicker({
       </Select>
       {characters.length === 0 && (
         <p className="text-[11px] leading-tight text-muted-foreground">
-          등록된 캐릭터가 없어요.{" "}
+          No characters yet. Add one on the{" "}
           <Link to="/characters" className="font-semibold text-primary underline">
-            캐릭터 관리
-          </Link>
-          에서 추가해주세요.
+            characters
+          </Link>{" "}
+          page.
         </p>
       )}
       {value && (
@@ -533,13 +533,13 @@ function RefUpload({
             className="h-8 w-full rounded-lg text-xs font-semibold text-muted-foreground hover:text-destructive"
             onClick={onClear}
           >
-            <X className="mr-1 h-3.5 w-3.5" /> 제거
+            <X className="mr-1 h-3.5 w-3.5" /> Remove
           </Button>
         </div>
       ) : (
         <label className="flex h-24 cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-border bg-muted/40 text-xs text-muted-foreground hover:bg-muted">
           <ImagePlus className="mb-1 h-4 w-4" />
-          이미지 선택
+          Choose image
           <input
             type="file"
             accept="image/*"
@@ -575,12 +575,12 @@ function PresetSelect({
       <Label className="text-[11px] font-semibold text-muted-foreground">{label}</Label>
       <Select value={value} onValueChange={onChange}>
         <SelectTrigger className="h-10 rounded-xl bg-muted/50">
-          <SelectValue placeholder={items.length === 0 ? "(비어있음)" : "선택"} />
+          <SelectValue placeholder={items.length === 0 ? "(empty)" : "Select"} />
         </SelectTrigger>
         <SelectContent>
           {items.length === 0 ? (
             <SelectItem value={value} disabled>
-              (프리셋 없음)
+              (no presets)
             </SelectItem>
           ) : (
             items.map((it) => (

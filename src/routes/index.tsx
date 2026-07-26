@@ -9,13 +9,13 @@ export const Route = createFileRoute("/")({
   component: Index,
   head: () => ({
     meta: [
-      { title: "toonpilot — 캐릭터 기반 이미지 생성 워크스페이스" },
+      { title: "toonpilot — Character-driven image generation workspace" },
       {
         name: "description",
-        content: "캐릭터 라이브러리와 구조화된 프롬프트로 Seedream 이미지를 조립하는 워크스페이스.",
+        content: "Assemble Seedream images with a reusable character library and a structured prompt engine.",
       },
       { property: "og:title", content: "toonpilot" },
-      { property: "og:description", content: "캐릭터 기반 Seedream 이미지 생성 SaaS" },
+      { property: "og:description", content: "Character-based Seedream image generation SaaS" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -38,39 +38,39 @@ function Index() {
           Seedream 4.0 · Beta
         </span>
         <h1 className="mt-6 text-5xl font-extrabold tracking-tight text-foreground sm:text-6xl">
-          캐릭터부터 컷까지,
+          From characters to cuts,
           <br />
-          <span className="text-primary">toonpilot</span> 하나로.
+          all in <span className="text-primary">toonpilot</span>.
         </h1>
         <p className="mt-5 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
-          레퍼런스 · 포즈 · 카메라 · 스타일을 구조화된 프롬프트로 조립하는
-          가장 쉬운 방법. 결과는 자동으로 히스토리에 저장돼요.
+          The easiest way to assemble references, poses, camera, and style into a
+          structured prompt. Every result is saved to your history automatically.
         </p>
 
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
           <Button asChild size="lg" className="h-12 rounded-full px-8 text-base font-semibold shadow-toss">
-            <Link to="/auth">시작하기</Link>
+            <Link to="/auth">Get started</Link>
           </Button>
           <Button asChild size="lg" variant="ghost" className="h-12 rounded-full px-6 text-base font-semibold">
-            <Link to="/auth">로그인</Link>
+            <Link to="/auth">Sign in</Link>
           </Button>
         </div>
 
         <div className="mt-16 grid w-full max-w-3xl grid-cols-1 gap-4 sm:grid-cols-3">
           <FeatureCard
             icon={<Users className="h-5 w-5" />}
-            title="캐릭터 라이브러리"
-            body="한 번 등록한 캐릭터를 어디서든 재사용"
+            title="Character library"
+            body="Register once, reuse across every generation"
           />
           <FeatureCard
             icon={<Wand2 className="h-5 w-5" />}
-            title="4패널 컨트롤"
-            body="레퍼런스·프롬프트·피규어·최종"
+            title="4-panel controls"
+            body="References · Prompt · Figure · Final"
           />
           <FeatureCard
             icon={<Sparkles className="h-5 w-5" />}
-            title="자동 히스토리"
-            body="옵션 복원으로 즉시 재생성"
+            title="Auto history"
+            body="Restore options and regenerate instantly"
           />
         </div>
       </div>
