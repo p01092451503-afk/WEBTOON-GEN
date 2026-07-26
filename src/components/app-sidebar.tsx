@@ -38,9 +38,18 @@ export function AppSidebar() {
   async function handleSignOut() {
     if (typeof window !== "undefined")
       sessionStorage.setItem("toonpilot:signedOut", "1");
-    await supabase.auth.signOut();
-    navigate({ to: "/auth", replace: true });
+    try {
+      await supabase.auth.signOut();
+    } catch (e) {
+      console.error("signOut failed", e);
+    }
+    if (typeof window !== "undefined") {
+      window.location.replace("/auth");
+    } else {
+      navigate({ to: "/auth", replace: true });
+    }
   }
+
 
   const initial = (email?.[0] || "T").toUpperCase();
 
