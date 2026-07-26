@@ -10,7 +10,15 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { LanguageToggle } from "@/components/language-toggle";
 import { IconTooltip } from "@/components/icon-tooltip";
 import { GlobalSearch } from "@/components/global-search";
-import { Bell } from "lucide-react";
+import { Bell, LogOut, User as UserIcon, ChevronDown } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -126,11 +134,55 @@ function AuthenticatedLayout() {
               </button>
             </IconTooltip>
 
-            <div className="flex items-center rounded-full border border-border bg-card px-3 py-1.5">
-              <span className="max-w-[180px] truncate text-xs font-semibold text-foreground">
-                {email || "user"}
-              </span>
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className="flex items-center gap-2 rounded-full border border-border bg-card px-2 py-1.5 pr-3 transition-colors hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  aria-label={email || "user menu"}
+                >
+                  <span className="grid h-7 w-7 place-items-center rounded-full bg-primary-soft text-xs font-bold text-primary">
+                    {(email?.[0] || "U").toUpperCase()}
+                  </span>
+                  <span className="max-w-[160px] truncate text-xs font-semibold text-foreground">
+                    {email || "user"}
+                  </span>
+                  <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-64 rounded-2xl p-1.5">
+                <DropdownMenuLabel className="px-2 py-2">
+                  <div className="flex items-center gap-2.5">
+                    <span className="grid h-9 w-9 place-items-center rounded-full bg-primary-soft text-sm font-bold text-primary">
+                      {(email?.[0] || "U").toUpperCase()}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-semibold text-foreground">
+                        {email ? email.split("@")[0] : "user"}
+                      </div>
+                      <div className="truncate text-[11px] font-normal text-muted-foreground">
+                        {email || "—"}
+                      </div>
+                    </div>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="rounded-xl px-2.5 py-2 text-sm"
+                  onSelect={() => navigate({ to: "/projects" })}
+                >
+                  <UserIcon className="mr-2 h-4 w-4" />
+                  {t("header.projects.title")}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="rounded-xl px-2.5 py-2 text-sm text-destructive focus:text-destructive"
+                  onSelect={handleSignOut}
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  {t("common.sign_out")}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </header>
 
           <main className="flex-1">
