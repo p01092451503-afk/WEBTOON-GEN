@@ -1,11 +1,13 @@
 import { createFileRoute, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { bootstrapTenant } from "@/lib/onboarding.functions";
 import { Button } from "@/components/ui/button";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
+import { LanguageToggle } from "@/components/language-toggle";
 import { Bell, Search } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated")({
@@ -13,12 +15,12 @@ export const Route = createFileRoute("/_authenticated")({
   component: AuthenticatedLayout,
 });
 
-const PAGE_META: Record<string, { title: string; sub: string }> = {
-  "/projects": { title: "Projects", sub: "Organize episodes and storyboards" },
-  "/episodes": { title: "Storyboard", sub: "Arrange panels in sequence" },
-  "/characters": { title: "Character library", sub: "Manage the characters used in your generations" },
-  "/generate": { title: "Studio", sub: "Single-panel prompt engine" },
-  "/history": { title: "History", sub: "Recent results and options" },
+const PAGE_META_KEYS: Record<string, string> = {
+  "/projects": "header.projects",
+  "/episodes": "header.episodes",
+  "/characters": "header.characters",
+  "/generate": "header.generate",
+  "/history": "header.history",
 };
 
 function AuthenticatedLayout() {
