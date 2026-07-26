@@ -707,7 +707,7 @@ function Panel({
   return (
     <section
       className={
-        "relative flex flex-col rounded-3xl border-2 border-foreground/30 transition-all duration-300 ease-out lg:h-[calc(100vh-13rem)] lg:min-h-[520px] " +
+        "relative flex flex-col rounded-3xl transition-all duration-300 ease-out lg:h-[calc(100vh-13rem)] lg:min-h-[520px] " +
         stepBg +
         " " +
         stepShadow +
