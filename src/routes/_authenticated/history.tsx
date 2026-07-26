@@ -26,6 +26,8 @@ type Row = {
   api_model: string | null;
   seed: number | null;
   final_prompt: string | null;
+  raw_prompt: string | null;
+  prompt_edited: boolean;
   compiled_prompt: string | null;
   options: any;
   figure_map: any;
