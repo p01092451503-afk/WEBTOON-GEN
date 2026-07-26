@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { IconTooltip } from "@/components/icon-tooltip";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -566,9 +567,11 @@ function NoticeBar({
     <div className={`flex items-start justify-between gap-2 rounded-2xl border px-4 py-3 text-sm ${cls}`}>
       <span>{children}</span>
       {onClose && (
-        <button onClick={onClose} className="shrink-0 rounded-full p-1 hover:bg-black/5">
-          <X className="h-3.5 w-3.5" />
-        </button>
+        <IconTooltip label="Dismiss">
+          <button onClick={onClose} aria-label="Dismiss" className="shrink-0 rounded-full p-1 hover:bg-black/5">
+            <X className="h-3.5 w-3.5" aria-hidden="true" />
+          </button>
+        </IconTooltip>
       )}
     </div>
   );
@@ -902,18 +905,20 @@ function VariationGrid({
               <span className="rounded-md bg-black/60 px-1.5 py-0.5 text-[10px] font-mono text-white">
                 #{r.seq + 1} · seed {r.seed ?? "—"}
               </span>
-              <button
-                type="button"
-                onClick={() => onToggleLock(r.seq, r.seed)}
-                title={locked ? "Unlock" : "Lock this seed"}
-                disabled={r.seed == null}
-                className={
-                  "grid h-6 w-6 place-items-center rounded-md text-white shadow-sm " +
-                  (locked ? "bg-primary" : "bg-black/60 hover:bg-black/80 disabled:opacity-40")
-                }
-              >
-                {locked ? <Lock className="h-3 w-3" /> : <Unlock className="h-3 w-3" />}
-              </button>
+              <IconTooltip label={locked ? "Unlock this seed" : "Lock this seed"}>
+                <button
+                  type="button"
+                  onClick={() => onToggleLock(r.seq, r.seed)}
+                  aria-label={locked ? "Unlock this seed" : "Lock this seed"}
+                  disabled={r.seed == null}
+                  className={
+                    "grid h-6 w-6 place-items-center rounded-md text-white shadow-sm " +
+                    (locked ? "bg-primary" : "bg-black/60 hover:bg-black/80 disabled:opacity-40")
+                  }
+                >
+                  {locked ? <Lock className="h-3 w-3" aria-hidden="true" /> : <Unlock className="h-3 w-3" aria-hidden="true" />}
+                </button>
+              </IconTooltip>
             </div>
             <div className="absolute inset-x-0 bottom-0 flex items-center gap-1 bg-gradient-to-t from-black/70 to-transparent p-1.5 opacity-0 transition group-hover:opacity-100">
               <button
@@ -957,9 +962,11 @@ function CompareView({
     <div className="rounded-2xl border border-primary/40 bg-primary-soft/40 p-3">
       <div className="mb-2 flex items-center justify-between">
         <span className="text-[11px] font-bold text-primary">Compare</span>
-        <button onClick={onClose} className="rounded-full p-1 hover:bg-black/5">
-          <X className="h-3 w-3" />
-        </button>
+        <IconTooltip label="Close compare">
+          <button onClick={onClose} aria-label="Close compare" className="rounded-full p-1 hover:bg-black/5">
+            <X className="h-3 w-3" aria-hidden="true" />
+          </button>
+        </IconTooltip>
       </div>
       <div className="grid grid-cols-2 gap-2">
         {[a, b].map((r, idx) => (

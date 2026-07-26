@@ -8,6 +8,7 @@ import { listProjects, createProject, deleteProject } from "@/lib/projects.funct
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { IconTooltip } from "@/components/icon-tooltip";
 import { FolderPlus, Trash2, ArrowRight, FolderKanban } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/projects/")({
@@ -113,14 +114,16 @@ function ProjectsIndex() {
                         {t("common.open")} <ArrowRight className="ml-1 h-3.5 w-3.5" />
                       </Link>
                     </Button>
-                    <Button
-                      size="sm" variant="ghost"
-                      disabled={delMut.isPending}
-                      onClick={() => { if (confirm(t("common.confirm_delete", { name: p.title }))) delMut.mutate(p.id); }}
-                      className="h-8 rounded-lg text-xs font-semibold text-destructive hover:bg-destructive/10 hover:text-destructive"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
+                    <IconTooltip label={t("common.delete_item")}>
+                      <Button
+                        size="sm" variant="ghost"
+                        disabled={delMut.isPending}
+                        onClick={() => { if (confirm(t("common.confirm_delete", { name: p.title }))) delMut.mutate(p.id); }}
+                        className="h-8 rounded-lg text-xs font-semibold text-destructive hover:bg-destructive/10 hover:text-destructive"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                      </Button>
+                    </IconTooltip>
                   </div>
                 </div>
               </div>

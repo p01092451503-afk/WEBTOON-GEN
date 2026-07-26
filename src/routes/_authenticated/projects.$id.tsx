@@ -11,6 +11,7 @@ import {
 import { useCharacters } from "@/hooks/useCharacters";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { IconTooltip } from "@/components/icon-tooltip";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -111,13 +112,15 @@ function ProjectDetail() {
                       {t("common.open")} <ArrowRight className="ml-1 h-4 w-4" />
                     </Link>
                   </Button>
-                  <Button
-                    size="sm" variant="ghost"
-                    onClick={() => { if (confirm(t("common.confirm_delete", { name: ep.title }))) delEpMut.mutate(ep.id); }}
-                    className="rounded-lg text-muted-foreground hover:text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <IconTooltip label={t("common.delete_item")}>
+                    <Button
+                      size="sm" variant="ghost"
+                      onClick={() => { if (confirm(t("common.confirm_delete", { name: ep.title }))) delEpMut.mutate(ep.id); }}
+                      className="rounded-lg text-muted-foreground hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" aria-hidden="true" />
+                    </Button>
+                  </IconTooltip>
                 </div>
               </li>
             ))}
@@ -142,10 +145,12 @@ function ProjectDetail() {
                   <div className="truncate text-sm font-semibold">{c.characters?.display_name ?? "—"}</div>
                   {c.role_label && <div className="truncate text-xs text-muted-foreground">{c.role_label}</div>}
                 </div>
-                <Button size="sm" variant="ghost" className="rounded-lg text-muted-foreground hover:text-destructive"
-                  onClick={() => rmCastMut.mutate(c.character_id)}>
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                <IconTooltip label={t("common.remove_from_cast")}>
+                  <Button size="sm" variant="ghost" className="rounded-lg text-muted-foreground hover:text-destructive"
+                    onClick={() => rmCastMut.mutate(c.character_id)}>
+                    <Trash2 className="h-4 w-4" aria-hidden="true" />
+                  </Button>
+                </IconTooltip>
               </div>
             ))}
           </div>
