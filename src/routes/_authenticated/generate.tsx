@@ -885,8 +885,8 @@ function PresetSelect({
   const displayLabel = (it: { label_en?: string; label_ko: string }) =>
     (it.label_en && it.label_en.trim()) || it.label_ko;
   return (
-    <div className="space-y-1.5">
-      <Label className="text-[11px] font-semibold text-muted-foreground">{label}</Label>
+    <div className="space-y-2">
+      <Label className="text-[13px] font-semibold text-foreground">{label}</Label>
       <Select value={value} onValueChange={onChange}>
         <SelectTrigger className="h-10 rounded-xl bg-muted/50">
           <SelectValue placeholder={items.length === 0 ? t("studio.labels.empty") : t("studio.labels.select")} />
@@ -928,9 +928,9 @@ function PresetGallery({
 
   if (items.length === 0) {
     return (
-      <div className="space-y-1.5">
-        <Label className="text-[11px] font-semibold text-muted-foreground">{label}</Label>
-        <div className="rounded-xl border border-dashed border-border p-3 text-center text-[11px] text-muted-foreground">
+      <div className="space-y-2">
+        <Label className="text-[13px] font-semibold text-foreground">{label}</Label>
+        <div className="rounded-xl border border-dashed border-border p-3 text-center text-[12px] text-muted-foreground">
           {t("studio.labels.no_presets_loaded")}
         </div>
       </div>
@@ -939,9 +939,9 @@ function PresetGallery({
 
   if (variant === "chip") {
     return (
-      <div className="space-y-1.5">
-        <Label className="text-[11px] font-semibold text-muted-foreground">{label}</Label>
-        <div className="flex flex-wrap gap-1.5">
+      <div className="space-y-2">
+        <Label className="text-[13px] font-semibold text-foreground">{label}</Label>
+        <div className="flex flex-wrap gap-2">
           {items.map((it) => {
             const active = it.id === value;
             return (
@@ -950,14 +950,14 @@ function PresetGallery({
                 type="button"
                 onClick={() => onChange(it.id)}
                 className={
-                  "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-bold transition " +
+                  "inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-[13px] font-semibold transition " +
                   (active
-                    ? "border-primary bg-muted/50 text-foreground"
+                    ? "border-primary bg-primary-soft text-primary"
                     : "border-border bg-muted/50 text-foreground hover:border-primary/40")
                 }
               >
                 <span aria-hidden className="inline-flex">
-                  {iconForPreset(sheet, it.id, "h-3.5 w-3.5")}
+                  {iconForPreset(sheet, it.id, "h-4 w-4")}
                 </span>
                 {displayLabel(it)}
               </button>
@@ -971,9 +971,9 @@ function PresetGallery({
   // card / face → grid of tiles with prominent icon label + text
   const cols = variant === "face" ? "grid-cols-5" : "grid-cols-4";
   return (
-    <div className="space-y-1.5">
-      <Label className="text-[11px] font-semibold text-muted-foreground">{label}</Label>
-      <div className={`grid ${cols} gap-1.5`}>
+    <div className="space-y-2">
+      <Label className="text-[13px] font-semibold text-foreground">{label}</Label>
+      <div className={`grid ${cols} gap-2`}>
         {items.map((it) => {
           const active = it.id === value;
           const hasPreview = Boolean(it.preview_path);
@@ -988,9 +988,9 @@ function PresetGallery({
               title={displayLabel(it)}
               aria-pressed={active}
               className={
-                "group relative flex aspect-square flex-col items-center justify-between gap-1 overflow-hidden rounded-xl border p-2 text-[10px] font-semibold transition " +
+                "group relative flex aspect-square flex-col items-center justify-center gap-2 overflow-hidden rounded-xl border p-2 transition " +
                 (active
-                  ? "border-primary bg-muted/40"
+                  ? "border-primary bg-primary-soft/40 ring-1 ring-primary/40"
                   : "border-border bg-muted/40 hover:border-primary/40 hover:bg-muted/60")
               }
             >
@@ -1002,7 +1002,6 @@ function PresetGallery({
                 />
               )}
 
-              {/* Icon label — sits at the top for consistent visual anchoring */}
               <span
                 className={
                   "relative z-10 inline-grid h-9 w-9 place-items-center rounded-xl transition " +
@@ -1015,10 +1014,9 @@ function PresetGallery({
                 {iconEl}
               </span>
 
-              {/* Text label */}
               <span
                 className={
-                  "relative z-10 max-w-full truncate rounded px-1 text-[10px] leading-tight " +
+                  "relative z-10 max-w-full truncate rounded px-1 text-[13px] font-semibold leading-tight " +
                   (hasPreview
                     ? "bg-background/80 text-foreground shadow-sm backdrop-blur"
                     : "text-foreground")
