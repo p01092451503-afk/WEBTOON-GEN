@@ -59,12 +59,16 @@ export function AppSidebar() {
         <div className="flex items-center px-2">
           {!collapsed && (
             <div className="min-w-0">
-              <div className="truncate text-[37px] font-black tracking-tighter text-foreground leading-none">
+              <Link
+                to="/"
+                className="truncate text-[37px] font-black tracking-tighter text-foreground leading-none hover:opacity-80 transition-opacity"
+              >
                 {t("brand.name")}
-              </div>
+              </Link>
             </div>
           )}
         </div>
+
 
 
         {!collapsed && (
