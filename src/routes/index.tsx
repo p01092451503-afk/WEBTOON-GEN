@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Users, Wand2 } from "lucide-react";
+import { Library, LayoutGrid, History } from "lucide-react";
 import { LanguageToggle } from "@/components/language-toggle";
 
 export const Route = createFileRoute("/")({
@@ -39,8 +39,11 @@ function Index() {
         <LanguageToggle />
       </div>
       <div className="mx-auto flex min-h-screen max-w-5xl flex-col items-center justify-center px-6 py-16 text-center">
-        <span className="inline-flex items-center gap-2 rounded-full bg-primary-soft px-4 py-1.5 text-xs font-semibold text-primary">
-          <Sparkles className="h-3.5 w-3.5" />
+        <span className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-1.5 text-xs font-semibold tracking-wide text-foreground/80">
+          <span className="relative flex h-1.5 w-1.5">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-60" />
+            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-primary" />
+          </span>
           {t("landing.badge")}
         </span>
         <h1 className="mt-6 text-5xl font-extrabold tracking-tight text-foreground sm:text-6xl">
@@ -63,17 +66,20 @@ function Index() {
 
         <div className="mt-16 grid w-full max-w-3xl grid-cols-1 gap-4 sm:grid-cols-3">
           <FeatureCard
-            icon={<Users className="h-5 w-5" />}
+            index="01"
+            icon={<Library className="h-4 w-4" strokeWidth={1.75} />}
             title={t("landing.feature_library")}
             body={t("landing.feature_library_body")}
           />
           <FeatureCard
-            icon={<Wand2 className="h-5 w-5" />}
+            index="02"
+            icon={<LayoutGrid className="h-4 w-4" strokeWidth={1.75} />}
             title={t("landing.feature_panels")}
             body={t("landing.feature_panels_body")}
           />
           <FeatureCard
-            icon={<Sparkles className="h-5 w-5" />}
+            index="03"
+            icon={<History className="h-4 w-4" strokeWidth={1.75} />}
             title={t("landing.feature_history")}
             body={t("landing.feature_history_body")}
           />
@@ -83,14 +89,18 @@ function Index() {
   );
 }
 
-function FeatureCard({ icon, title, body }: { icon: React.ReactNode; title: string; body: string }) {
+function FeatureCard({ index, icon, title, body }: { index: string; icon: React.ReactNode; title: string; body: string }) {
   return (
-    <div className="rounded-2xl border border-border bg-card p-5 text-left shadow-toss-sm">
-      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-soft text-primary">
-        {icon}
+    <div className="group relative rounded-2xl border border-border bg-card p-6 text-left transition-colors hover:border-foreground/20">
+      <div className="flex items-center justify-between">
+        <span className="inline-flex items-center gap-1.5 text-[11px] font-mono font-medium uppercase tracking-[0.14em] text-muted-foreground">
+          {icon}
+          {index}
+        </span>
+        <span className="h-px w-8 bg-border" />
       </div>
-      <div className="mt-3 text-sm font-bold text-foreground">{title}</div>
-      <div className="mt-1 text-xs leading-relaxed text-muted-foreground">{body}</div>
+      <div className="mt-6 text-sm font-bold text-foreground">{title}</div>
+      <div className="mt-1.5 text-xs leading-relaxed text-muted-foreground">{body}</div>
     </div>
   );
 }
