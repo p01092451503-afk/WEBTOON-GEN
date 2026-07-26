@@ -1,13 +1,23 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { sanitizePrompt, checkFigureN, checkActionMissing } from "@/lib/promptEngine";
+import {
+  sanitizePrompt,
+  checkFigureN,
+  checkActionMissing,
+  validateFinalPrompt,
+  PROMPT_MAX_CHARS,
+} from "@/lib/promptEngine";
 
 const inputSchema = z.object({
   workLabel: z.string().default("W1"),
   mode: z.enum(["new", "edit"]).default("new"),
   aspectRatio: z.string().optional(),
-  finalPrompt: z.string().min(1),
+  finalPrompt: z.string().min(1).max(PROMPT_MAX_CHARS),
+  /** Auto-built prompt before user edits (for auditing). */
+  rawPrompt: z.string().max(PROMPT_MAX_CHARS).optional(),
+  /** True when the user manually edited the auto-generated prompt. */
+  promptEdited: z.boolean().default(false),
   compiledPrompt: z.string().optional(),
   imagePaths: z.array(z.string()).default([]),
   figureMap: z.array(z.any()).default([]),
