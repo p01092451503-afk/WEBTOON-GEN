@@ -813,7 +813,7 @@ function PresetGallery({
           const hasPreview = Boolean(it.preview_path);
           const iconEl = variant === "face"
             ? iconForEmotion(it.id, "h-5 w-5")
-            : iconForCamera(sheet, "h-5 w-5");
+            : iconForCamera(sheet, it.id, "h-5 w-5");
           return (
             <button
               key={it.id}
