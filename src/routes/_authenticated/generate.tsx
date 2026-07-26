@@ -165,8 +165,9 @@ function GeneratePage() {
         figureMap,
         options: { ...work, aspectRatio },
         batchCount,
+        panelId: panelId ?? undefined,
       });
-      toast.success("Generation request submitted");
+      toast.success(panelId ? "Panel generation submitted" : "Generation request submitted");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : String(e));
     }
@@ -191,6 +192,18 @@ function GeneratePage() {
           Manage characters
         </Link>
       </header>
+
+      {panelId && backEpisodeId && (
+        <div className="mt-4">
+          <Link
+            to="/episodes/$id" params={{ id: backEpisodeId }}
+            className="inline-flex items-center gap-2 rounded-full bg-primary-soft px-4 py-2 text-xs font-bold text-primary hover:bg-primary-soft/70"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            Editing storyboard panel — back to episode
+          </Link>
+        </div>
+      )}
 
       {(!hasPresets || restoredNote) && (
         <div className="mt-4 space-y-2">
