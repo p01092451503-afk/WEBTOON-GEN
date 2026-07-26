@@ -10,7 +10,6 @@ import { SignedImage } from "@/components/SignedImage";
 import { buildFigureMap, buildPrompt, WARN, type WorkInput } from "@/lib/promptEngine";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -22,8 +21,7 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ImagePlus, Sparkles, X } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/generate")({
   component: GeneratePage,
@@ -65,7 +63,6 @@ function GeneratePage() {
   const [work, setWork] = useState<WorkInput>(DEFAULT_WORK);
   const [restoredNote, setRestoredNote] = useState<string | null>(null);
 
-  // 히스토리에서 넘어온 설정 복원 (sessionStorage: toonpilot:restore)
   useEffect(() => {
     if (typeof window === "undefined") return;
     const raw = sessionStorage.getItem("toonpilot:restore");
@@ -134,14 +131,12 @@ function GeneratePage() {
       toast.error("Character A 또는 B 를 최소 1개 선택하세요.");
       return;
     }
-    // 순서: CharA → CharB → Background → Pose → Style
     const imagePaths: string[] = [];
     if (charA?.primary_path) imagePaths.push(charA.primary_path);
     if (charB?.primary_path) imagePaths.push(charB.primary_path);
     if (bgRef) imagePaths.push(bgRef.path);
     if (poseRef) imagePaths.push(poseRef.path);
     if (styleRef) imagePaths.push(styleRef.path);
-
     try {
       await gen.run({
         workLabel: "W1",
@@ -154,7 +149,7 @@ function GeneratePage() {
         options: { ...work, aspectRatio },
         batchCount,
       });
-      toast.success("생성 요청 완료");
+      toast.success("생성 요청이 접수됐어요");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : String(e));
     }
@@ -163,51 +158,48 @@ function GeneratePage() {
   const hasPresets = Object.keys(cfg).length > 0;
 
   return (
-    <main className="max-w-[1400px] mx-auto p-4 space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold tracking-tight">생성</h1>
-        <Link to="/characters" className="text-sm underline text-muted-foreground">
+    <main className="mx-auto max-w-[1400px] px-5 py-6 sm:py-8">
+      <header className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-4 sm:flex sm:flex-wrap sm:justify-between">
+        <div className="min-w-0">
+          <div className="text-xs font-semibold text-primary">Studio</div>
+          <h1 className="mt-1 truncate text-3xl font-extrabold tracking-tight">이미지 생성</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            레퍼런스와 옵션을 선택하면 프롬프트가 자동으로 조립돼요.
+          </p>
+        </div>
+        <Link
+          to="/characters"
+          className="inline-flex h-10 shrink-0 items-center justify-center rounded-full bg-primary-soft px-4 text-sm font-semibold text-primary hover:bg-primary-soft/70"
+        >
           캐릭터 관리
         </Link>
-      </div>
+      </header>
 
-      {!hasPresets && (
-        <Alert>
-          <AlertDescription className="text-sm">
-            프리셋 데이터가 비어 있습니다. presets 테이블에 시드가 필요합니다. (기본 스타일 문장만 사용됨)
-          </AlertDescription>
-        </Alert>
+      {(!hasPresets || restoredNote) && (
+        <div className="mt-4 space-y-2">
+          {!hasPresets && (
+            <NoticeBar tone="warn">
+              프리셋 데이터가 비어 있어요. presets 테이블에 시드가 필요합니다.
+            </NoticeBar>
+          )}
+          {restoredNote && (
+            <NoticeBar tone="info" onClose={() => setRestoredNote(null)}>
+              {restoredNote} 참조 이미지와 캐릭터는 다시 선택해주세요.
+            </NoticeBar>
+          )}
+        </div>
       )}
 
-      {restoredNote && (
-        <Alert>
-          <AlertDescription className="text-sm flex items-center justify-between gap-2">
-            <span>{restoredNote} (참조 이미지와 캐릭터는 다시 선택해주세요.)</span>
-            <button
-              onClick={() => setRestoredNote(null)}
-              className="text-xs underline text-muted-foreground"
-            >
-              닫기
-            </button>
-          </AlertDescription>
-        </Alert>
-      )}
-
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-12">
         {/* Panel 1: References */}
-        <Card className="lg:col-span-3">
-          <CardHeader>
-            <CardTitle className="text-base">1. References</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label className="text-xs">Character A</Label>
+        <Panel step={1} title="References" className="lg:col-span-3">
+          <div className="space-y-4">
+            <FieldGroup label="Character A">
               <CharacterPicker value={charAId} onChange={setCharAId} characters={characters} />
-            </div>
-            <div>
-              <Label className="text-xs">Character B</Label>
+            </FieldGroup>
+            <FieldGroup label="Character B">
               <CharacterPicker value={charBId} onChange={setCharBId} characters={characters} />
-            </div>
+            </FieldGroup>
             <RefUpload
               label="Background"
               value={bgRef}
@@ -226,138 +218,69 @@ function GeneratePage() {
               onFile={(f) => uploadRef(f, "style")}
               onClear={() => setStyleRef(null)}
             />
-          </CardContent>
-        </Card>
+          </div>
+        </Panel>
 
         {/* Panel 2: Prompt Controls */}
-        <Card className="lg:col-span-4">
-          <CardHeader>
-            <CardTitle className="text-base">2. Prompt Controls</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
+        <Panel step={2} title="Prompt Controls" className="lg:col-span-4">
+          <div className="space-y-4">
             <div className="grid grid-cols-2 gap-2">
-              <PresetSelect
-                label="Pose Strength"
-                sheet="PoseStrength"
-                cfg={cfg}
-                value={work.poseStrengthId}
-                onChange={(v) => setWork({ ...work, poseStrengthId: v })}
-              />
-              <PresetSelect
-                label="Bg Strength"
-                sheet="BgStrength"
-                cfg={cfg}
-                value={work.bgStrengthId}
-                onChange={(v) => setWork({ ...work, bgStrengthId: v })}
-              />
-              <PresetSelect
-                label="Body Source"
-                sheet="BodySource"
-                cfg={cfg}
-                value={work.bodySourceId}
-                onChange={(v) => setWork({ ...work, bodySourceId: v })}
-              />
-              <PresetSelect
-                label="Camera Angle"
-                sheet="CameraAngle"
-                cfg={cfg}
-                value={work.cameraAngleId}
-                onChange={(v) => setWork({ ...work, cameraAngleId: v })}
-              />
-              <PresetSelect
-                label="Camera Distance"
-                sheet="CameraDistance"
-                cfg={cfg}
-                value={work.cameraDistanceId}
-                onChange={(v) => setWork({ ...work, cameraDistanceId: v })}
-              />
-              <PresetSelect
-                label="Camera Position"
-                sheet="CameraPosition"
-                cfg={cfg}
-                value={work.cameraPositionId}
-                onChange={(v) => setWork({ ...work, cameraPositionId: v })}
-              />
-              <PresetSelect
-                label="Focus"
-                sheet="FocusTarget"
-                cfg={cfg}
-                value={work.focusTargetId}
-                onChange={(v) => setWork({ ...work, focusTargetId: v })}
-              />
-              <PresetSelect
-                label="Bg Style"
-                sheet="BgStyle"
-                cfg={cfg}
-                value={work.bgStyleId}
-                onChange={(v) => setWork({ ...work, bgStyleId: v })}
-              />
-              <PresetSelect
-                label="Costume"
-                sheet="CostumeMode"
-                cfg={cfg}
-                value={work.costumeModeId}
-                onChange={(v) => setWork({ ...work, costumeModeId: v })}
-              />
-              <PresetSelect
-                label="Emotion"
-                sheet="Emotion"
-                cfg={cfg}
-                value={work.emotionId}
-                onChange={(v) => setWork({ ...work, emotionId: v })}
-              />
-              <PresetSelect
-                label="Style Finish"
-                sheet="StyleFinish"
-                cfg={cfg}
-                value={work.styleFinishId}
-                onChange={(v) => setWork({ ...work, styleFinishId: v })}
-              />
+              <PresetSelect label="Pose Strength" sheet="PoseStrength" cfg={cfg} value={work.poseStrengthId} onChange={(v) => setWork({ ...work, poseStrengthId: v })} />
+              <PresetSelect label="Bg Strength" sheet="BgStrength" cfg={cfg} value={work.bgStrengthId} onChange={(v) => setWork({ ...work, bgStrengthId: v })} />
+              <PresetSelect label="Body Source" sheet="BodySource" cfg={cfg} value={work.bodySourceId} onChange={(v) => setWork({ ...work, bodySourceId: v })} />
+              <PresetSelect label="Camera Angle" sheet="CameraAngle" cfg={cfg} value={work.cameraAngleId} onChange={(v) => setWork({ ...work, cameraAngleId: v })} />
+              <PresetSelect label="Camera Distance" sheet="CameraDistance" cfg={cfg} value={work.cameraDistanceId} onChange={(v) => setWork({ ...work, cameraDistanceId: v })} />
+              <PresetSelect label="Camera Position" sheet="CameraPosition" cfg={cfg} value={work.cameraPositionId} onChange={(v) => setWork({ ...work, cameraPositionId: v })} />
+              <PresetSelect label="Focus" sheet="FocusTarget" cfg={cfg} value={work.focusTargetId} onChange={(v) => setWork({ ...work, focusTargetId: v })} />
+              <PresetSelect label="Bg Style" sheet="BgStyle" cfg={cfg} value={work.bgStyleId} onChange={(v) => setWork({ ...work, bgStyleId: v })} />
+              <PresetSelect label="Costume" sheet="CostumeMode" cfg={cfg} value={work.costumeModeId} onChange={(v) => setWork({ ...work, costumeModeId: v })} />
+              <PresetSelect label="Emotion" sheet="Emotion" cfg={cfg} value={work.emotionId} onChange={(v) => setWork({ ...work, emotionId: v })} />
+              <PresetSelect label="Style Finish" sheet="StyleFinish" cfg={cfg} value={work.styleFinishId} onChange={(v) => setWork({ ...work, styleFinishId: v })} />
             </div>
-            <div>
-              <Label className="text-xs">Action</Label>
+
+            <FieldGroup label="Action">
               <Textarea
                 rows={2}
                 value={work.actionText}
                 onChange={(e) => setWork({ ...work, actionText: e.target.value })}
                 placeholder="예: they hold hands and walk toward the camera"
+                className="resize-none rounded-xl bg-muted/50"
               />
-            </div>
-            <div>
-              <Label className="text-xs">Direction Memo</Label>
+            </FieldGroup>
+            <FieldGroup label="Direction Memo">
               <Textarea
                 rows={2}
                 value={work.directionMemo}
                 onChange={(e) => setWork({ ...work, directionMemo: e.target.value })}
+                className="resize-none rounded-xl bg-muted/50"
               />
-            </div>
-            <div className="flex items-center justify-between">
-              <Label className="text-xs">Photopose (실사 포즈)</Label>
+            </FieldGroup>
+
+            <div className="flex items-center justify-between rounded-xl bg-muted/50 px-4 py-3">
+              <div>
+                <div className="text-sm font-semibold">Photopose</div>
+                <div className="text-xs text-muted-foreground">실사 포즈 사용</div>
+              </div>
               <Switch
                 checked={work.isPhotopose}
                 onCheckedChange={(v) => setWork({ ...work, isPhotopose: v })}
               />
             </div>
+
             <div className="grid grid-cols-2 gap-2">
-              <div>
-                <Label className="text-xs">Aspect Ratio</Label>
+              <FieldGroup label="Aspect Ratio">
                 <Select value={aspectRatio} onValueChange={setAspectRatio}>
-                  <SelectTrigger>
+                  <SelectTrigger className="h-10 rounded-xl bg-muted/50">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="1:1">1:1</SelectItem>
-                    <SelectItem value="4:3">4:3</SelectItem>
-                    <SelectItem value="3:4">3:4</SelectItem>
-                    <SelectItem value="16:9">16:9</SelectItem>
-                    <SelectItem value="9:16">9:16</SelectItem>
-                    <SelectItem value="3:2">3:2</SelectItem>
-                    <SelectItem value="2:3">2:3</SelectItem>
+                    {["1:1", "4:3", "3:4", "16:9", "9:16", "3:2", "2:3"].map((r) => (
+                      <SelectItem key={r} value={r}>{r}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
-              </div>
-              <div>
-                <Label className="text-xs">Batch</Label>
+              </FieldGroup>
+              <FieldGroup label="Batch">
                 <Input
                   type="number"
                   min={1}
@@ -366,78 +289,76 @@ function GeneratePage() {
                   onChange={(e) =>
                     setBatchCount(Math.max(1, Math.min(4, Number(e.target.value) || 1)))
                   }
+                  className="h-10 rounded-xl bg-muted/50 px-3"
                 />
-              </div>
+              </FieldGroup>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </Panel>
 
         {/* Panel 3: Figure Map */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="text-base">3. Figure Map</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {figureMap.length === 0 ? (
-              <p className="text-xs text-muted-foreground">참조가 없습니다.</p>
-            ) : (
-              figureMap.map((f) => (
+        <Panel step={3} title="Figure Map" className="lg:col-span-2">
+          {figureMap.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-border p-4 text-center text-xs text-muted-foreground">
+              참조를 추가하면 자동으로 매핑돼요.
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {figureMap.map((f) => (
                 <div
                   key={f.figNo}
-                  className="flex items-center gap-2 text-xs border rounded px-2 py-1"
+                  className="flex items-center gap-2 rounded-xl bg-muted/60 px-3 py-2"
                 >
-                  <Badge variant="outline">Figure {f.figNo}</Badge>
-                  <span className="truncate">{f.label}</span>
+                  <span className="grid h-6 w-6 shrink-0 place-items-center rounded-md bg-primary text-[10px] font-black text-primary-foreground">
+                    {f.figNo}
+                  </span>
+                  <span className="truncate text-xs font-medium">{f.label}</span>
                 </div>
-              ))
-            )}
-          </CardContent>
-        </Card>
+              ))}
+            </div>
+          )}
+        </Panel>
 
         {/* Panel 4: Final Prompt & Result */}
-        <Card className="lg:col-span-3">
-          <CardHeader>
-            <CardTitle className="text-base">4. Final Prompt</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
+        <Panel step={4} title="Final Prompt" className="lg:col-span-3">
+          <div className="space-y-3">
             <Textarea
               rows={10}
               readOnly
               value={built.prompt}
-              className="font-mono text-xs"
+              className="resize-none rounded-xl bg-muted/50 font-mono text-xs leading-relaxed"
             />
             <div className="flex items-center justify-between text-xs">
-              <span className="text-muted-foreground">단어수: {built.wordCount}</span>
+              <span className="text-muted-foreground">단어수 {built.wordCount}</span>
               {built.warnings.length > 0 && (
-                <div className="text-amber-600 space-y-1">
+                <div className="text-right text-amber-600">
                   {built.warnings.map((w) => (
                     <div key={w}>{(WARN as Record<string, string>)[w] || w}</div>
                   ))}
                 </div>
               )}
             </div>
-            <Button className="w-full" onClick={handleGenerate} disabled={gen.running}>
+            <Button
+              onClick={handleGenerate}
+              disabled={gen.running}
+              className="h-12 w-full rounded-xl bg-primary text-[15px] font-bold text-primary-foreground shadow-toss hover:bg-primary/90"
+            >
+              <Sparkles className="mr-2 h-4 w-4" />
               {gen.running ? "요청 중…" : "Generate"}
             </Button>
 
             {gen.row && (
-              <div className="space-y-2 pt-2 border-t">
-                <div className="text-xs flex items-center justify-between">
-                  <Badge
-                    variant={
-                      gen.row.status === "done"
-                        ? "default"
-                        : gen.row.status === "error"
-                          ? "destructive"
-                          : "secondary"
-                    }
-                  >
-                    {gen.row.status}
-                  </Badge>
-                  <span className="text-muted-foreground truncate">{gen.currentId}</span>
+              <div className="space-y-3 border-t border-border pt-3">
+                <div className="flex items-center justify-between">
+                  <StatusPill status={gen.row.status} />
+                  <span className="truncate text-[11px] text-muted-foreground">
+                    {gen.currentId}
+                  </span>
                 </div>
                 {gen.row.error_message && (
-                  <p className="text-xs text-destructive break-all">{gen.row.error_message}</p>
+                  <p className="rounded-xl bg-destructive/10 p-2 text-xs text-destructive break-all">
+                    {gen.row.error_message}
+                  </p>
                 )}
                 <div className="grid grid-cols-2 gap-2">
                   {gen.row.results.map((r) => (
@@ -446,16 +367,93 @@ function GeneratePage() {
                       bucket="generation-outputs"
                       path={r.storage_path}
                       alt={`result-${r.seq}`}
-                      className="rounded border w-full aspect-square object-cover"
+                      className="aspect-square w-full rounded-xl border border-border object-cover"
                     />
                   ))}
                 </div>
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </Panel>
       </div>
     </main>
+  );
+}
+
+/* ---------- helpers ---------- */
+
+function Panel({
+  step,
+  title,
+  className,
+  children,
+}: {
+  step: number;
+  title: string;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section
+      className={
+        "rounded-3xl border border-border bg-card p-5 shadow-toss-sm " + (className ?? "")
+      }
+    >
+      <div className="mb-4 flex items-center gap-2">
+        <span className="grid h-6 w-6 place-items-center rounded-md bg-primary-soft text-[11px] font-black text-primary">
+          {step}
+        </span>
+        <h2 className="text-sm font-bold">{title}</h2>
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function FieldGroup({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-1.5">
+      <Label className="text-[11px] font-semibold text-muted-foreground">{label}</Label>
+      {children}
+    </div>
+  );
+}
+
+function NoticeBar({
+  tone,
+  children,
+  onClose,
+}: {
+  tone: "info" | "warn";
+  children: React.ReactNode;
+  onClose?: () => void;
+}) {
+  const cls =
+    tone === "warn"
+      ? "border-amber-300/50 bg-amber-50 text-amber-800"
+      : "border-primary/20 bg-primary-soft text-primary";
+  return (
+    <div className={`flex items-start justify-between gap-2 rounded-2xl border px-4 py-3 text-sm ${cls}`}>
+      <span>{children}</span>
+      {onClose && (
+        <button onClick={onClose} className="shrink-0 rounded-full p-1 hover:bg-black/5">
+          <X className="h-3.5 w-3.5" />
+        </button>
+      )}
+    </div>
+  );
+}
+
+function StatusPill({ status }: { status: string }) {
+  const styles: Record<string, string> = {
+    done: "bg-emerald-100 text-emerald-700",
+    error: "bg-destructive/10 text-destructive",
+    queued: "bg-muted text-muted-foreground",
+    running: "bg-primary-soft text-primary",
+  };
+  const cls = styles[status] ?? "bg-muted text-muted-foreground";
+  return (
+    <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${cls}`}>{status}</span>
   );
 }
 
@@ -474,7 +472,7 @@ function CharacterPicker({
         value={value ?? "__none"}
         onValueChange={(v) => onChange(v === "__none" ? null : v)}
       >
-        <SelectTrigger>
+        <SelectTrigger className="h-10 rounded-xl bg-muted/50">
           <SelectValue placeholder="선택" />
         </SelectTrigger>
         <SelectContent>
@@ -487,12 +485,12 @@ function CharacterPicker({
         </SelectContent>
       </Select>
       {characters.length === 0 && (
-        <p className="text-[11px] text-muted-foreground leading-tight">
-          등록된 캐릭터가 없습니다.{" "}
-          <Link to="/characters" className="underline">
+        <p className="text-[11px] leading-tight text-muted-foreground">
+          등록된 캐릭터가 없어요.{" "}
+          <Link to="/characters" className="font-semibold text-primary underline">
             캐릭터 관리
           </Link>
-          에서 이름과 이미지를 추가한 뒤 [추가] 버튼을 눌러 저장하세요.
+          에서 추가해주세요.
         </p>
       )}
       {value && (
@@ -500,13 +498,12 @@ function CharacterPicker({
           bucket="character-refs"
           path={characters.find((c) => c.id === value)?.primary_path}
           alt="char"
-          className="w-full aspect-square object-cover rounded border"
+          className="aspect-square w-full rounded-xl border border-border object-cover"
         />
       )}
     </div>
   );
 }
-
 
 function RefUpload({
   label,
@@ -520,30 +517,40 @@ function RefUpload({
   onClear: () => void;
 }) {
   return (
-    <div>
-      <Label className="text-xs">{label}</Label>
+    <div className="space-y-1.5">
+      <Label className="text-[11px] font-semibold text-muted-foreground">{label}</Label>
       {value ? (
-        <div className="space-y-1">
+        <div className="space-y-2">
           <SignedImage
             bucket="character-refs"
             path={value.path}
             alt={label}
-            className="w-full aspect-square object-cover rounded border"
+            className="aspect-square w-full rounded-xl border border-border object-cover"
           />
-          <Button variant="outline" size="sm" className="w-full" onClick={onClear}>
-            제거
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 w-full rounded-lg text-xs font-semibold text-muted-foreground hover:text-destructive"
+            onClick={onClear}
+          >
+            <X className="mr-1 h-3.5 w-3.5" /> 제거
           </Button>
         </div>
       ) : (
-        <Input
-          type="file"
-          accept="image/*"
-          onChange={(e) => {
-            const f = e.target.files?.[0];
-            if (f) onFile(f);
-            e.currentTarget.value = "";
-          }}
-        />
+        <label className="flex h-24 cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-border bg-muted/40 text-xs text-muted-foreground hover:bg-muted">
+          <ImagePlus className="mb-1 h-4 w-4" />
+          이미지 선택
+          <input
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) onFile(f);
+              e.currentTarget.value = "";
+            }}
+          />
+        </label>
       )}
     </div>
   );
@@ -564,10 +571,10 @@ function PresetSelect({
 }) {
   const items = cfg[sheet] ?? [];
   return (
-    <div>
-      <Label className="text-xs">{label}</Label>
+    <div className="space-y-1.5">
+      <Label className="text-[11px] font-semibold text-muted-foreground">{label}</Label>
       <Select value={value} onValueChange={onChange}>
-        <SelectTrigger>
+        <SelectTrigger className="h-10 rounded-xl bg-muted/50">
           <SelectValue placeholder={items.length === 0 ? "(비어있음)" : "선택"} />
         </SelectTrigger>
         <SelectContent>

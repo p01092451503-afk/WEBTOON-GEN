@@ -4,9 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/hooks/useTenant";
 import { SignedImage } from "@/components/SignedImage";
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { Clock, X } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/history")({
   component: HistoryPage,
@@ -71,88 +70,94 @@ function useHistory(tenantId: string | null) {
 
 function HistoryPage() {
   const { tenantId } = useTenant();
-  const { id } = Route.useSearch();
-  const navigate = useNavigate({ from: "/history" });
   const rows = useHistory(tenantId);
-
-  const selected = id ? rows?.find((r) => r.id === id) ?? null : null;
-
-  if (!rows) {
-    return <main className="max-w-6xl mx-auto p-6 text-sm text-muted-foreground">불러오는 중…</main>;
-  }
-
-  if (rows.length === 0) {
-    return (
-      <main className="max-w-6xl mx-auto p-6">
-        <h1 className="text-2xl font-semibold mb-2">히스토리</h1>
-        <p className="text-sm text-muted-foreground">
-          아직 생성 기록이 없습니다. <Link to="/generate" className="underline">생성 화면</Link>에서 첫 이미지를 만들어보세요.
-        </p>
-      </main>
-    );
-  }
+  const { id } = Route.useSearch();
+  const navigate = Route.useNavigate();
+  const selected = rows?.find((r) => r.id === id) ?? null;
 
   return (
-    <main className="max-w-6xl mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">히스토리</h1>
-        <span className="text-xs text-muted-foreground">최근 {rows.length}건</span>
-      </div>
+    <main className="mx-auto max-w-6xl px-5 py-8 sm:py-10">
+      <header className="min-w-0">
+        <div className="text-xs font-semibold text-primary">활동</div>
+        <h1 className="mt-1 truncate text-3xl font-extrabold tracking-tight">히스토리</h1>
+        <p className="mt-1 text-sm text-muted-foreground">최근 100건의 생성 기록을 볼 수 있어요.</p>
+      </header>
 
       {selected && (
-        <DetailCard
-          row={selected}
-          onClose={() => navigate({ search: {} })}
-        />
+        <div className="mt-6">
+          <DetailCard row={selected} onClose={() => navigate({ search: {} })} />
+        </div>
       )}
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-        {rows.map((r) => {
-          const first = r.results[0];
-          return (
-            <button
-              key={r.id}
-              onClick={() => navigate({ search: { id: r.id } })}
-              className="group text-left border rounded-lg overflow-hidden bg-card hover:ring-2 hover:ring-primary transition"
-            >
-              <div className="aspect-square bg-muted relative">
-                {first?.storage_path ? (
-                  <SignedImage
-                    bucket="generation-outputs"
-                    path={first.storage_path}
-                    alt={r.work_label}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground">
-                    {r.status === "error" ? "실패" : r.status}
+      {rows === null ? (
+        <p className="mt-8 text-sm text-muted-foreground">불러오는 중…</p>
+      ) : rows.length === 0 ? (
+        <div className="mt-8 flex flex-col items-center rounded-3xl border border-dashed border-border bg-card p-12 text-center">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-soft text-primary">
+            <Clock className="h-6 w-6" />
+          </div>
+          <p className="mt-4 text-sm font-semibold">아직 생성 이력이 없어요</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            <Link to="/generate" className="font-semibold text-primary underline">
+              생성 화면
+            </Link>
+            에서 첫 이미지를 만들어보세요.
+          </p>
+        </div>
+      ) : (
+        <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+          {rows.map((r) => {
+            const first = r.results[0];
+            return (
+              <button
+                key={r.id}
+                onClick={() => navigate({ search: { id: r.id } })}
+                className="group overflow-hidden rounded-2xl border border-border bg-card text-left shadow-toss-sm transition hover:shadow-toss"
+              >
+                <div className="relative aspect-square overflow-hidden bg-muted">
+                  {first?.storage_path ? (
+                    <SignedImage
+                      bucket="generation-outputs"
+                      path={first.storage_path}
+                      alt={r.work_label}
+                      className="h-full w-full object-cover transition group-hover:scale-[1.02]"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
+                      {r.status === "error" ? "실패" : r.status}
+                    </div>
+                  )}
+                  <div className="absolute left-2 top-2">
+                    <StatusPill status={r.status} />
                   </div>
-                )}
-                <div className="absolute top-2 left-2">
-                  <StatusBadge status={r.status} />
                 </div>
-              </div>
-              <div className="p-2 space-y-1">
-                <div className="text-xs font-medium truncate">{r.work_label}</div>
-                <div className="text-[10px] text-muted-foreground">
-                  {new Date(r.created_at).toLocaleString("ko-KR")}
+                <div className="space-y-1 p-3">
+                  <div className="truncate text-sm font-bold">{r.work_label}</div>
+                  <div className="text-[11px] text-muted-foreground">
+                    {new Date(r.created_at).toLocaleString("ko-KR")}
+                  </div>
                 </div>
-              </div>
-            </button>
-          );
-        })}
-      </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
     </main>
   );
 }
 
-function StatusBadge({ status }: { status: string }) {
-  const variant =
-    status === "done" ? "default" : status === "error" ? "destructive" : "secondary";
+function StatusPill({ status }: { status: string }) {
+  const styles: Record<string, string> = {
+    done: "bg-emerald-100 text-emerald-700",
+    error: "bg-destructive/10 text-destructive",
+    queued: "bg-white/90 text-muted-foreground",
+    running: "bg-primary-soft text-primary",
+  };
+  const cls = styles[status] ?? "bg-white/90 text-muted-foreground";
   return (
-    <Badge variant={variant as any} className="text-[10px]">
+    <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold shadow-toss-sm ${cls}`}>
       {status}
-    </Badge>
+    </span>
   );
 }
 
@@ -171,36 +176,42 @@ function DetailCard({ row, onClose }: { row: Row; onClose: () => void }) {
           finalPrompt: row.final_prompt,
         }),
       );
-      toast.success("생성 화면으로 이동하면 옵션이 복원됩니다.");
-    } catch (e) {
+      toast.success("생성 화면으로 이동하면 옵션이 복원돼요");
+    } catch {
       toast.error("복원 데이터 저장 실패");
     }
   }
 
   return (
-    <Card>
-      <CardHeader className="flex-row items-center justify-between space-y-0">
-        <CardTitle className="text-base">
-          {row.work_label} · <StatusBadge status={row.status} />
-        </CardTitle>
-        <div className="flex gap-2">
-          <Button size="sm" variant="outline" onClick={loadIntoGenerate} asChild>
-            <Link to="/generate" onClick={loadIntoGenerate}>설정 불러오기</Link>
-          </Button>
-          <Button size="sm" variant="ghost" onClick={onClose}>닫기</Button>
+    <section className="rounded-3xl border border-border bg-card p-6 shadow-toss">
+      <header className="mb-4 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 sm:flex sm:justify-between">
+        <div className="flex min-w-0 items-center gap-2">
+          <h3 className="truncate text-base font-bold">{row.work_label}</h3>
+          <StatusPill status={row.status} />
         </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
+        <div className="flex shrink-0 gap-2">
+          <Button size="sm" variant="outline" asChild className="rounded-full">
+            <Link to="/generate" onClick={loadIntoGenerate}>
+              설정 불러오기
+            </Link>
+          </Button>
+          <Button size="sm" variant="ghost" className="rounded-full" onClick={onClose}>
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      </header>
+
+      <div className="space-y-5">
         {row.results.length > 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             {row.results.map((res) => (
-              <div key={res.id} className="border rounded overflow-hidden bg-muted">
+              <div key={res.id} className="overflow-hidden rounded-xl border border-border bg-muted">
                 {res.storage_path && (
                   <SignedImage
                     bucket="generation-outputs"
                     path={res.storage_path}
                     alt={`result-${res.seq}`}
-                    className="w-full aspect-square object-cover"
+                    className="aspect-square w-full object-cover"
                   />
                 )}
               </div>
@@ -208,7 +219,7 @@ function DetailCard({ row, onClose }: { row: Row; onClose: () => void }) {
           </div>
         )}
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+        <div className="grid grid-cols-2 gap-3 text-xs md:grid-cols-4">
           <Meta label="모드" value={row.mode} />
           <Meta label="비율" value={row.aspect_ratio ?? "-"} />
           <Meta label="모델" value={row.api_model ?? "-"} />
@@ -221,34 +232,36 @@ function DetailCard({ row, onClose }: { row: Row; onClose: () => void }) {
           />
           <Meta
             label="경고"
-            value={Array.isArray(row.warnings) && row.warnings.length ? String(row.warnings.length) : "0"}
+            value={
+              Array.isArray(row.warnings) && row.warnings.length ? String(row.warnings.length) : "0"
+            }
           />
         </div>
 
         {row.error_message && (
-          <div className="text-xs text-destructive whitespace-pre-wrap border border-destructive/40 rounded p-2">
+          <div className="whitespace-pre-wrap rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-xs text-destructive">
             {row.error_message}
           </div>
         )}
 
         {row.final_prompt && (
           <div>
-            <div className="text-xs font-semibold mb-1">Final Prompt</div>
-            <pre className="text-xs whitespace-pre-wrap bg-muted rounded p-2 max-h-64 overflow-auto">
+            <div className="mb-1 text-[11px] font-semibold text-muted-foreground">Final Prompt</div>
+            <pre className="max-h-64 overflow-auto whitespace-pre-wrap rounded-xl bg-muted/60 p-3 text-xs">
               {row.final_prompt}
             </pre>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </section>
   );
 }
 
 function Meta({ label, value }: { label: string; value: string }) {
   return (
-    <div>
-      <div className="text-[10px] uppercase text-muted-foreground">{label}</div>
-      <div className="truncate">{value}</div>
+    <div className="rounded-xl bg-muted/50 px-3 py-2">
+      <div className="text-[10px] font-semibold uppercase text-muted-foreground">{label}</div>
+      <div className="truncate text-xs font-medium">{value}</div>
     </div>
   );
 }
