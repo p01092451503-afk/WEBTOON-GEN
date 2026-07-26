@@ -185,6 +185,15 @@ export const generate = createServerFn({ method: "POST" })
         .update({ status: "done", completed_at: new Date().toISOString() })
         .eq("id", generationId);
 
+      if (data.panelId) {
+        const firstResultId = savedResults.length > 0
+          ? (await supabaseAdmin.from("generation_results").select("id").eq("generation_id", generationId).order("seq").limit(1).maybeSingle()).data?.id ?? null
+          : null;
+        const panelPatch: { status: string; chosen_result_id?: string | null } = { status: "done" };
+        if (firstResultId) panelPatch.chosen_result_id = firstResultId;
+        await supabaseAdmin.from("panels").update(panelPatch).eq("id", data.panelId);
+      }
+
       return { generationId, status: "done" as const };
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
@@ -194,6 +203,9 @@ export const generate = createServerFn({ method: "POST" })
         .from("generations")
         .update({ status: "error", error_message: message.slice(0, 1000), completed_at: new Date().toISOString() })
         .eq("id", generationId);
+      if (data.panelId) {
+        await supabaseAdmin.from("panels").update({ status: "empty" }).eq("id", data.panelId);
+      }
       throw new Error(message);
     }
   });
