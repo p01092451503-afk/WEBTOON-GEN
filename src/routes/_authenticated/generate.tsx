@@ -341,16 +341,16 @@ function GeneratePage() {
               <PresetSelect label={t("studio.labels.style_finish")} sheet="StyleFinish" cfg={cfg} value={work.styleFinishId} onChange={(v) => setWork({ ...work, styleFinishId: v })} />
             </div>
 
-            <FieldGroup label="Action">
+            <FieldGroup label={t("studio.labels.action")}>
               <Textarea
                 rows={2}
                 value={work.actionText}
                 onChange={(e) => setWork({ ...work, actionText: e.target.value })}
-                placeholder="e.g. they hold hands and walk toward the camera"
+                placeholder={t("studio.labels.action_placeholder")}
                 className="resize-none rounded-xl bg-muted/50"
               />
             </FieldGroup>
-            <FieldGroup label="Direction Memo">
+            <FieldGroup label={t("studio.labels.direction_memo")}>
               <Textarea
                 rows={2}
                 value={work.directionMemo}
@@ -361,8 +361,8 @@ function GeneratePage() {
 
             <div className="flex items-center justify-between rounded-xl bg-muted/50 px-4 py-3">
               <div>
-                <div className="text-sm font-semibold">Photopose</div>
-                <div className="text-xs text-muted-foreground">Use photorealistic pose</div>
+                <div className="text-sm font-semibold">{t("studio.labels.photopose")}</div>
+                <div className="text-xs text-muted-foreground">{t("studio.labels.photopose_hint")}</div>
               </div>
               <Switch
                 checked={work.isPhotopose}
@@ -371,7 +371,7 @@ function GeneratePage() {
             </div>
 
             <div className="grid grid-cols-2 gap-2">
-              <FieldGroup label="Aspect Ratio">
+              <FieldGroup label={t("studio.labels.aspect_ratio")}>
                 <Select value={aspectRatio} onValueChange={setAspectRatio}>
                   <SelectTrigger className="h-10 rounded-xl bg-muted/50">
                     <SelectValue />
@@ -383,7 +383,7 @@ function GeneratePage() {
                   </SelectContent>
                 </Select>
               </FieldGroup>
-              <FieldGroup label="Batch (variants)">
+              <FieldGroup label={t("studio.labels.batch")}>
                 <Input
                   type="number"
                   min={1}
@@ -400,10 +400,10 @@ function GeneratePage() {
         </Panel>
 
         {/* Panel 3: Figure Map */}
-        <Panel step={3} title="Figure Map" className="lg:col-span-2">
+        <Panel step={3} title={t("studio.panels.figure_map")} className="lg:col-span-2">
           {figureMap.length === 0 ? (
             <div className="rounded-xl border border-dashed border-border p-4 text-center text-xs text-muted-foreground">
-              Add references and they'll map automatically.
+              {t("studio.labels.figure_hint")}
             </div>
           ) : (
             <div className="space-y-2">
