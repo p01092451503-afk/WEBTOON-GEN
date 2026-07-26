@@ -103,6 +103,7 @@ export const generate = createServerFn({ method: "POST" })
       const savedResults: Array<{
         seq: number;
         storage_path: string;
+        thumb_path: string | null;
         source_url: string;
         width?: number;
         height?: number;
@@ -122,9 +123,26 @@ export const generate = createServerFn({ method: "POST" })
           .upload(storagePath, bytes, { contentType, upsert: true });
         if (upErr) throw new Error(`STORAGE_UPLOAD_FAILED: ${upErr.message}`);
 
+        // 썸네일 (실패해도 원본 저장은 유지)
+        let thumbPath: string | null = null;
+        try {
+          const thumbBytes = await makeThumbnailWebp(bytes);
+          thumbPath = `${tenantId}/${generationId}/${i}_thumb.webp`;
+          const { error: tErr } = await supabaseAdmin.storage
+            .from("generation-outputs")
+            .upload(thumbPath, thumbBytes, { contentType: "image/webp", upsert: true });
+          if (tErr) {
+            console.warn("THUMB_UPLOAD_FAILED", tErr.message);
+            thumbPath = null;
+          }
+        } catch (e) {
+          console.warn("THUMB_MAKE_FAILED", e instanceof Error ? e.message : String(e));
+        }
+
         savedResults.push({
           seq: i,
           storage_path: storagePath,
+          thumb_path: thumbPath,
           source_url: r.url,
           width: r.width,
           height: r.height,
@@ -138,6 +156,7 @@ export const generate = createServerFn({ method: "POST" })
             generation_id: generationId,
             seq: s.seq,
             storage_path: s.storage_path,
+            thumb_path: s.thumb_path,
             source_url: s.source_url,
             source_url_expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
             width: s.width ?? null,
