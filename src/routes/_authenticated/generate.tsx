@@ -473,6 +473,30 @@ function GeneratePage() {
               value={built.prompt}
               className="resize-none rounded-xl bg-muted/50 font-mono text-xs leading-relaxed"
             />
+            {showTranslated && translated && (
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-semibold text-primary">
+                    {t("studio.labels.translation", "Translation")}
+                    {" · "}
+                    {/[\u3131-\uD79D]/.test(built.prompt) ? "EN" : "KO"}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => navigator.clipboard.writeText(translated).then(() => toast.success(t("common.copied", "Copied")))}
+                    className="text-[11px] text-muted-foreground hover:text-foreground"
+                  >
+                    {t("common.copy", "Copy")}
+                  </button>
+                </div>
+                <Textarea
+                  rows={8}
+                  readOnly
+                  value={translated}
+                  className="resize-none rounded-xl border-primary/30 bg-primary/5 font-mono text-xs leading-relaxed"
+                />
+              </div>
+            )}
             <div className="flex items-center justify-between text-xs">
               <span className="text-muted-foreground">{t("studio.labels.words", { count: built.wordCount })}</span>
               {built.warnings.length > 0 && (
@@ -483,6 +507,28 @@ function GeneratePage() {
                 </div>
               )}
             </div>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleTranslate}
+              disabled={translating || !built.prompt}
+              className="h-10 w-full rounded-xl text-sm font-semibold"
+            >
+              {translating ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Languages className="mr-2 h-4 w-4" />
+              )}
+              {translating
+                ? t("studio.labels.translating", "Translating…")
+                : translated
+                ? showTranslated
+                  ? t("studio.labels.hide_translation", "Hide translation")
+                  : t("studio.labels.show_translation", "Show translation")
+                : /[\u3131-\uD79D]/.test(built.prompt)
+                ? t("studio.labels.translate_to_en", "Translate to English")
+                : t("studio.labels.translate_to_ko", "Translate to Korean")}
+            </Button>
             <Button
               onClick={() => handleGenerate()}
               disabled={gen.running}
