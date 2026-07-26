@@ -17,6 +17,14 @@ import {
   Moon, Zap, Snowflake, Brain, Ghost, Drama,
   Triangle, Camera, Video, Focus, Move, PersonStanding,
   Aperture, Scan, Ruler, Compass, Eye, ArrowUp, ArrowDown,
+  ArrowUpRight, ArrowDownRight, ArrowLeftRight, RotateCcw, RotateCw,
+  Bird, Worm, ArrowUpFromLine, ArrowDownFromLine,
+  User, UserCircle2, UserSquare2, Users, Crop, Maximize2, Minimize2, Expand,
+  ChevronsUpDown, ChevronUp, ChevronDown, ChevronLeft, ChevronRight,
+  Home, TreePine, Waves, Building2, Coffee, GraduationCap, Bed,
+  Castle, Cpu, Cloud, CloudSnow, CloudRain, Sun, Flower2, Sparkle,
+  Layers, Palette, Brush, PenTool, Pencil, Grid3x3, Film, Image as ImageIcon,
+  Gauge, Zap as ZapIcon, Sliders, Target, Circle, Square,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
