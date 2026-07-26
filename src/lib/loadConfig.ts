@@ -17,7 +17,11 @@ export async function loadConfig(
   if (error) throw error;
 
   const cfg: PromptConfig = {};
+  const seen = new Set<string>();
   for (const r of data ?? []) {
+    const key = `${r.sheet}:${r.item_id}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
     (cfg[r.sheet] ??= []).push({
       id: r.item_id,
       label_ko: r.label_ko,
