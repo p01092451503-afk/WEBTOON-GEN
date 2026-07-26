@@ -138,7 +138,7 @@ function GeneratePage() {
     if (poseRef) imagePaths.push(poseRef.path);
     if (styleRef) imagePaths.push(styleRef.path);
     try {
-      await gen.generate({
+      await gen.run({
         workLabel: "W1",
         mode: "new",
         aspectRatio,
