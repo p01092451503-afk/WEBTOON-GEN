@@ -111,14 +111,12 @@ export const generate = createServerFn({ method: "POST" })
         imageUrls.push(signed.signedUrl);
       }
 
-      // 5) ARK 호출
-      const arkResults = await callArk({
-        prompt: cleanPrompt,
-        imageUrls,
-        size,
-        seed,
-        batchCount: data.batchCount,
-      });
+      // 5) ARK 호출 — 슬롯별 seed 로 병렬 요청하여 실제 변형(variation) 결과를 얻는다.
+      const arkPerSlot = await Promise.all(
+        slotSeeds.map((s) =>
+          callArk({ prompt: cleanPrompt, imageUrls, size, seed: s }).then((r) => r[0]),
+        ),
+      );
 
       // 7) 결과 이미지 저장
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -129,10 +127,12 @@ export const generate = createServerFn({ method: "POST" })
         source_url: string;
         width?: number;
         height?: number;
+        seed: number;
       }> = [];
 
-      for (let i = 0; i < arkResults.length; i++) {
-        const r = arkResults[i];
+      for (let i = 0; i < arkPerSlot.length; i++) {
+        const r = arkPerSlot[i];
+        if (!r) continue;
         const imgRes = await fetch(r.url);
         if (!imgRes.ok) throw new Error(`FETCH_RESULT_FAILED: ${imgRes.status}`);
         const bytes = new Uint8Array(await imgRes.arrayBuffer());
@@ -168,6 +168,7 @@ export const generate = createServerFn({ method: "POST" })
           source_url: r.url,
           width: r.width,
           height: r.height,
+          seed: slotSeeds[i],
         });
       }
 
@@ -183,10 +184,12 @@ export const generate = createServerFn({ method: "POST" })
             source_url_expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
             width: s.width ?? null,
             height: s.height ?? null,
+            seed: s.seed,
           })),
         );
         if (resErr) throw new Error(`DB_INSERT_RESULTS_FAILED: ${resErr.message}`);
       }
+
 
       await supabaseAdmin.from("usage_events").insert({
         tenant_id: tenantId,
