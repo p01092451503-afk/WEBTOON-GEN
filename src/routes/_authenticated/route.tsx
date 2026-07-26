@@ -10,7 +10,15 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { LanguageToggle } from "@/components/language-toggle";
 import { IconTooltip } from "@/components/icon-tooltip";
 import { GlobalSearch } from "@/components/global-search";
-import { Bell } from "lucide-react";
+import { Bell, LogOut, User as UserIcon, ChevronDown } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
