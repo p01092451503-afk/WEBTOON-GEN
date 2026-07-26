@@ -272,12 +272,12 @@ function PanelCard({
               <Button size="sm" variant="ghost" className="rounded-lg"
                 onClick={() => setShowResults((v) => !v)}>
                 <ChevronDown className={"mr-1 h-4 w-4 transition " + (showResults ? "rotate-180" : "")} />
-                {tt("episodes.variants")}
+                {t("episodes.variants")}
               </Button>
             )}
             <Button size="sm" variant="ghost" className="rounded-lg" onClick={onOpen}>
               <Wand2 className="mr-1 h-4 w-4" />
-              {panel.chosen ? tt("episodes.regenerate") : tt("episodes.generate")}
+              {panel.chosen ? t("episodes.regenerate") : t("episodes.generate")}
             </Button>
             <Button size="sm" variant="ghost"
               onClick={onDelete}
