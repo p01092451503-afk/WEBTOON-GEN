@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/hooks/useTenant";
@@ -7,8 +8,9 @@ import { useCharacters } from "@/hooks/useCharacters";
 import { usePresets } from "@/hooks/usePresets";
 import { useGeneration } from "@/hooks/useGeneration";
 import { SignedImage } from "@/components/SignedImage";
-import { buildFigureMap, buildPrompt, WARN, type WorkInput } from "@/lib/promptEngine";
-import { ArrowLeft } from "lucide-react";
+import { buildFigureMap, buildPrompt, WARN, type WorkInput, type PresetItem } from "@/lib/promptEngine";
+import { updatePanel } from "@/lib/projects.functions";
+import { ArrowLeft, Lock, Unlock, GitCompare, Check, Sparkles, ImagePlus, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -22,7 +24,6 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { ImagePlus, Sparkles, X } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/generate")({
   component: GeneratePage,
