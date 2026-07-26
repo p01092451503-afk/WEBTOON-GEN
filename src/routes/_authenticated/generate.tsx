@@ -928,9 +928,9 @@ function PresetGallery({
 
   if (items.length === 0) {
     return (
-      <div className="space-y-1.5">
-        <Label className="text-[11px] font-semibold text-muted-foreground">{label}</Label>
-        <div className="rounded-xl border border-dashed border-border p-3 text-center text-[11px] text-muted-foreground">
+      <div className="space-y-2">
+        <Label className="text-[13px] font-semibold text-foreground">{label}</Label>
+        <div className="rounded-xl border border-dashed border-border p-3 text-center text-[12px] text-muted-foreground">
           {t("studio.labels.no_presets_loaded")}
         </div>
       </div>
