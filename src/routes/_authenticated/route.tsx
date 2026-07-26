@@ -9,7 +9,8 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { LanguageToggle } from "@/components/language-toggle";
 import { IconTooltip } from "@/components/icon-tooltip";
-import { Bell, Search } from "lucide-react";
+import { GlobalSearch } from "@/components/global-search";
+import { Bell } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -113,11 +114,7 @@ function AuthenticatedLayout() {
               )}
             </div>
 
-            <div className="hidden items-center gap-2 rounded-xl border border-border bg-card px-3 py-1.5 text-sm text-muted-foreground md:flex">
-              <Search className="h-4 w-4" />
-              <span className="text-xs">{t("common.search_placeholder")}</span>
-              <kbd className="ml-3 rounded bg-muted px-1.5 py-0.5 text-[10px] font-semibold">⌘K</kbd>
-            </div>
+            <GlobalSearch />
 
             <LanguageToggle />
 
