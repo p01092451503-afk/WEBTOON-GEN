@@ -137,12 +137,9 @@ function AuthenticatedLayout() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
-                  className="flex items-center gap-2 rounded-full border border-border bg-card px-2 py-1.5 pr-3 transition-colors hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  className="flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 pr-3 transition-colors hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary/20"
                   aria-label={email || "user menu"}
                 >
-                  <span className="grid h-7 w-7 place-items-center rounded-full bg-primary-soft text-xs font-bold text-primary">
-                    {(email?.[0] || "U").toUpperCase()}
-                  </span>
                   <span className="max-w-[160px] truncate text-xs font-semibold text-foreground">
                     {email || "user"}
                   </span>
