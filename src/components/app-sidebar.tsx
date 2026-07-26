@@ -1,13 +1,11 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { Users, Sparkles, History, LogOut, FolderKanban } from "lucide-react";
+import { Users, Sparkles, History, LogOut, FolderKanban, Search, ChevronsUpDown } from "lucide-react";
+import { useEffect, useState } from "react";
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
@@ -15,7 +13,6 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "@tanstack/react-router";
 
 export function AppSidebar() {
   const { t } = useTranslation();
@@ -23,86 +20,119 @@ export function AppSidebar() {
   const collapsed = state === "collapsed";
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const isActive = (path: string) => pathname === path || pathname.startsWith(path + "/");
+  const isActive = (path: string) =>
+    pathname === path || pathname.startsWith(path + "/");
+  const [email, setEmail] = useState<string>("");
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? ""));
+  }, []);
 
   const items = [
-    { title: t("sidebar.projects"), url: "/projects", icon: FolderKanban, desc: t("sidebar.projects_desc") },
-    { title: t("sidebar.characters"), url: "/characters", icon: Users, desc: t("sidebar.characters_desc") },
-    { title: t("sidebar.studio"), url: "/generate", icon: Sparkles, desc: t("sidebar.studio_desc") },
-    { title: t("sidebar.history"), url: "/history", icon: History, desc: t("sidebar.history_desc") },
+    { title: t("sidebar.projects"), url: "/projects", icon: FolderKanban },
+    { title: t("sidebar.characters"), url: "/characters", icon: Users },
+    { title: t("sidebar.studio"), url: "/generate", icon: Sparkles },
+    { title: t("sidebar.history"), url: "/history", icon: History },
   ] as const;
 
   async function handleSignOut() {
-    if (typeof window !== "undefined") sessionStorage.setItem("toonpilot:signedOut", "1");
+    if (typeof window !== "undefined")
+      sessionStorage.setItem("toonpilot:signedOut", "1");
     await supabase.auth.signOut();
     navigate({ to: "/auth", replace: true });
   }
 
+  const initial = (email?.[0] || "T").toUpperCase();
+
   return (
-    <Sidebar collapsible="icon" className="border-r border-sidebar-border">
-      <SidebarHeader className="border-b border-sidebar-border">
-        <div className="flex items-center px-2 py-2.5">
+    <Sidebar collapsible="icon" className="border-r border-sidebar-border bg-sidebar">
+      <SidebarHeader className="border-none pt-5 pb-2">
+        <div className="flex items-center gap-3 px-2">
+          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-primary text-primary-foreground shadow-toss">
+            <Sparkles className="h-5 w-5" strokeWidth={2.4} />
+          </div>
           {!collapsed && (
             <div className="min-w-0">
-              <div className="truncate text-sm font-extrabold tracking-tight">{t("brand.name")}</div>
-              <div className="truncate text-[11px] font-medium text-muted-foreground">
-                {t("brand.tagline")}
+              <div className="truncate text-[17px] font-extrabold tracking-tight text-foreground">
+                {t("brand.name")}
               </div>
             </div>
           )}
         </div>
+
+        {!collapsed && (
+          <div className="relative mt-5 px-2">
+            <Search className="pointer-events-none absolute left-5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder={t("common.search_placeholder")}
+              className="h-10 w-full rounded-2xl border border-border bg-card pl-10 pr-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/15"
+            />
+          </div>
+        )}
       </SidebarHeader>
 
-      <SidebarContent className="px-1.5 py-3">
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-            {t("sidebar.workspace")}
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {items.map((item) => {
-                const active = isActive(item.url);
-                return (
-                  <SidebarMenuItem key={item.url}>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={active}
-                      tooltip={item.title}
-                      className="h-11 rounded-xl data-[active=true]:bg-primary-soft data-[active=true]:text-primary data-[active=true]:font-semibold"
-                    >
-                      <Link to={item.url} className="flex items-center gap-3">
-                        <item.icon className="h-[18px] w-[18px] shrink-0" strokeWidth={2.2} />
-                        {!collapsed && (
-                          <span className="flex min-w-0 flex-col leading-tight">
-                            <span className="truncate text-sm font-semibold">{item.title}</span>
-                            <span className="truncate text-[11px] font-normal text-muted-foreground">
-                              {item.desc}
-                            </span>
-                          </span>
-                        )}
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+      <SidebarContent className="px-2 pt-4">
+        <SidebarMenu className="gap-1.5">
+          {items.map((item) => {
+            const active = isActive(item.url);
+            return (
+              <SidebarMenuItem key={item.url}>
+                <SidebarMenuButton
+                  asChild
+                  isActive={active}
+                  tooltip={item.title}
+                  className="h-12 rounded-2xl px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground data-[active=true]:border data-[active=true]:border-border data-[active=true]:bg-card data-[active=true]:font-semibold data-[active=true]:text-foreground data-[active=true]:shadow-toss-sm"
+                >
+                  <Link to={item.url} className="flex items-center gap-3">
+                    <item.icon
+                      className={`h-5 w-5 shrink-0 ${active ? "text-primary" : ""}`}
+                      strokeWidth={2}
+                    />
+                    {!collapsed && <span className="truncate">{item.title}</span>}
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            );
+          })}
+        </SidebarMenu>
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-sidebar-border">
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
+      <SidebarFooter className="border-t border-sidebar-border pt-3">
+        {!collapsed ? (
+          <div className="flex items-center gap-3 rounded-2xl px-2 py-2">
+            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary-soft text-sm font-bold text-primary">
+              {initial}
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-sm font-semibold text-foreground">
+                {email ? email.split("@")[0] : t("brand.name")}
+              </div>
+              <div className="truncate text-[11px] text-muted-foreground">
+                {email || "—"}
+              </div>
+            </div>
+            <button
               onClick={handleSignOut}
-              tooltip={t("common.sign_out")}
-              className="h-10 rounded-xl text-muted-foreground hover:text-foreground"
+              aria-label={t("common.sign_out")}
+              className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
             >
-              <LogOut className="h-4 w-4" strokeWidth={2.2} />
-              {!collapsed && <span className="text-sm font-medium">{t("common.sign_out")}</span>}
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+              <LogOut className="h-4 w-4" />
+            </button>
+          </div>
+        ) : (
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                onClick={handleSignOut}
+                tooltip={t("common.sign_out")}
+                className="h-10 rounded-xl text-muted-foreground hover:text-foreground"
+              >
+                <LogOut className="h-4 w-4" strokeWidth={2.2} />
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        )}
       </SidebarFooter>
     </Sidebar>
   );
