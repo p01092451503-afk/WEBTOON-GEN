@@ -885,8 +885,8 @@ function PresetSelect({
   const displayLabel = (it: { label_en?: string; label_ko: string }) =>
     (it.label_en && it.label_en.trim()) || it.label_ko;
   return (
-    <div className="space-y-1.5">
-      <Label className="text-[11px] font-semibold text-muted-foreground">{label}</Label>
+    <div className="space-y-2">
+      <Label className="text-[13px] font-semibold text-foreground">{label}</Label>
       <Select value={value} onValueChange={onChange}>
         <SelectTrigger className="h-10 rounded-xl bg-muted/50">
           <SelectValue placeholder={items.length === 0 ? t("studio.labels.empty") : t("studio.labels.select")} />
