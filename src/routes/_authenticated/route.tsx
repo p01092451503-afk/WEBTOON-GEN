@@ -105,7 +105,6 @@ function AuthenticatedLayout() {
 
         <div className="flex min-w-0 flex-1 flex-col">
           <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border bg-background/85 px-4 backdrop-blur sm:px-6">
-            <SidebarTrigger className="h-9 w-9 rounded-lg hover:bg-muted" />
             <div className="hidden h-6 w-px bg-border sm:block" />
             <div className="min-w-0 flex-1">
               <div className="truncate text-[15px] font-bold tracking-tight">{meta.title}</div>
