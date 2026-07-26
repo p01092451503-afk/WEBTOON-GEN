@@ -215,6 +215,10 @@ function GeneratePage() {
       toast.error(t("studio.select_character_error"));
       return;
     }
+    if (overLimit) {
+      toast.error(t("studio.labels.prompt_too_long", { max: 4000 }));
+      return;
+    }
     const imagePaths: string[] = [];
     if (charA?.primary_path) imagePaths.push(charA.primary_path);
     if (charB?.primary_path) imagePaths.push(charB.primary_path);
@@ -222,7 +226,6 @@ function GeneratePage() {
     if (poseRef) imagePaths.push(poseRef.path);
     if (styleRef) imagePaths.push(styleRef.path);
 
-    // Build per-slot seed list. Locked slots reuse their seed; others get a new random seed.
     const useLocks = opts?.keepLocks && Object.keys(lockedSeeds).length > 0;
     const seeds: number[] | undefined = useLocks
       ? Array.from({ length: batchCount }, (_, i) =>
@@ -235,7 +238,9 @@ function GeneratePage() {
         workLabel: "W1",
         mode: "new",
         aspectRatio,
-        finalPrompt: built.prompt,
+        finalPrompt: effectivePrompt,
+        rawPrompt: built.prompt,
+        promptEdited: isEdited,
         compiledPrompt: built.prompt,
         imagePaths,
         figureMap,
@@ -244,7 +249,6 @@ function GeneratePage() {
         seeds,
         panelId: panelId ?? undefined,
       });
-      // Reset compare selection whenever a fresh batch starts; keep locks so user can iterate.
       setCompareIds([]);
       toast.success(panelId ? t("studio.submitted_panel") : t("studio.submitted"));
     } catch (e) {
