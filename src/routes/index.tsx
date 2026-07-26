@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Library, LayoutGrid, History } from "lucide-react";
 import { LanguageToggle } from "@/components/language-toggle";
-import { LogoIcon } from "@/components/logo";
+
 
 export const Route = createFileRoute("/")({
   ssr: false,

@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { LanguageToggle } from "@/components/language-toggle";
-import { LogoIcon } from "@/components/logo";
+
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
