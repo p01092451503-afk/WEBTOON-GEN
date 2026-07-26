@@ -261,9 +261,25 @@ function DetailCard({ row, onClose, locale }: { row: Row; onClose: () => void; l
 
         {row.final_prompt && (
           <div>
-            <div className="mb-1 text-[11px] font-semibold text-muted-foreground">{t("history.final_prompt")}</div>
+            <div className="mb-1 flex items-center gap-2 text-[11px] font-semibold text-muted-foreground">
+              <span>{t("history.final_prompt")}</span>
+              {row.prompt_edited && (
+                <span className="text-amber-700">· {t("history.edited_badge", "Edited")}</span>
+              )}
+            </div>
             <pre className="max-h-64 overflow-auto whitespace-pre-wrap rounded-xl bg-muted/60 p-3 text-xs">
               {row.final_prompt}
+            </pre>
+          </div>
+        )}
+
+        {row.prompt_edited && row.raw_prompt && (
+          <div>
+            <div className="mb-1 text-[11px] font-semibold text-muted-foreground">
+              {t("history.raw_prompt", "Original auto-prompt")}
+            </div>
+            <pre className="max-h-48 overflow-auto whitespace-pre-wrap rounded-xl border border-dashed border-border bg-muted/30 p-3 text-xs text-muted-foreground">
+              {row.raw_prompt}
             </pre>
           </div>
         )}
