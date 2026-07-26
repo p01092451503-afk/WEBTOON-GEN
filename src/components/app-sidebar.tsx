@@ -107,42 +107,6 @@ export function AppSidebar() {
         </SidebarMenu>
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-sidebar-border pt-3">
-        {!collapsed ? (
-          <div className="flex items-center gap-3 rounded-2xl px-2 py-2">
-            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary-soft text-sm font-bold text-primary">
-              {initial}
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="truncate text-sm font-semibold text-foreground">
-                {email ? email.split("@")[0] : t("brand.name")}
-              </div>
-              <div className="truncate text-[11px] text-muted-foreground">
-                {email || "—"}
-              </div>
-            </div>
-            <button
-              onClick={handleSignOut}
-              aria-label={t("common.sign_out")}
-              className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
-            >
-              <LogOut className="h-4 w-4" />
-            </button>
-          </div>
-        ) : (
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                onClick={handleSignOut}
-                tooltip={t("common.sign_out")}
-                className="h-10 rounded-xl text-muted-foreground hover:text-foreground"
-              >
-                <LogOut className="h-4 w-4" strokeWidth={2.2} />
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        )}
-      </SidebarFooter>
     </Sidebar>
   );
 }
