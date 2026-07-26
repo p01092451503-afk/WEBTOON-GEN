@@ -147,7 +147,7 @@ function GeneratePage() {
     [tenantId],
   );
 
-  async function handleGenerate() {
+  async function handleGenerate(opts?: { keepLocks?: boolean }) {
     if (!charA?.primary_path && !charB?.primary_path) {
       toast.error("Please select at least Character A or B.");
       return;
@@ -158,6 +158,15 @@ function GeneratePage() {
     if (bgRef) imagePaths.push(bgRef.path);
     if (poseRef) imagePaths.push(poseRef.path);
     if (styleRef) imagePaths.push(styleRef.path);
+
+    // Build per-slot seed list. Locked slots reuse their seed; others get a new random seed.
+    const useLocks = opts?.keepLocks && Object.keys(lockedSeeds).length > 0;
+    const seeds: number[] | undefined = useLocks
+      ? Array.from({ length: batchCount }, (_, i) =>
+          lockedSeeds[i] ?? Math.floor(Math.random() * 2_000_000_000),
+        )
+      : undefined;
+
     try {
       await gen.run({
         workLabel: "W1",
@@ -169,9 +178,38 @@ function GeneratePage() {
         figureMap,
         options: { ...work, aspectRatio },
         batchCount,
+        seeds,
         panelId: panelId ?? undefined,
       });
-      toast.success(panelId ? "Panel generation submitted" : "Generation request submitted");
+      // Reset compare selection whenever a fresh batch starts; keep locks so user can iterate.
+      setCompareIds([]);
+      toast.success(panelId ? "Panel generation submitted" : "Generation submitted");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : String(e));
+    }
+  }
+
+  function toggleLock(seq: number, seed: number | null) {
+    if (seed == null) return;
+    setLockedSeeds((prev) => {
+      const next = { ...prev };
+      if (next[seq] === seed) delete next[seq];
+      else next[seq] = seed;
+      return next;
+    });
+  }
+  function toggleCompare(id: string) {
+    setCompareIds((prev) => {
+      if (prev.includes(id)) return prev.filter((x) => x !== id);
+      if (prev.length >= 2) return [prev[1], id];
+      return [...prev, id];
+    });
+  }
+  async function setAsPanel(resultId: string) {
+    if (!panelId) return;
+    try {
+      await updatePanelFn({ data: { id: panelId, chosen_result_id: resultId, status: "done" } });
+      toast.success("Panel updated with this shot.");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : String(e));
     }
