@@ -423,7 +423,7 @@ function GeneratePage() {
         </Panel>
 
         {/* Panel 4: Final Prompt & Result */}
-        <Panel step={4} title="Final Prompt" className="lg:col-span-3">
+        <Panel step={4} title={t("studio.panels.final_prompt")} className="lg:col-span-3">
           <div className="space-y-3">
             <Textarea
               rows={10}
@@ -432,7 +432,7 @@ function GeneratePage() {
               className="resize-none rounded-xl bg-muted/50 font-mono text-xs leading-relaxed"
             />
             <div className="flex items-center justify-between text-xs">
-              <span className="text-muted-foreground">{built.wordCount} words</span>
+              <span className="text-muted-foreground">{t("studio.labels.words", { count: built.wordCount })}</span>
               {built.warnings.length > 0 && (
                 <div className="text-right text-amber-600">
                   {built.warnings.map((w) => (
@@ -447,7 +447,7 @@ function GeneratePage() {
               className="h-12 w-full rounded-xl bg-primary text-[15px] font-bold text-primary-foreground shadow-toss hover:bg-primary/90"
             >
               <Sparkles className="mr-2 h-4 w-4" />
-              {gen.running ? "Requesting…" : "Generate"}
+              {gen.running ? t("common.requesting") : t("common.generate")}
             </Button>
 
             {gen.row && (
@@ -483,7 +483,7 @@ function GeneratePage() {
                         className="flex-1 rounded-lg text-xs font-semibold"
                       >
                         <Lock className="mr-1 h-3.5 w-3.5" />
-                        Vary the rest ({Object.keys(lockedSeeds).length} locked)
+                        {t("studio.labels.vary_the_rest", { count: Object.keys(lockedSeeds).length })}
                       </Button>
                       {Object.keys(lockedSeeds).length > 0 && (
                         <Button
@@ -491,7 +491,7 @@ function GeneratePage() {
                           onClick={() => setLockedSeeds({})}
                           className="rounded-lg text-xs text-muted-foreground"
                         >
-                          Clear locks
+                          {t("studio.labels.clear_locks")}
                         </Button>
                       )}
                     </div>
