@@ -486,6 +486,15 @@ function CharacterPicker({
           ))}
         </SelectContent>
       </Select>
+      {characters.length === 0 && (
+        <p className="text-[11px] text-muted-foreground leading-tight">
+          등록된 캐릭터가 없습니다.{" "}
+          <Link to="/characters" className="underline">
+            캐릭터 관리
+          </Link>
+          에서 이름과 이미지를 추가한 뒤 [추가] 버튼을 눌러 저장하세요.
+        </p>
+      )}
       {value && (
         <SignedImage
           bucket="character-refs"
@@ -497,6 +506,7 @@ function CharacterPicker({
     </div>
   );
 }
+
 
 function RefUpload({
   label,
