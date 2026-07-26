@@ -47,18 +47,16 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border bg-sidebar">
       <SidebarHeader className="border-none pt-5 pb-2">
-        <div className="flex items-center gap-3 px-2">
-          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-primary text-primary-foreground shadow-toss">
-            <Sparkles className="h-5 w-5" strokeWidth={2.4} />
-          </div>
+        <div className="flex items-center px-2">
           {!collapsed && (
             <div className="min-w-0">
-              <div className="truncate text-[17px] font-extrabold tracking-tight text-foreground">
+              <div className="truncate text-[42px] font-extrabold tracking-tight text-foreground leading-none">
                 {t("brand.name")}
               </div>
             </div>
           )}
         </div>
+
 
         {!collapsed && (
           <div className="relative mt-5 px-2">
