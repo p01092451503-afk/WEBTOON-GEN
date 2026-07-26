@@ -15,6 +15,7 @@ const inputSchema = z.object({
   batchCount: z.number().int().min(1).max(4).default(1),
   editImagePath: z.string().optional(),
   seed: z.number().int().nullable().optional(),
+  panelId: z.string().uuid().nullable().optional(),
 });
 
 export const generate = createServerFn({ method: "POST" })
@@ -67,6 +68,7 @@ export const generate = createServerFn({ method: "POST" })
         options: data.options,
         figure_map: data.figureMap,
         batch_count: data.batchCount,
+        panel_id: data.panelId ?? null,
       })
       .select("id")
       .single();
