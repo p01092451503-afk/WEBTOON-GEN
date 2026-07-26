@@ -116,10 +116,10 @@ function HistoryPage() {
                 className="group overflow-hidden rounded-2xl border border-border bg-card text-left shadow-toss-sm transition hover:shadow-toss"
               >
                 <div className="relative aspect-square overflow-hidden bg-muted">
-                  {first?.storage_path ? (
+                  {first?.thumb_path || first?.storage_path ? (
                     <SignedImage
                       bucket="generation-outputs"
-                      path={first.storage_path}
+                      path={(first.thumb_path ?? first.storage_path) as string}
                       alt={r.work_label}
                       className="h-full w-full object-cover transition group-hover:scale-[1.02]"
                     />
