@@ -432,7 +432,7 @@ function GeneratePage() {
               )}
             </div>
             <Button
-              onClick={handleGenerate}
+              onClick={() => handleGenerate()}
               disabled={gen.running}
               className="h-12 w-full rounded-xl bg-primary text-[15px] font-bold text-primary-foreground shadow-toss hover:bg-primary/90"
             >
@@ -445,7 +445,7 @@ function GeneratePage() {
                 <div className="flex items-center justify-between">
                   <StatusPill status={gen.row.status} />
                   <span className="truncate text-[11px] text-muted-foreground">
-                    {gen.currentId}
+                    {gen.currentId?.slice(0, 8)}
                   </span>
                 </div>
                 {gen.row.error_message && (
@@ -453,17 +453,48 @@ function GeneratePage() {
                     {gen.row.error_message}
                   </p>
                 )}
-                <div className="grid grid-cols-2 gap-2">
-                  {gen.row.results.map((r) => (
-                    <SignedImage
-                      key={r.id}
-                      bucket="generation-outputs"
-                      path={r.storage_path}
-                      alt={`result-${r.seq}`}
-                      className="aspect-square w-full rounded-xl border border-border object-cover"
+
+                {gen.row.results.length > 0 && (
+                  <>
+                    <VariationGrid
+                      results={gen.row.results}
+                      lockedSeeds={lockedSeeds}
+                      compareIds={compareIds}
+                      onToggleLock={toggleLock}
+                      onToggleCompare={toggleCompare}
+                      onSetAsPanel={panelId ? setAsPanel : null}
                     />
-                  ))}
-                </div>
+                    <div className="flex items-center gap-2 pt-1">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleGenerate({ keepLocks: true })}
+                        disabled={gen.running || Object.keys(lockedSeeds).length === 0}
+                        className="flex-1 rounded-lg text-xs font-semibold"
+                      >
+                        <Lock className="mr-1 h-3.5 w-3.5" />
+                        Vary the rest ({Object.keys(lockedSeeds).length} locked)
+                      </Button>
+                      {Object.keys(lockedSeeds).length > 0 && (
+                        <Button
+                          variant="ghost" size="sm"
+                          onClick={() => setLockedSeeds({})}
+                          className="rounded-lg text-xs text-muted-foreground"
+                        >
+                          Clear locks
+                        </Button>
+                      )}
+                    </div>
+
+                    {compareIds.length === 2 && (
+                      <CompareView
+                        results={gen.row.results}
+                        ids={compareIds}
+                        onClose={() => setCompareIds([])}
+                      />
+                    )}
+                  </>
+                )}
               </div>
             )}
           </div>
