@@ -98,6 +98,8 @@ export const generate = createServerFn({ method: "POST" })
         seed,
         compiled_prompt: data.compiledPrompt ?? null,
         final_prompt: cleanPrompt,
+        raw_prompt: data.rawPrompt ? sanitizePrompt(data.rawPrompt) : null,
+        prompt_edited: data.promptEdited === true,
         options: data.options,
         figure_map: data.figureMap,
         batch_count: slotSeeds.length,
