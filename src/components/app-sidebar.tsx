@@ -30,9 +30,11 @@ export function AppSidebar() {
   const isActive = (path: string) => pathname === path || pathname.startsWith(path + "/");
 
   async function handleSignOut() {
+    if (typeof window !== "undefined") sessionStorage.setItem("toonpilot:signedOut", "1");
     await supabase.auth.signOut();
     navigate({ to: "/auth", replace: true });
   }
+
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
