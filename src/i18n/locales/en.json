@@ -162,6 +162,8 @@
     "back_to_episode": "Editing storyboard panel — back to episode",
     "no_presets": "No preset data found. Seed data is required in the presets table.",
     "restored_note": "Please re-select reference images and characters.",
+    "restored_prefix": "Restored settings from previous generation ({{label}}).",
+    "upload_failed": "Upload failed: {{msg}}",
     "restored_toast": "Previous settings restored.",
     "select_character_error": "Please select at least Character A or B.",
     "submitted_panel": "Panel generation submitted",

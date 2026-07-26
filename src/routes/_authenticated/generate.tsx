@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, useCallback, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -58,6 +59,7 @@ const DEFAULT_WORK: WorkInput = {
 };
 
 function GeneratePage() {
+  const { t } = useTranslation();
   const { tenantId } = useTenant();
   const { data: characters = [] } = useCharacters();
   const { data: cfg = {} } = usePresets(tenantId);
@@ -111,8 +113,8 @@ function GeneratePage() {
       }
       if (typeof r.aspectRatio === "string") setAspectRatio(r.aspectRatio);
       if (typeof r.batchCount === "number") setBatchCount(Math.max(1, Math.min(4, r.batchCount)));
-      setRestoredNote(`Restored settings from previous generation (${r.workLabel ?? "W1"}).`);
-      toast.success("Previous settings restored.");
+      setRestoredNote(t("studio.restored_prefix", { label: r.workLabel ?? "W1" }));
+      toast.success(t("studio.restored_toast"));
     } catch {
       // ignore
     }
@@ -146,7 +148,7 @@ function GeneratePage() {
         .from("character-refs")
         .upload(path, file, { contentType: file.type });
       if (error) {
-        toast.error(`Upload failed: ${error.message}`);
+        toast.error(t("studio.upload_failed", { msg: error.message }));
         return;
       }
       const setter = kind === "bg" ? setBgRef : kind === "pose" ? setPoseRef : setStyleRef;
@@ -157,7 +159,7 @@ function GeneratePage() {
 
   async function handleGenerate(opts?: { keepLocks?: boolean }) {
     if (!charA?.primary_path && !charB?.primary_path) {
-      toast.error("Please select at least Character A or B.");
+      toast.error(t("studio.select_character_error"));
       return;
     }
     const imagePaths: string[] = [];
@@ -191,7 +193,7 @@ function GeneratePage() {
       });
       // Reset compare selection whenever a fresh batch starts; keep locks so user can iterate.
       setCompareIds([]);
-      toast.success(panelId ? "Panel generation submitted" : "Generation submitted");
+      toast.success(panelId ? t("studio.submitted_panel") : t("studio.submitted"));
     } catch (e) {
       toast.error(e instanceof Error ? e.message : String(e));
     }
@@ -217,7 +219,7 @@ function GeneratePage() {
     if (!panelId) return;
     try {
       await updatePanelFn({ data: { id: panelId, chosen_result_id: resultId, status: "done" } });
-      toast.success("Panel updated with this shot.");
+      toast.success(t("studio.panel_use_toast"));
     } catch (e) {
       toast.error(e instanceof Error ? e.message : String(e));
     }
@@ -229,17 +231,17 @@ function GeneratePage() {
     <main className="mx-auto max-w-[1400px] px-5 py-6 sm:py-8">
       <header className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-4 sm:flex sm:flex-wrap sm:justify-between">
         <div className="min-w-0">
-          <div className="text-xs font-semibold text-primary">Studio</div>
-          <h1 className="mt-1 truncate text-3xl font-extrabold tracking-tight">Generate image</h1>
+          <div className="text-xs font-semibold text-primary">{t("studio.eyebrow")}</div>
+          <h1 className="mt-1 truncate text-3xl font-extrabold tracking-tight">{t("studio.title")}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Pick references and options — the prompt assembles itself.
+            {t("studio.sub")}
           </p>
         </div>
         <Link
           to="/characters"
           className="inline-flex h-10 shrink-0 items-center justify-center rounded-full bg-primary-soft px-4 text-sm font-semibold text-primary hover:bg-primary-soft/70"
         >
-          Manage characters
+          {t("studio.manage_characters")}
         </Link>
       </header>
 
@@ -250,7 +252,7 @@ function GeneratePage() {
             className="inline-flex items-center gap-2 rounded-full bg-primary-soft px-4 py-2 text-xs font-bold text-primary hover:bg-primary-soft/70"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
-            Editing storyboard panel — back to episode
+            {t("studio.back_to_episode")}
           </Link>
         </div>
       )}
@@ -259,12 +261,12 @@ function GeneratePage() {
         <div className="mt-4 space-y-2">
           {!hasPresets && (
             <NoticeBar tone="warn">
-              No preset data found. Seed data is required in the presets table.
+              {t("studio.no_presets")}
             </NoticeBar>
           )}
           {restoredNote && (
             <NoticeBar tone="info" onClose={() => setRestoredNote(null)}>
-              {restoredNote} Please re-select reference images and characters.
+              {restoredNote} {t("studio.restored_note")}
             </NoticeBar>
           )}
         </div>
@@ -272,28 +274,28 @@ function GeneratePage() {
 
       <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-12">
         {/* Panel 1: References */}
-        <Panel step={1} title="References" className="lg:col-span-3">
+        <Panel step={1} title={t("studio.panels.references")} className="lg:col-span-3">
           <div className="space-y-4">
-            <FieldGroup label="Character A">
+            <FieldGroup label={t("studio.labels.character_a")}>
               <CharacterPicker value={charAId} onChange={setCharAId} characters={characters} />
             </FieldGroup>
-            <FieldGroup label="Character B">
+            <FieldGroup label={t("studio.labels.character_b")}>
               <CharacterPicker value={charBId} onChange={setCharBId} characters={characters} />
             </FieldGroup>
             <RefUpload
-              label="Background"
+              label={t("studio.labels.background")}
               value={bgRef}
               onFile={(f) => uploadRef(f, "bg")}
               onClear={() => setBgRef(null)}
             />
             <RefUpload
-              label="Pose / Composition"
+              label={t("studio.labels.pose")}
               value={poseRef}
               onFile={(f) => uploadRef(f, "pose")}
               onClear={() => setPoseRef(null)}
             />
             <RefUpload
-              label="Style (Advanced)"
+              label={t("studio.labels.style")}
               value={styleRef}
               onFile={(f) => uploadRef(f, "style")}
               onClear={() => setStyleRef(null)}
@@ -302,53 +304,53 @@ function GeneratePage() {
         </Panel>
 
         {/* Panel 2: Prompt Controls */}
-        <Panel step={2} title="Prompt Controls" className="lg:col-span-4">
+        <Panel step={2} title={t("studio.panels.controls")} className="lg:col-span-4">
           <div className="space-y-5">
             <PresetGallery
-              label="Pose Strength" sheet="PoseStrength" cfg={cfg}
+              label={t("studio.labels.pose_strength")} sheet="PoseStrength" cfg={cfg}
               value={work.poseStrengthId} onChange={(v) => setWork({ ...work, poseStrengthId: v })}
               variant="chip"
             />
             <PresetGallery
-              label="Camera Angle" sheet="CameraAngle" cfg={cfg}
+              label={t("studio.labels.camera_angle")} sheet="CameraAngle" cfg={cfg}
               value={work.cameraAngleId} onChange={(v) => setWork({ ...work, cameraAngleId: v })}
               variant="card"
             />
             <PresetGallery
-              label="Camera Distance" sheet="CameraDistance" cfg={cfg}
+              label={t("studio.labels.camera_distance")} sheet="CameraDistance" cfg={cfg}
               value={work.cameraDistanceId} onChange={(v) => setWork({ ...work, cameraDistanceId: v })}
               variant="card"
             />
             <PresetGallery
-              label="Camera Position" sheet="CameraPosition" cfg={cfg}
+              label={t("studio.labels.camera_position")} sheet="CameraPosition" cfg={cfg}
               value={work.cameraPositionId} onChange={(v) => setWork({ ...work, cameraPositionId: v })}
               variant="card"
             />
             <PresetGallery
-              label="Emotion" sheet="Emotion" cfg={cfg}
+              label={t("studio.labels.emotion")} sheet="Emotion" cfg={cfg}
               value={work.emotionId} onChange={(v) => setWork({ ...work, emotionId: v })}
               variant="face"
             />
 
             <div className="grid grid-cols-2 gap-2 pt-1">
-              <PresetSelect label="Bg Strength" sheet="BgStrength" cfg={cfg} value={work.bgStrengthId} onChange={(v) => setWork({ ...work, bgStrengthId: v })} />
-              <PresetSelect label="Body Source" sheet="BodySource" cfg={cfg} value={work.bodySourceId} onChange={(v) => setWork({ ...work, bodySourceId: v })} />
-              <PresetSelect label="Focus" sheet="FocusTarget" cfg={cfg} value={work.focusTargetId} onChange={(v) => setWork({ ...work, focusTargetId: v })} />
-              <PresetSelect label="Bg Style" sheet="BgStyle" cfg={cfg} value={work.bgStyleId} onChange={(v) => setWork({ ...work, bgStyleId: v })} />
-              <PresetSelect label="Costume" sheet="CostumeMode" cfg={cfg} value={work.costumeModeId} onChange={(v) => setWork({ ...work, costumeModeId: v })} />
-              <PresetSelect label="Style Finish" sheet="StyleFinish" cfg={cfg} value={work.styleFinishId} onChange={(v) => setWork({ ...work, styleFinishId: v })} />
+              <PresetSelect label={t("studio.labels.bg_strength")} sheet="BgStrength" cfg={cfg} value={work.bgStrengthId} onChange={(v) => setWork({ ...work, bgStrengthId: v })} />
+              <PresetSelect label={t("studio.labels.body_source")} sheet="BodySource" cfg={cfg} value={work.bodySourceId} onChange={(v) => setWork({ ...work, bodySourceId: v })} />
+              <PresetSelect label={t("studio.labels.focus")} sheet="FocusTarget" cfg={cfg} value={work.focusTargetId} onChange={(v) => setWork({ ...work, focusTargetId: v })} />
+              <PresetSelect label={t("studio.labels.bg_style")} sheet="BgStyle" cfg={cfg} value={work.bgStyleId} onChange={(v) => setWork({ ...work, bgStyleId: v })} />
+              <PresetSelect label={t("studio.labels.costume")} sheet="CostumeMode" cfg={cfg} value={work.costumeModeId} onChange={(v) => setWork({ ...work, costumeModeId: v })} />
+              <PresetSelect label={t("studio.labels.style_finish")} sheet="StyleFinish" cfg={cfg} value={work.styleFinishId} onChange={(v) => setWork({ ...work, styleFinishId: v })} />
             </div>
 
-            <FieldGroup label="Action">
+            <FieldGroup label={t("studio.labels.action")}>
               <Textarea
                 rows={2}
                 value={work.actionText}
                 onChange={(e) => setWork({ ...work, actionText: e.target.value })}
-                placeholder="e.g. they hold hands and walk toward the camera"
+                placeholder={t("studio.labels.action_placeholder")}
                 className="resize-none rounded-xl bg-muted/50"
               />
             </FieldGroup>
-            <FieldGroup label="Direction Memo">
+            <FieldGroup label={t("studio.labels.direction_memo")}>
               <Textarea
                 rows={2}
                 value={work.directionMemo}
@@ -359,8 +361,8 @@ function GeneratePage() {
 
             <div className="flex items-center justify-between rounded-xl bg-muted/50 px-4 py-3">
               <div>
-                <div className="text-sm font-semibold">Photopose</div>
-                <div className="text-xs text-muted-foreground">Use photorealistic pose</div>
+                <div className="text-sm font-semibold">{t("studio.labels.photopose")}</div>
+                <div className="text-xs text-muted-foreground">{t("studio.labels.photopose_hint")}</div>
               </div>
               <Switch
                 checked={work.isPhotopose}
@@ -369,7 +371,7 @@ function GeneratePage() {
             </div>
 
             <div className="grid grid-cols-2 gap-2">
-              <FieldGroup label="Aspect Ratio">
+              <FieldGroup label={t("studio.labels.aspect_ratio")}>
                 <Select value={aspectRatio} onValueChange={setAspectRatio}>
                   <SelectTrigger className="h-10 rounded-xl bg-muted/50">
                     <SelectValue />
@@ -381,7 +383,7 @@ function GeneratePage() {
                   </SelectContent>
                 </Select>
               </FieldGroup>
-              <FieldGroup label="Batch (variants)">
+              <FieldGroup label={t("studio.labels.batch")}>
                 <Input
                   type="number"
                   min={1}
@@ -398,10 +400,10 @@ function GeneratePage() {
         </Panel>
 
         {/* Panel 3: Figure Map */}
-        <Panel step={3} title="Figure Map" className="lg:col-span-2">
+        <Panel step={3} title={t("studio.panels.figure_map")} className="lg:col-span-2">
           {figureMap.length === 0 ? (
             <div className="rounded-xl border border-dashed border-border p-4 text-center text-xs text-muted-foreground">
-              Add references and they'll map automatically.
+              {t("studio.labels.figure_hint")}
             </div>
           ) : (
             <div className="space-y-2">
@@ -421,7 +423,7 @@ function GeneratePage() {
         </Panel>
 
         {/* Panel 4: Final Prompt & Result */}
-        <Panel step={4} title="Final Prompt" className="lg:col-span-3">
+        <Panel step={4} title={t("studio.panels.final_prompt")} className="lg:col-span-3">
           <div className="space-y-3">
             <Textarea
               rows={10}
@@ -430,7 +432,7 @@ function GeneratePage() {
               className="resize-none rounded-xl bg-muted/50 font-mono text-xs leading-relaxed"
             />
             <div className="flex items-center justify-between text-xs">
-              <span className="text-muted-foreground">{built.wordCount} words</span>
+              <span className="text-muted-foreground">{t("studio.labels.words", { count: built.wordCount })}</span>
               {built.warnings.length > 0 && (
                 <div className="text-right text-amber-600">
                   {built.warnings.map((w) => (
@@ -445,7 +447,7 @@ function GeneratePage() {
               className="h-12 w-full rounded-xl bg-primary text-[15px] font-bold text-primary-foreground shadow-toss hover:bg-primary/90"
             >
               <Sparkles className="mr-2 h-4 w-4" />
-              {gen.running ? "Requesting…" : "Generate"}
+              {gen.running ? t("common.requesting") : t("common.generate")}
             </Button>
 
             {gen.row && (
@@ -481,7 +483,7 @@ function GeneratePage() {
                         className="flex-1 rounded-lg text-xs font-semibold"
                       >
                         <Lock className="mr-1 h-3.5 w-3.5" />
-                        Vary the rest ({Object.keys(lockedSeeds).length} locked)
+                        {t("studio.labels.vary_the_rest", { count: Object.keys(lockedSeeds).length })}
                       </Button>
                       {Object.keys(lockedSeeds).length > 0 && (
                         <Button
@@ -489,7 +491,7 @@ function GeneratePage() {
                           onClick={() => setLockedSeeds({})}
                           className="rounded-lg text-xs text-muted-foreground"
                         >
-                          Clear locks
+                          {t("studio.labels.clear_locks")}
                         </Button>
                       )}
                     </div>
@@ -558,6 +560,7 @@ function NoticeBar({
   children: React.ReactNode;
   onClose?: () => void;
 }) {
+  const { t } = useTranslation();
   const cls =
     tone === "warn"
       ? "border-amber-300/50 bg-amber-50 text-amber-800"
@@ -566,8 +569,8 @@ function NoticeBar({
     <div className={`flex items-start justify-between gap-2 rounded-2xl border px-4 py-3 text-sm ${cls}`}>
       <span>{children}</span>
       {onClose && (
-        <IconTooltip label="Dismiss">
-          <button onClick={onClose} aria-label="Dismiss" className="shrink-0 rounded-full p-1 hover:bg-black/5">
+        <IconTooltip label={t("common.dismiss")}>
+          <button onClick={onClose} aria-label={t("common.dismiss")} className="shrink-0 rounded-full p-1 hover:bg-black/5">
             <X className="h-3.5 w-3.5" aria-hidden="true" />
           </button>
         </IconTooltip>
@@ -598,6 +601,7 @@ function CharacterPicker({
   onChange: (id: string | null) => void;
   characters: { id: string; display_name: string; primary_path: string | null }[];
 }) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-2">
       <Select
@@ -605,10 +609,10 @@ function CharacterPicker({
         onValueChange={(v) => onChange(v === "__none" ? null : v)}
       >
         <SelectTrigger className="h-10 rounded-xl bg-muted/50">
-          <SelectValue placeholder="Select" />
+          <SelectValue placeholder={t("studio.labels.select")} />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="__none">(none)</SelectItem>
+          <SelectItem value="__none">{t("studio.labels.none")}</SelectItem>
           {characters.map((c) => (
             <SelectItem key={c.id} value={c.id}>
               {c.display_name}
@@ -618,11 +622,11 @@ function CharacterPicker({
       </Select>
       {characters.length === 0 && (
         <p className="text-[11px] leading-tight text-muted-foreground">
-          No characters yet. Add one on the{" "}
+          {t("studio.labels.no_characters_hint")}{" "}
           <Link to="/characters" className="font-semibold text-primary underline">
-            characters
+            {t("studio.labels.characters_link")}
           </Link>{" "}
-          page.
+          {t("studio.labels.page_suffix")}
         </p>
       )}
       {value && (
@@ -648,6 +652,7 @@ function RefUpload({
   onFile: (f: File) => void;
   onClear: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-1.5">
       <Label className="text-[11px] font-semibold text-muted-foreground">{label}</Label>
@@ -665,13 +670,13 @@ function RefUpload({
             className="h-8 w-full rounded-lg text-xs font-semibold text-muted-foreground hover:text-destructive"
             onClick={onClear}
           >
-            <X className="mr-1 h-3.5 w-3.5" /> Remove
+            <X className="mr-1 h-3.5 w-3.5" /> {t("common.remove")}
           </Button>
         </div>
       ) : (
         <label className="flex h-24 cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-border bg-muted/40 text-xs text-muted-foreground hover:bg-muted">
           <ImagePlus className="mb-1 h-4 w-4" />
-          Choose image
+          {t("studio.labels.choose_image")}
           <input
             type="file"
             accept="image/*"
@@ -701,6 +706,7 @@ function PresetSelect({
   value: string;
   onChange: (v: string) => void;
 }) {
+  const { t } = useTranslation();
   const items = cfg[sheet] ?? [];
   const displayLabel = (it: { label_en?: string; label_ko: string }) =>
     (it.label_en && it.label_en.trim()) || it.label_ko;
@@ -709,12 +715,12 @@ function PresetSelect({
       <Label className="text-[11px] font-semibold text-muted-foreground">{label}</Label>
       <Select value={value} onValueChange={onChange}>
         <SelectTrigger className="h-10 rounded-xl bg-muted/50">
-          <SelectValue placeholder={items.length === 0 ? "(empty)" : "Select"} />
+          <SelectValue placeholder={items.length === 0 ? t("studio.labels.empty") : t("studio.labels.select")} />
         </SelectTrigger>
         <SelectContent>
           {items.length === 0 ? (
             <SelectItem value={value} disabled>
-              (no presets)
+              {t("studio.labels.no_presets_loaded")}
             </SelectItem>
           ) : (
             items.map((it) => (
@@ -742,6 +748,7 @@ function PresetGallery({
   /** chip = compact pill row, card = rectangle w/ preview, face = emoji-first square */
   variant: "chip" | "card" | "face";
 }) {
+  const { t } = useTranslation();
   const items = cfg[sheet] ?? [];
   const displayLabel = (it: PresetItem) => (it.label_en && it.label_en.trim()) || it.label_ko;
 
@@ -750,7 +757,7 @@ function PresetGallery({
       <div className="space-y-1.5">
         <Label className="text-[11px] font-semibold text-muted-foreground">{label}</Label>
         <div className="rounded-xl border border-dashed border-border p-3 text-center text-[11px] text-muted-foreground">
-          No presets loaded.
+          {t("studio.labels.no_presets_loaded")}
         </div>
       </div>
     );
@@ -906,6 +913,7 @@ function VariationGrid({
   onToggleCompare: (id: string) => void;
   onSetAsPanel: ((resultId: string) => void) | null;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="grid grid-cols-2 gap-2">
       {results.map((r) => {
@@ -929,11 +937,11 @@ function VariationGrid({
               <span className="rounded-md bg-black/60 px-1.5 py-0.5 text-[10px] font-mono text-white">
                 #{r.seq + 1} · seed {r.seed ?? "—"}
               </span>
-              <IconTooltip label={locked ? "Unlock this seed" : "Lock this seed"}>
+              <IconTooltip label={locked ? t("common.unlock_seed") : t("common.lock_seed")}>
                 <button
                   type="button"
                   onClick={() => onToggleLock(r.seq, r.seed)}
-                  aria-label={locked ? "Unlock this seed" : "Lock this seed"}
+                  aria-label={locked ? t("common.unlock_seed") : t("common.lock_seed")}
                   disabled={r.seed == null}
                   className={
                     "grid h-6 w-6 place-items-center rounded-md text-white shadow-sm " +
@@ -954,7 +962,7 @@ function VariationGrid({
                 }
               >
                 <GitCompare className="mr-1 inline h-3 w-3" />
-                {inCompare ? "Selected" : "Compare"}
+                {inCompare ? t("studio.labels.selected") : t("studio.labels.compare")}
               </button>
               {onSetAsPanel && (
                 <button
@@ -962,7 +970,7 @@ function VariationGrid({
                   onClick={() => onSetAsPanel(r.id)}
                   className="flex-1 rounded-md bg-primary px-2 py-1 text-[10px] font-bold text-primary-foreground hover:opacity-90"
                 >
-                  Use for panel
+                  {t("studio.labels.use_for_panel")}
                 </button>
               )}
             </div>
@@ -980,14 +988,15 @@ function CompareView({
   ids: string[];
   onClose: () => void;
 }) {
+  const { t } = useTranslation();
   const [a, b] = ids.map((id) => results.find((r) => r.id === id)).filter(Boolean) as typeof results;
   if (!a || !b) return null;
   return (
     <div className="rounded-2xl border border-primary/40 bg-primary-soft/40 p-3">
       <div className="mb-2 flex items-center justify-between">
-        <span className="text-[11px] font-bold text-primary">Compare</span>
-        <IconTooltip label="Close compare">
-          <button onClick={onClose} aria-label="Close compare" className="rounded-full p-1 hover:bg-black/5">
+        <span className="text-[11px] font-bold text-primary">{t("studio.labels.compare_title")}</span>
+        <IconTooltip label={t("common.close_compare")}>
+          <button onClick={onClose} aria-label={t("common.close_compare")} className="rounded-full p-1 hover:bg-black/5">
             <X className="h-3 w-3" aria-hidden="true" />
           </button>
         </IconTooltip>

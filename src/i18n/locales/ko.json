@@ -162,6 +162,8 @@
     "back_to_episode": "스토리보드 패널 편집 중 — 에피소드로 돌아가기",
     "no_presets": "프리셋 데이터가 없습니다. presets 테이블에 시드 데이터가 필요합니다.",
     "restored_note": "레퍼런스 이미지와 캐릭터는 다시 선택해 주세요.",
+    "restored_prefix": "이전 생성 설정을 복원했습니다 ({{label}}).",
+    "upload_failed": "업로드 실패: {{msg}}",
     "restored_toast": "이전 설정을 복원했습니다.",
     "select_character_error": "캐릭터 A 또는 B 중 하나 이상을 선택해 주세요.",
     "submitted_panel": "패널 생성이 요청되었습니다",
