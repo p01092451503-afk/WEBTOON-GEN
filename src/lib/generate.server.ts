@@ -1,0 +1,104 @@
+// Server-only helpers for the generate server function.
+// This file must NOT be imported from client code.
+
+export type AspectRatio = "9:16" | "16:9" | "1:1" | "4:3" | "3:4" | "21:9" | "9:21";
+
+// aspectRatio → size 매핑 (원본 규칙 준수: 최소 3,686,400px 이상 + 16의 배수)
+export function aspectRatioToSize(ar?: string): string {
+  switch (ar) {
+    case "9:16":
+      return "2160x3840";
+    case "16:9":
+      return "3840x2160";
+    case "1:1":
+      return "2880x2880";
+    case "4:3":
+      return "3520x2640";
+    case "3:4":
+      return "2640x3520";
+    case "21:9":
+      return "4320x1856";
+    case "9:21":
+      return "1856x4320";
+    default:
+      return "2880x2880"; // 안전 기본값 (문자열 '2K' 반환 금지)
+  }
+}
+
+export type ArkResult = { url: string; width?: number; height?: number };
+
+export async function callArk(params: {
+  prompt: string;
+  imageUrls: string[];
+  size: string;
+  seed?: number | null;
+  batchCount: number;
+}): Promise<ArkResult[]> {
+  const ARK_API_KEY = process.env.ARK_API_KEY;
+  const ARK_BASE_URL = process.env.ARK_BASE_URL;
+  const ARK_ENDPOINT_ID = process.env.ARK_ENDPOINT_ID;
+  if (!ARK_API_KEY || !ARK_BASE_URL || !ARK_ENDPOINT_ID) {
+    throw new Error("ARK 시크릿이 설정되지 않았습니다.");
+  }
+
+  const url = `${ARK_BASE_URL.replace(/\/$/, "")}/images/generations`;
+  const payload: Record<string, unknown> = {
+    model: ARK_ENDPOINT_ID,
+    prompt: params.prompt,
+    response_format: "url",
+    size: params.size,
+    watermark: false,
+    n: Math.max(1, Math.min(4, params.batchCount || 1)),
+  };
+  if (params.imageUrls.length > 0) payload.image = params.imageUrls;
+  if (params.seed != null) payload.seed = params.seed;
+
+  const maxAttempts = 2;
+  let lastErr: unknown;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 120_000);
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${ARK_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+      });
+      clearTimeout(timeout);
+
+      if (res.status === 429) {
+        throw new Error("ARK_RATE_LIMITED: 요청량 제한에 도달했습니다. 잠시 후 다시 시도해 주세요.");
+      }
+      if (!res.ok) {
+        const text = await res.text().catch(() => "");
+        throw new Error(`ARK_HTTP_${res.status}: ${text.slice(0, 500)}`);
+      }
+      const json = (await res.json()) as { data?: Array<{ url?: string; size?: string }> };
+      const items = Array.isArray(json.data) ? json.data : [];
+      const results: ArkResult[] = [];
+      for (const it of items) {
+        if (typeof it?.url === "string" && /^https?:\/\//i.test(it.url)) {
+          const [w, h] = String(it.size ?? params.size).split("x").map((n) => Number(n) || undefined);
+          results.push({ url: it.url, width: w, height: h });
+        }
+      }
+      if (results.length === 0) throw new Error("ARK_NO_IMAGE: 결과 이미지 URL을 파싱할 수 없습니다.");
+      return results;
+    } catch (err) {
+      clearTimeout(timeout);
+      lastErr = err;
+      const msg = err instanceof Error ? err.message : String(err);
+      // 429 는 즉시 표면화 (재시도 안 함)
+      if (msg.startsWith("ARK_RATE_LIMITED")) throw err;
+      if (attempt < maxAttempts) {
+        await new Promise((r) => setTimeout(r, 500 * Math.pow(2, attempt - 1)));
+        continue;
+      }
+    }
+  }
+  throw lastErr instanceof Error ? lastErr : new Error("ARK_UNKNOWN_ERROR");
+}
