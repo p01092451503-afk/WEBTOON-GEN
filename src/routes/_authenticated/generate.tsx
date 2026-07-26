@@ -482,19 +482,80 @@ function GeneratePage() {
         {/* Panel 4: Final Prompt & Result */}
         <Panel step={4} title={t("studio.panels.final_prompt")} className="lg:col-span-3">
           <div className="space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 text-[11px]">
+                {isEdited ? (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 font-semibold text-amber-700">
+                    <Sparkles className="h-3 w-3" aria-hidden="true" />
+                    {t("studio.labels.edited_badge", "Edited")}
+                  </span>
+                ) : (
+                  <span className="text-muted-foreground">
+                    {t("studio.labels.auto_generated", "Auto-generated")}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-1">
+                {promptEditMode ? (
+                  <Button
+                    type="button" size="sm" variant="ghost"
+                    onClick={() => setPromptEditMode(false)}
+                    className="h-7 rounded-lg text-[11px]"
+                  >
+                    {t("studio.labels.done_editing", "Done")}
+                  </Button>
+                ) : (
+                  <Button
+                    type="button" size="sm" variant="ghost"
+                    onClick={() => {
+                      setEditedPrompt(effectivePrompt);
+                      setPromptEditMode(true);
+                    }}
+                    className="h-7 rounded-lg text-[11px]"
+                  >
+                    {t("studio.labels.edit_prompt", "Edit")}
+                  </Button>
+                )}
+                {isEdited && (
+                  <Button
+                    type="button" size="sm" variant="ghost"
+                    onClick={resetEditedPrompt}
+                    className="h-7 rounded-lg text-[11px] text-muted-foreground"
+                  >
+                    {t("studio.labels.reset_prompt", "Reset")}
+                  </Button>
+                )}
+              </div>
+            </div>
             <Textarea
               rows={10}
-              readOnly
-              value={built.prompt}
-              className="resize-none rounded-xl bg-muted/50 font-mono text-xs leading-relaxed"
+              readOnly={!promptEditMode}
+              value={effectivePrompt}
+              onChange={(e) => setEditedPrompt(e.target.value)}
+              maxLength={4000}
+              className={`resize-none rounded-xl font-mono text-xs leading-relaxed ${
+                promptEditMode
+                  ? "border-primary/50 bg-background"
+                  : isEdited
+                  ? "border-amber-300 bg-amber-50/40"
+                  : "bg-muted/50"
+              }`}
             />
+            {promptEditMode && (
+              <p className="text-[11px] text-muted-foreground">
+                {t(
+                  "studio.labels.edit_hint",
+                  "Manual edits stay locked — controls won't override until you Reset.",
+                )}
+              </p>
+            )}
             {showTranslated && translated && (
               <div className="space-y-1">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-semibold text-primary">
                     {t("studio.labels.translation", "Translation")}
                     {" · "}
-                    {/[\u3131-\uD79D]/.test(built.prompt) ? "EN" : "KO"}
+                    {/[\u3131-\uD79D]/.test(effectivePrompt) ? "EN" : "KO"}
                   </span>
                   <button
                     type="button"
@@ -513,8 +574,14 @@ function GeneratePage() {
               </div>
             )}
             <div className="flex items-center justify-between text-xs">
-              <span className="text-muted-foreground">{t("studio.labels.words", { count: built.wordCount })}</span>
-              {built.warnings.length > 0 && (
+              <span className="text-muted-foreground">
+                {t("studio.labels.words", { count: effectivePrompt.trim().split(/\s+/).filter(Boolean).length })}
+                {" · "}
+                <span className={overLimit ? "font-semibold text-destructive" : ""}>
+                  {effectivePrompt.length}/4000
+                </span>
+              </span>
+              {built.warnings.length > 0 && !isEdited && (
                 <div className="text-right text-amber-600">
                   {built.warnings.map((w) => (
                     <div key={w}>{(WARN as Record<string, string>)[w] || w}</div>
@@ -526,7 +593,7 @@ function GeneratePage() {
               type="button"
               variant="outline"
               onClick={handleTranslate}
-              disabled={translating || !built.prompt}
+              disabled={translating || !effectivePrompt}
               className="h-10 w-full rounded-xl text-sm font-semibold"
             >
               {translating ? (
@@ -540,7 +607,7 @@ function GeneratePage() {
                 ? showTranslated
                   ? t("studio.labels.hide_translation", "Hide translation")
                   : t("studio.labels.show_translation", "Show translation")
-                : /[\u3131-\uD79D]/.test(built.prompt)
+                : /[\u3131-\uD79D]/.test(effectivePrompt)
                 ? t("studio.labels.translate_to_en", "Translate to English")
                 : t("studio.labels.translate_to_ko", "Translate to Korean")}
             </Button>
