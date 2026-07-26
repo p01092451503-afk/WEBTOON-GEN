@@ -73,6 +73,12 @@
   --shadow-toss: 0 10px 30px oklch(0.4 0.18 277 / 0.10);
   --shadow-toss-lg: 0 24px 60px oklch(0.4 0.22 277 / 0.16);
   --shadow-brix-glow: 0 20px 50px -12px oklch(0.55 0.24 277 / 0.35);
+
+  /* Step-by-step panel depth: deeper shadow as the workflow progresses */
+  --shadow-panel-step-1: 0 6px 18px -4px oklch(0.55 0.25 277 / 0.10);
+  --shadow-panel-step-2: 0 12px 32px -6px oklch(0.55 0.25 277 / 0.14);
+  --shadow-panel-step-3: 0 20px 48px -8px oklch(0.55 0.25 277 / 0.18);
+  --shadow-panel-step-4: 0 28px 70px -10px oklch(0.55 0.25 277 / 0.24);
 }
 
 :root {
