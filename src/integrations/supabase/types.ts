@@ -119,6 +119,7 @@ export type Database = {
           generation_id: string
           height: number | null
           id: string
+          seed: number | null
           seq: number
           source_url: string | null
           source_url_expires_at: string | null
@@ -131,6 +132,7 @@ export type Database = {
           generation_id: string
           height?: number | null
           id?: string
+          seed?: number | null
           seq?: number
           source_url?: string | null
           source_url_expires_at?: string | null
@@ -143,6 +145,7 @@ export type Database = {
           generation_id?: string
           height?: number | null
           id?: string
+          seed?: number | null
           seq?: number
           source_url?: string | null
           source_url_expires_at?: string | null
@@ -308,6 +311,7 @@ export type Database = {
           label_en: string | null
           label_ko: string
           level: number
+          preview_path: string | null
           prompt_text: string | null
           sheet: string
           sort_order: number
@@ -321,6 +325,7 @@ export type Database = {
           label_en?: string | null
           label_ko: string
           level?: number
+          preview_path?: string | null
           prompt_text?: string | null
           sheet: string
           sort_order?: number
@@ -334,6 +339,7 @@ export type Database = {
           label_en?: string | null
           label_ko?: string
           level?: number
+          preview_path?: string | null
           prompt_text?: string | null
           sheet?: string
           sort_order?: number

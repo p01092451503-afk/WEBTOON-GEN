@@ -15,6 +15,8 @@ const inputSchema = z.object({
   batchCount: z.number().int().min(1).max(4).default(1),
   editImagePath: z.string().optional(),
   seed: z.number().int().nullable().optional(),
+  /** Explicit per-slot seeds. When provided, batchCount is derived from length. Used for lock-one/vary-rest. */
+  seeds: z.array(z.number().int()).max(4).optional(),
   panelId: z.string().uuid().nullable().optional(),
 });
 
@@ -48,7 +50,21 @@ export const generate = createServerFn({ method: "POST" })
     // 3) generations row 생성
     const { aspectRatioToSize, callArk, makeThumbnailWebp } = await import("@/lib/generate.server");
     const size = aspectRatioToSize(data.aspectRatio);
-    const seed = data.seed ?? Math.floor(Math.random() * 2_000_000_000);
+
+    // Build per-slot seed list (explicit seeds win; else derive from batchCount)
+    const slotSeeds: number[] = (() => {
+      if (data.seeds && data.seeds.length > 0) return data.seeds.slice(0, 4);
+      const n = Math.max(1, Math.min(4, data.batchCount ?? 1));
+      const base = data.seed ?? Math.floor(Math.random() * 2_000_000_000);
+      // If a single seed was passed and batch > 1, still fan out with derived distinct seeds
+      // so each slot actually varies.
+      if (n === 1) return [base];
+      return Array.from({ length: n }, (_, i) =>
+        i === 0 ? base : Math.floor(Math.random() * 2_000_000_000),
+      );
+    })();
+
+    const seed = slotSeeds[0];
     const apiModel = process.env.ARK_ENDPOINT_ID ?? "unknown";
 
     const { data: genRow, error: genErr } = await supabase
@@ -67,7 +83,7 @@ export const generate = createServerFn({ method: "POST" })
         final_prompt: cleanPrompt,
         options: data.options,
         figure_map: data.figureMap,
-        batch_count: data.batchCount,
+        batch_count: slotSeeds.length,
         panel_id: data.panelId ?? null,
       })
       .select("id")
@@ -95,14 +111,12 @@ export const generate = createServerFn({ method: "POST" })
         imageUrls.push(signed.signedUrl);
       }
 
-      // 5) ARK 호출
-      const arkResults = await callArk({
-        prompt: cleanPrompt,
-        imageUrls,
-        size,
-        seed,
-        batchCount: data.batchCount,
-      });
+      // 5) ARK 호출 — 슬롯별 seed 로 병렬 요청하여 실제 변형(variation) 결과를 얻는다.
+      const arkPerSlot = await Promise.all(
+        slotSeeds.map((s) =>
+          callArk({ prompt: cleanPrompt, imageUrls, size, seed: s }).then((r) => r[0]),
+        ),
+      );
 
       // 7) 결과 이미지 저장
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -113,10 +127,12 @@ export const generate = createServerFn({ method: "POST" })
         source_url: string;
         width?: number;
         height?: number;
+        seed: number;
       }> = [];
 
-      for (let i = 0; i < arkResults.length; i++) {
-        const r = arkResults[i];
+      for (let i = 0; i < arkPerSlot.length; i++) {
+        const r = arkPerSlot[i];
+        if (!r) continue;
         const imgRes = await fetch(r.url);
         if (!imgRes.ok) throw new Error(`FETCH_RESULT_FAILED: ${imgRes.status}`);
         const bytes = new Uint8Array(await imgRes.arrayBuffer());
@@ -152,6 +168,7 @@ export const generate = createServerFn({ method: "POST" })
           source_url: r.url,
           width: r.width,
           height: r.height,
+          seed: slotSeeds[i],
         });
       }
 
@@ -167,10 +184,12 @@ export const generate = createServerFn({ method: "POST" })
             source_url_expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
             width: s.width ?? null,
             height: s.height ?? null,
+            seed: s.seed,
           })),
         );
         if (resErr) throw new Error(`DB_INSERT_RESULTS_FAILED: ${resErr.message}`);
       }
+
 
       await supabaseAdmin.from("usage_events").insert({
         tenant_id: tenantId,

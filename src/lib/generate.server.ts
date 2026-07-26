@@ -50,7 +50,8 @@ export async function callArk(params: {
   imageUrls: string[];
   size: string;
   seed?: number | null;
-  batchCount: number;
+  /** Kept for backward-compat but ignored — the handler now issues one ARK call per seed to produce real variation. */
+  batchCount?: number;
 }): Promise<ArkResult[]> {
   const ARK_API_KEY = process.env.ARK_API_KEY;
   const ARK_BASE_URL = process.env.ARK_BASE_URL;
@@ -66,7 +67,7 @@ export async function callArk(params: {
     response_format: "url",
     size: params.size,
     watermark: false,
-    n: Math.max(1, Math.min(4, params.batchCount || 1)),
+    n: 1,
   };
   if (params.imageUrls.length > 0) payload.image = params.imageUrls;
   if (params.seed != null) payload.seed = params.seed;
@@ -110,7 +111,6 @@ export async function callArk(params: {
       clearTimeout(timeout);
       lastErr = err;
       const msg = err instanceof Error ? err.message : String(err);
-      // 429 는 즉시 표면화 (재시도 안 함)
       if (msg.startsWith("ARK_RATE_LIMITED")) throw err;
       if (attempt < maxAttempts) {
         await new Promise((r) => setTimeout(r, 500 * Math.pow(2, attempt - 1)));

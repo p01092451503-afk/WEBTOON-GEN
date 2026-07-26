@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/hooks/useTenant";
@@ -7,8 +8,9 @@ import { useCharacters } from "@/hooks/useCharacters";
 import { usePresets } from "@/hooks/usePresets";
 import { useGeneration } from "@/hooks/useGeneration";
 import { SignedImage } from "@/components/SignedImage";
-import { buildFigureMap, buildPrompt, WARN, type WorkInput } from "@/lib/promptEngine";
-import { ArrowLeft } from "lucide-react";
+import { buildFigureMap, buildPrompt, WARN, type WorkInput, type PresetItem } from "@/lib/promptEngine";
+import { updatePanel } from "@/lib/projects.functions";
+import { ArrowLeft, Lock, Unlock, GitCompare, Check, Sparkles, ImagePlus, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -22,7 +24,6 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { ImagePlus, Sparkles, X } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/generate")({
   component: GeneratePage,
@@ -65,6 +66,9 @@ function GeneratePage() {
   const [restoredNote, setRestoredNote] = useState<string | null>(null);
   const [panelId, setPanelId] = useState<string | null>(null);
   const [backEpisodeId, setBackEpisodeId] = useState<string | null>(null);
+  const [lockedSeeds, setLockedSeeds] = useState<Record<number, number>>({});
+  const [compareIds, setCompareIds] = useState<string[]>([]);
+  const updatePanelFn = useServerFn(updatePanel);
 
   // Read query params: panel / charA / charB / back
   useEffect(() => {
@@ -143,7 +147,7 @@ function GeneratePage() {
     [tenantId],
   );
 
-  async function handleGenerate() {
+  async function handleGenerate(opts?: { keepLocks?: boolean }) {
     if (!charA?.primary_path && !charB?.primary_path) {
       toast.error("Please select at least Character A or B.");
       return;
@@ -154,6 +158,15 @@ function GeneratePage() {
     if (bgRef) imagePaths.push(bgRef.path);
     if (poseRef) imagePaths.push(poseRef.path);
     if (styleRef) imagePaths.push(styleRef.path);
+
+    // Build per-slot seed list. Locked slots reuse their seed; others get a new random seed.
+    const useLocks = opts?.keepLocks && Object.keys(lockedSeeds).length > 0;
+    const seeds: number[] | undefined = useLocks
+      ? Array.from({ length: batchCount }, (_, i) =>
+          lockedSeeds[i] ?? Math.floor(Math.random() * 2_000_000_000),
+        )
+      : undefined;
+
     try {
       await gen.run({
         workLabel: "W1",
@@ -165,9 +178,38 @@ function GeneratePage() {
         figureMap,
         options: { ...work, aspectRatio },
         batchCount,
+        seeds,
         panelId: panelId ?? undefined,
       });
-      toast.success(panelId ? "Panel generation submitted" : "Generation request submitted");
+      // Reset compare selection whenever a fresh batch starts; keep locks so user can iterate.
+      setCompareIds([]);
+      toast.success(panelId ? "Panel generation submitted" : "Generation submitted");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : String(e));
+    }
+  }
+
+  function toggleLock(seq: number, seed: number | null) {
+    if (seed == null) return;
+    setLockedSeeds((prev) => {
+      const next = { ...prev };
+      if (next[seq] === seed) delete next[seq];
+      else next[seq] = seed;
+      return next;
+    });
+  }
+  function toggleCompare(id: string) {
+    setCompareIds((prev) => {
+      if (prev.includes(id)) return prev.filter((x) => x !== id);
+      if (prev.length >= 2) return [prev[1], id];
+      return [...prev, id];
+    });
+  }
+  async function setAsPanel(resultId: string) {
+    if (!panelId) return;
+    try {
+      await updatePanelFn({ data: { id: panelId, chosen_result_id: resultId, status: "done" } });
+      toast.success("Panel updated with this shot.");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : String(e));
     }
@@ -253,18 +295,39 @@ function GeneratePage() {
 
         {/* Panel 2: Prompt Controls */}
         <Panel step={2} title="Prompt Controls" className="lg:col-span-4">
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-2">
-              <PresetSelect label="Pose Strength" sheet="PoseStrength" cfg={cfg} value={work.poseStrengthId} onChange={(v) => setWork({ ...work, poseStrengthId: v })} />
+          <div className="space-y-5">
+            <PresetGallery
+              label="Pose Strength" sheet="PoseStrength" cfg={cfg}
+              value={work.poseStrengthId} onChange={(v) => setWork({ ...work, poseStrengthId: v })}
+              variant="chip"
+            />
+            <PresetGallery
+              label="Camera Angle" sheet="CameraAngle" cfg={cfg}
+              value={work.cameraAngleId} onChange={(v) => setWork({ ...work, cameraAngleId: v })}
+              variant="card"
+            />
+            <PresetGallery
+              label="Camera Distance" sheet="CameraDistance" cfg={cfg}
+              value={work.cameraDistanceId} onChange={(v) => setWork({ ...work, cameraDistanceId: v })}
+              variant="card"
+            />
+            <PresetGallery
+              label="Camera Position" sheet="CameraPosition" cfg={cfg}
+              value={work.cameraPositionId} onChange={(v) => setWork({ ...work, cameraPositionId: v })}
+              variant="card"
+            />
+            <PresetGallery
+              label="Emotion" sheet="Emotion" cfg={cfg}
+              value={work.emotionId} onChange={(v) => setWork({ ...work, emotionId: v })}
+              variant="face"
+            />
+
+            <div className="grid grid-cols-2 gap-2 pt-1">
               <PresetSelect label="Bg Strength" sheet="BgStrength" cfg={cfg} value={work.bgStrengthId} onChange={(v) => setWork({ ...work, bgStrengthId: v })} />
               <PresetSelect label="Body Source" sheet="BodySource" cfg={cfg} value={work.bodySourceId} onChange={(v) => setWork({ ...work, bodySourceId: v })} />
-              <PresetSelect label="Camera Angle" sheet="CameraAngle" cfg={cfg} value={work.cameraAngleId} onChange={(v) => setWork({ ...work, cameraAngleId: v })} />
-              <PresetSelect label="Camera Distance" sheet="CameraDistance" cfg={cfg} value={work.cameraDistanceId} onChange={(v) => setWork({ ...work, cameraDistanceId: v })} />
-              <PresetSelect label="Camera Position" sheet="CameraPosition" cfg={cfg} value={work.cameraPositionId} onChange={(v) => setWork({ ...work, cameraPositionId: v })} />
               <PresetSelect label="Focus" sheet="FocusTarget" cfg={cfg} value={work.focusTargetId} onChange={(v) => setWork({ ...work, focusTargetId: v })} />
               <PresetSelect label="Bg Style" sheet="BgStyle" cfg={cfg} value={work.bgStyleId} onChange={(v) => setWork({ ...work, bgStyleId: v })} />
               <PresetSelect label="Costume" sheet="CostumeMode" cfg={cfg} value={work.costumeModeId} onChange={(v) => setWork({ ...work, costumeModeId: v })} />
-              <PresetSelect label="Emotion" sheet="Emotion" cfg={cfg} value={work.emotionId} onChange={(v) => setWork({ ...work, emotionId: v })} />
               <PresetSelect label="Style Finish" sheet="StyleFinish" cfg={cfg} value={work.styleFinishId} onChange={(v) => setWork({ ...work, styleFinishId: v })} />
             </div>
 
@@ -310,7 +373,7 @@ function GeneratePage() {
                   </SelectContent>
                 </Select>
               </FieldGroup>
-              <FieldGroup label="Batch">
+              <FieldGroup label="Batch (variants)">
                 <Input
                   type="number"
                   min={1}
@@ -369,7 +432,7 @@ function GeneratePage() {
               )}
             </div>
             <Button
-              onClick={handleGenerate}
+              onClick={() => handleGenerate()}
               disabled={gen.running}
               className="h-12 w-full rounded-xl bg-primary text-[15px] font-bold text-primary-foreground shadow-toss hover:bg-primary/90"
             >
@@ -382,7 +445,7 @@ function GeneratePage() {
                 <div className="flex items-center justify-between">
                   <StatusPill status={gen.row.status} />
                   <span className="truncate text-[11px] text-muted-foreground">
-                    {gen.currentId}
+                    {gen.currentId?.slice(0, 8)}
                   </span>
                 </div>
                 {gen.row.error_message && (
@@ -390,17 +453,48 @@ function GeneratePage() {
                     {gen.row.error_message}
                   </p>
                 )}
-                <div className="grid grid-cols-2 gap-2">
-                  {gen.row.results.map((r) => (
-                    <SignedImage
-                      key={r.id}
-                      bucket="generation-outputs"
-                      path={r.storage_path}
-                      alt={`result-${r.seq}`}
-                      className="aspect-square w-full rounded-xl border border-border object-cover"
+
+                {gen.row.results.length > 0 && (
+                  <>
+                    <VariationGrid
+                      results={gen.row.results}
+                      lockedSeeds={lockedSeeds}
+                      compareIds={compareIds}
+                      onToggleLock={toggleLock}
+                      onToggleCompare={toggleCompare}
+                      onSetAsPanel={panelId ? setAsPanel : null}
                     />
-                  ))}
-                </div>
+                    <div className="flex items-center gap-2 pt-1">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleGenerate({ keepLocks: true })}
+                        disabled={gen.running || Object.keys(lockedSeeds).length === 0}
+                        className="flex-1 rounded-lg text-xs font-semibold"
+                      >
+                        <Lock className="mr-1 h-3.5 w-3.5" />
+                        Vary the rest ({Object.keys(lockedSeeds).length} locked)
+                      </Button>
+                      {Object.keys(lockedSeeds).length > 0 && (
+                        <Button
+                          variant="ghost" size="sm"
+                          onClick={() => setLockedSeeds({})}
+                          className="rounded-lg text-xs text-muted-foreground"
+                        >
+                          Clear locks
+                        </Button>
+                      )}
+                    </div>
+
+                    {compareIds.length === 2 && (
+                      <CompareView
+                        results={gen.row.results}
+                        ids={compareIds}
+                        onClose={() => setCompareIds([])}
+                      />
+                    )}
+                  </>
+                )}
               </div>
             )}
           </div>
@@ -626,3 +720,237 @@ function PresetSelect({
     </div>
   );
 }
+
+/* ---------- S3: Preset Gallery (visual cards) ---------- */
+
+function PresetGallery({
+  label, sheet, cfg, value, onChange, variant,
+}: {
+  label: string;
+  sheet: string;
+  cfg: Record<string, PresetItem[]>;
+  value: string;
+  onChange: (v: string) => void;
+  /** chip = compact pill row, card = rectangle w/ preview, face = emoji-first square */
+  variant: "chip" | "card" | "face";
+}) {
+  const items = cfg[sheet] ?? [];
+  const displayLabel = (it: PresetItem) => (it.label_en && it.label_en.trim()) || it.label_ko;
+
+  if (items.length === 0) {
+    return (
+      <div className="space-y-1.5">
+        <Label className="text-[11px] font-semibold text-muted-foreground">{label}</Label>
+        <div className="rounded-xl border border-dashed border-border p-3 text-center text-[11px] text-muted-foreground">
+          No presets loaded.
+        </div>
+      </div>
+    );
+  }
+
+  if (variant === "chip") {
+    return (
+      <div className="space-y-1.5">
+        <Label className="text-[11px] font-semibold text-muted-foreground">{label}</Label>
+        <div className="flex flex-wrap gap-1.5">
+          {items.map((it) => {
+            const active = it.id === value;
+            return (
+              <button
+                key={it.id}
+                type="button"
+                onClick={() => onChange(it.id)}
+                className={
+                  "rounded-full border px-3 py-1.5 text-[11px] font-bold transition " +
+                  (active
+                    ? "border-primary bg-primary text-primary-foreground shadow-toss-sm"
+                    : "border-border bg-muted/50 text-foreground hover:border-primary/40")
+                }
+              >
+                {displayLabel(it)}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  // card / face → grid of tiles
+  const cols = variant === "face" ? "grid-cols-5" : "grid-cols-4";
+  return (
+    <div className="space-y-1.5">
+      <Label className="text-[11px] font-semibold text-muted-foreground">{label}</Label>
+      <div className={`grid ${cols} gap-1.5`}>
+        {items.map((it) => {
+          const active = it.id === value;
+          return (
+            <button
+              key={it.id}
+              type="button"
+              onClick={() => onChange(it.id)}
+              title={displayLabel(it)}
+              className={
+                "group relative flex aspect-square flex-col items-center justify-end gap-0.5 overflow-hidden rounded-xl border p-1.5 text-[10px] font-semibold transition " +
+                (active
+                  ? "border-primary bg-primary/5 ring-2 ring-primary"
+                  : "border-border bg-muted/40 hover:border-primary/40")
+              }
+            >
+              {it.preview_path ? (
+                <img
+                  src={it.preview_path}
+                  alt=""
+                  className="absolute inset-0 h-full w-full object-cover opacity-90 group-hover:opacity-100"
+                />
+              ) : (
+                <span
+                  aria-hidden
+                  className="absolute inset-0 grid place-items-center text-2xl opacity-40"
+                >
+                  {variant === "face" ? emojiForEmotion(it.id) : iconForCamera(sheet, it.id)}
+                </span>
+              )}
+              <span className="relative z-10 max-w-full truncate rounded bg-background/80 px-1 text-[10px] leading-tight text-foreground shadow-sm backdrop-blur">
+                {displayLabel(it)}
+              </span>
+              {active && (
+                <Check className="absolute right-1 top-1 z-10 h-3.5 w-3.5 rounded-full bg-primary p-0.5 text-primary-foreground" />
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function emojiForEmotion(id: string): string {
+  const m: Record<string, string> = {
+    EMO_000: "😐", EMO_001: "🙂", EMO_002: "😊", EMO_003: "😄", EMO_004: "😢",
+    EMO_005: "😠", EMO_006: "😳", EMO_007: "😲", EMO_008: "😌", EMO_009: "😍",
+    EMO_010: "😴", EMO_011: "😤", EMO_012: "🥺", EMO_013: "😏", EMO_014: "😱",
+  };
+  return m[id] ?? "🎭";
+}
+function iconForCamera(sheet: string, _id: string): string {
+  if (sheet.startsWith("CameraAngle")) return "📐";
+  if (sheet.startsWith("CameraDistance")) return "🔭";
+  if (sheet.startsWith("CameraPosition")) return "🎥";
+  if (sheet.startsWith("Pose")) return "🕺";
+  return "✨";
+}
+
+/* ---------- S4: Variation grid + compare + set-as-panel ---------- */
+
+function VariationGrid({
+  results, lockedSeeds, compareIds, onToggleLock, onToggleCompare, onSetAsPanel,
+}: {
+  results: Array<{ id: string; seq: number; storage_path: string | null; thumb_path: string | null; seed: number | null }>;
+  lockedSeeds: Record<number, number>;
+  compareIds: string[];
+  onToggleLock: (seq: number, seed: number | null) => void;
+  onToggleCompare: (id: string) => void;
+  onSetAsPanel: ((resultId: string) => void) | null;
+}) {
+  return (
+    <div className="grid grid-cols-2 gap-2">
+      {results.map((r) => {
+        const locked = r.seed != null && lockedSeeds[r.seq] === r.seed;
+        const inCompare = compareIds.includes(r.id);
+        return (
+          <div
+            key={r.id}
+            className={
+              "group relative overflow-hidden rounded-xl border " +
+              (inCompare ? "border-primary ring-2 ring-primary" : "border-border")
+            }
+          >
+            <SignedImage
+              bucket="generation-outputs"
+              path={r.thumb_path ?? r.storage_path}
+              alt={`variant-${r.seq}`}
+              className="aspect-square w-full object-cover"
+            />
+            <div className="absolute inset-x-0 top-0 flex items-center justify-between p-1.5">
+              <span className="rounded-md bg-black/60 px-1.5 py-0.5 text-[10px] font-mono text-white">
+                #{r.seq + 1} · seed {r.seed ?? "—"}
+              </span>
+              <button
+                type="button"
+                onClick={() => onToggleLock(r.seq, r.seed)}
+                title={locked ? "Unlock" : "Lock this seed"}
+                disabled={r.seed == null}
+                className={
+                  "grid h-6 w-6 place-items-center rounded-md text-white shadow-sm " +
+                  (locked ? "bg-primary" : "bg-black/60 hover:bg-black/80 disabled:opacity-40")
+                }
+              >
+                {locked ? <Lock className="h-3 w-3" /> : <Unlock className="h-3 w-3" />}
+              </button>
+            </div>
+            <div className="absolute inset-x-0 bottom-0 flex items-center gap-1 bg-gradient-to-t from-black/70 to-transparent p-1.5 opacity-0 transition group-hover:opacity-100">
+              <button
+                type="button"
+                onClick={() => onToggleCompare(r.id)}
+                className={
+                  "flex-1 rounded-md px-2 py-1 text-[10px] font-bold " +
+                  (inCompare ? "bg-primary text-primary-foreground" : "bg-white/90 text-foreground hover:bg-white")
+                }
+              >
+                <GitCompare className="mr-1 inline h-3 w-3" />
+                {inCompare ? "Selected" : "Compare"}
+              </button>
+              {onSetAsPanel && (
+                <button
+                  type="button"
+                  onClick={() => onSetAsPanel(r.id)}
+                  className="flex-1 rounded-md bg-primary px-2 py-1 text-[10px] font-bold text-primary-foreground hover:opacity-90"
+                >
+                  Use for panel
+                </button>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function CompareView({
+  results, ids, onClose,
+}: {
+  results: Array<{ id: string; seq: number; storage_path: string | null; thumb_path: string | null; seed: number | null }>;
+  ids: string[];
+  onClose: () => void;
+}) {
+  const [a, b] = ids.map((id) => results.find((r) => r.id === id)).filter(Boolean) as typeof results;
+  if (!a || !b) return null;
+  return (
+    <div className="rounded-2xl border border-primary/40 bg-primary-soft/40 p-3">
+      <div className="mb-2 flex items-center justify-between">
+        <span className="text-[11px] font-bold text-primary">Compare</span>
+        <button onClick={onClose} className="rounded-full p-1 hover:bg-black/5">
+          <X className="h-3 w-3" />
+        </button>
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        {[a, b].map((r, idx) => (
+          <div key={r.id} className="space-y-1">
+            <div className="text-[10px] font-bold uppercase text-muted-foreground">
+              {idx === 0 ? "A" : "B"} · seed {r.seed ?? "—"}
+            </div>
+            <SignedImage
+              bucket="generation-outputs"
+              path={r.storage_path ?? r.thumb_path}
+              alt={`compare-${idx}`}
+              className="aspect-square w-full rounded-lg border border-border object-cover"
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
