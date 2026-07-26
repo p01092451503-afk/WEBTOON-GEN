@@ -7,6 +7,7 @@ export type PresetItem = {
   label_en: string;
   prompt_text: string;
   level: number;
+  preview_path?: string | null;
 };
 
 export type PromptConfig = Record<string, PresetItem[]>; // sheet -> items (presets 테이블에서 조립)

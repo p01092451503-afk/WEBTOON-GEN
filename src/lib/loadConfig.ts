@@ -9,7 +9,7 @@ export async function loadConfig(
 ): Promise<PromptConfig> {
   const { data, error } = await supabase
     .from('presets')
-    .select('sheet,item_id,label_ko,label_en,prompt_text,level,sort_order')
+    .select('sheet,item_id,label_ko,label_en,prompt_text,level,sort_order,preview_path')
     .or(`tenant_id.is.null,tenant_id.eq.${tenantId}`)
     .eq('active', true)
     .order('sort_order');
@@ -24,6 +24,7 @@ export async function loadConfig(
       label_en: r.label_en ?? '',
       prompt_text: r.prompt_text ?? '',
       level: r.level ?? 0,
+      preview_path: (r as { preview_path?: string | null }).preview_path ?? null,
     });
   }
   return cfg;
