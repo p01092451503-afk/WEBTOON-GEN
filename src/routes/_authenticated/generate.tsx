@@ -769,12 +769,15 @@ function PresetGallery({
                 type="button"
                 onClick={() => onChange(it.id)}
                 className={
-                  "rounded-full border px-3 py-1.5 text-[11px] font-bold transition " +
+                  "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-bold transition " +
                   (active
                     ? "border-primary bg-primary text-primary-foreground shadow-toss-sm"
                     : "border-border bg-muted/50 text-foreground hover:border-primary/40")
                 }
               >
+                <span aria-hidden className="inline-flex">
+                  {iconForPreset(sheet, it.id, "h-3.5 w-3.5")}
+                </span>
                 {displayLabel(it)}
               </button>
             );
@@ -784,7 +787,7 @@ function PresetGallery({
     );
   }
 
-  // card / face → grid of tiles
+  // card / face → grid of tiles with prominent icon label + text
   const cols = variant === "face" ? "grid-cols-5" : "grid-cols-4";
   return (
     <div className="space-y-1.5">
@@ -792,41 +795,59 @@ function PresetGallery({
       <div className={`grid ${cols} gap-1.5`}>
         {items.map((it) => {
           const active = it.id === value;
+          const hasPreview = Boolean(it.preview_path);
+          const iconEl = variant === "face"
+            ? iconForEmotion(it.id, "h-5 w-5")
+            : iconForCamera(sheet, "h-5 w-5");
           return (
             <button
               key={it.id}
               type="button"
               onClick={() => onChange(it.id)}
               title={displayLabel(it)}
+              aria-pressed={active}
               className={
-                "group relative flex aspect-square flex-col items-center justify-end gap-0.5 overflow-hidden rounded-xl border p-1.5 text-[10px] font-semibold transition " +
+                "group relative flex aspect-square flex-col items-center justify-between gap-1 overflow-hidden rounded-xl border p-2 text-[10px] font-semibold transition " +
                 (active
                   ? "border-primary bg-primary/5 ring-2 ring-primary"
-                  : "border-border bg-muted/40 hover:border-primary/40")
+                  : "border-border bg-muted/40 hover:border-primary/40 hover:bg-muted/60")
               }
             >
-              {it.preview_path ? (
+              {hasPreview && (
                 <img
-                  src={it.preview_path}
+                  src={it.preview_path!}
                   alt=""
                   className="absolute inset-0 h-full w-full object-cover opacity-90 group-hover:opacity-100"
                 />
-              ) : (
-                <span
-                  aria-hidden
-                  className={
-                    "absolute inset-0 grid place-items-center opacity-40 " +
-                    (active ? "text-primary opacity-70" : "text-muted-foreground")
-                  }
-                >
-                  {variant === "face"
-                    ? iconForEmotion(it.id)
-                    : iconForCamera(sheet, it.id)}
-                </span>
               )}
-              <span className="relative z-10 max-w-full truncate rounded bg-background/80 px-1 text-[10px] leading-tight text-foreground shadow-sm backdrop-blur">
+
+              {/* Icon label — sits at the top for consistent visual anchoring */}
+              <span
+                className={
+                  "relative z-10 inline-grid h-9 w-9 place-items-center rounded-xl transition " +
+                  (hasPreview
+                    ? "bg-background/85 text-foreground shadow-sm backdrop-blur"
+                    : active
+                      ? "bg-primary text-primary-foreground shadow-toss-sm"
+                      : "bg-primary-soft text-primary group-hover:bg-primary-soft/80")
+                }
+                aria-hidden
+              >
+                {iconEl}
+              </span>
+
+              {/* Text label */}
+              <span
+                className={
+                  "relative z-10 max-w-full truncate rounded px-1 text-[10px] leading-tight " +
+                  (hasPreview
+                    ? "bg-background/80 text-foreground shadow-sm backdrop-blur"
+                    : "text-foreground")
+                }
+              >
                 {displayLabel(it)}
               </span>
+
               {active && (
                 <Check className="absolute right-1 top-1 z-10 h-3.5 w-3.5 rounded-full bg-primary p-0.5 text-primary-foreground" />
               )}
@@ -838,8 +859,12 @@ function PresetGallery({
   );
 }
 
-function iconForEmotion(id: string) {
-  const cls = "h-7 w-7";
+function iconForPreset(sheet: string, id: string, cls = "h-4 w-4") {
+  if (sheet.startsWith("Emotion")) return iconForEmotion(id, cls);
+  return iconForCamera(sheet, cls);
+}
+
+function iconForEmotion(id: string, cls = "h-7 w-7") {
   const m: Record<string, ReactNode> = {
     EMO_000: <Meh className={cls} />,
     EMO_001: <Smile className={cls} />,
@@ -860,14 +885,14 @@ function iconForEmotion(id: string) {
   };
   return m[id] ?? <Drama className={cls} />;
 }
-function iconForCamera(sheet: string, _id: string) {
-  const cls = "h-7 w-7";
+function iconForCamera(sheet: string, cls = "h-7 w-7") {
   if (sheet.startsWith("CameraAngle")) return <Triangle className={cls} />;
   if (sheet.startsWith("CameraDistance")) return <Focus className={cls} />;
   if (sheet.startsWith("CameraPosition")) return <Video className={cls} />;
   if (sheet.startsWith("Pose")) return <PersonStanding className={cls} />;
   return <Sparkles className={cls} />;
 }
+
 
 /* ---------- S4: Variation grid + compare + set-as-panel ---------- */
 
