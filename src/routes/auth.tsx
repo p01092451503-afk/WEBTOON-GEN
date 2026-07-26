@@ -31,7 +31,6 @@ function AuthPage() {
   const [email, setEmail] = useState(DEV_EMAIL);
   const [password, setPassword] = useState(DEV_PASSWORD);
   const [loading, setLoading] = useState(false);
-  const [autoTried, setAutoTried] = useState(false);
 
   async function submit(currentMode: "signin" | "signup", em: string, pw: string) {
     setLoading(true);
@@ -61,16 +60,7 @@ function AuthPage() {
     await submit(mode, email, password);
   }
 
-  useEffect(() => {
-    if (autoTried) return;
-    setAutoTried(true);
-    if (typeof window !== "undefined" && sessionStorage.getItem("toonpilot:signedOut") === "1") {
-      sessionStorage.removeItem("toonpilot:signedOut");
-      return;
-    }
-    void submit("signin", DEV_EMAIL, DEV_PASSWORD);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+
 
 
   return (
