@@ -176,7 +176,7 @@ export const updatePanel = createServerFn({ method: "POST" })
     }).parse(d),
   )
   .handler(async ({ data, context }) => {
-    const patch: Record<string, unknown> = {};
+    const patch: { caption?: string | null; chosen_result_id?: string | null; status?: string } = {};
     if (data.caption !== undefined) patch.caption = data.caption;
     if (data.chosen_result_id !== undefined) patch.chosen_result_id = data.chosen_result_id;
     if (data.status !== undefined) patch.status = data.status;
