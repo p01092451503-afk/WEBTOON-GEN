@@ -24,6 +24,7 @@ const PAGE_META_KEYS: Record<string, string> = {
 };
 
 function AuthenticatedLayout() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [status, setStatus] = useState<"checking" | "onboarding" | "ready" | "error">("checking");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -32,9 +33,13 @@ function AuthenticatedLayout() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   const meta = useMemo(() => {
-    const key = Object.keys(PAGE_META).find((k) => pathname === k || pathname.startsWith(k + "/"));
-    return key ? PAGE_META[key] : { title: "toonpilot", sub: "" };
-  }, [pathname]);
+    const key = Object.keys(PAGE_META_KEYS).find((k) => pathname === k || pathname.startsWith(k + "/"));
+    if (!key) return { title: t("brand.name"), sub: "" };
+    return {
+      title: t(`${PAGE_META_KEYS[key]}.title`),
+      sub: t(`${PAGE_META_KEYS[key]}.sub`),
+    };
+  }, [pathname, t]);
 
   useEffect(() => {
     let cancelled = false;
@@ -71,7 +76,7 @@ function AuthenticatedLayout() {
       <main className="flex min-h-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-3 text-sm text-muted-foreground">
           <div className="h-10 w-10 animate-pulse rounded-2xl bg-primary-soft" />
-          {status === "checking" ? "Checking session…" : "Preparing your workspace…"}
+          {status === "checking" ? t("auth.checking_session") : t("auth.preparing_workspace")}
         </div>
       </main>
     );
@@ -81,17 +86,15 @@ function AuthenticatedLayout() {
     return (
       <main className="flex min-h-screen items-center justify-center bg-background p-6">
         <div className="max-w-md space-y-4 rounded-3xl border border-border bg-card p-8 text-center shadow-toss">
-          <h2 className="text-lg font-bold">Onboarding failed</h2>
+          <h2 className="text-lg font-bold">{t("auth.onboarding_failed")}</h2>
           <p className="break-all text-sm text-muted-foreground">{errorMsg}</p>
           <Button onClick={handleSignOut} variant="outline" className="rounded-xl">
-            Sign out
+            {t("common.sign_out")}
           </Button>
         </div>
       </main>
     );
   }
-
-  const initials = (email.split("@")[0] || "U").slice(0, 2).toUpperCase();
 
   return (
     <SidebarProvider>
@@ -111,13 +114,15 @@ function AuthenticatedLayout() {
 
             <div className="hidden items-center gap-2 rounded-xl border border-border bg-card px-3 py-1.5 text-sm text-muted-foreground md:flex">
               <Search className="h-4 w-4" />
-              <span className="text-xs">Search…</span>
+              <span className="text-xs">{t("common.search_placeholder")}</span>
               <kbd className="ml-3 rounded bg-muted px-1.5 py-0.5 text-[10px] font-semibold">⌘K</kbd>
             </div>
 
+            <LanguageToggle />
+
             <button
               className="grid h-9 w-9 place-items-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
-              aria-label="Notifications"
+              aria-label={t("common.notifications")}
             >
               <Bell className="h-4 w-4" />
             </button>
