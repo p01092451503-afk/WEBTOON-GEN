@@ -252,6 +252,8 @@
       "warnings": "경고"
     },
     "final_prompt": "최종 프롬프트",
+    "raw_prompt": "원본 자동 프롬프트",
+    "edited_badge": "편집됨",
     "failed": "실패"
   },
   "not_found": {
