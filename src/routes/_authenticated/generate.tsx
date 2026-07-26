@@ -231,17 +231,17 @@ function GeneratePage() {
     <main className="mx-auto max-w-[1400px] px-5 py-6 sm:py-8">
       <header className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-4 sm:flex sm:flex-wrap sm:justify-between">
         <div className="min-w-0">
-          <div className="text-xs font-semibold text-primary">Studio</div>
-          <h1 className="mt-1 truncate text-3xl font-extrabold tracking-tight">Generate image</h1>
+          <div className="text-xs font-semibold text-primary">{t("studio.eyebrow")}</div>
+          <h1 className="mt-1 truncate text-3xl font-extrabold tracking-tight">{t("studio.title")}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Pick references and options — the prompt assembles itself.
+            {t("studio.sub")}
           </p>
         </div>
         <Link
           to="/characters"
           className="inline-flex h-10 shrink-0 items-center justify-center rounded-full bg-primary-soft px-4 text-sm font-semibold text-primary hover:bg-primary-soft/70"
         >
-          Manage characters
+          {t("studio.manage_characters")}
         </Link>
       </header>
 
@@ -252,7 +252,7 @@ function GeneratePage() {
             className="inline-flex items-center gap-2 rounded-full bg-primary-soft px-4 py-2 text-xs font-bold text-primary hover:bg-primary-soft/70"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
-            Editing storyboard panel — back to episode
+            {t("studio.back_to_episode")}
           </Link>
         </div>
       )}
@@ -261,12 +261,12 @@ function GeneratePage() {
         <div className="mt-4 space-y-2">
           {!hasPresets && (
             <NoticeBar tone="warn">
-              No preset data found. Seed data is required in the presets table.
+              {t("studio.no_presets")}
             </NoticeBar>
           )}
           {restoredNote && (
             <NoticeBar tone="info" onClose={() => setRestoredNote(null)}>
-              {restoredNote} Please re-select reference images and characters.
+              {restoredNote} {t("studio.restored_note")}
             </NoticeBar>
           )}
         </div>
@@ -274,28 +274,28 @@ function GeneratePage() {
 
       <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-12">
         {/* Panel 1: References */}
-        <Panel step={1} title="References" className="lg:col-span-3">
+        <Panel step={1} title={t("studio.panels.references")} className="lg:col-span-3">
           <div className="space-y-4">
-            <FieldGroup label="Character A">
+            <FieldGroup label={t("studio.labels.character_a")}>
               <CharacterPicker value={charAId} onChange={setCharAId} characters={characters} />
             </FieldGroup>
-            <FieldGroup label="Character B">
+            <FieldGroup label={t("studio.labels.character_b")}>
               <CharacterPicker value={charBId} onChange={setCharBId} characters={characters} />
             </FieldGroup>
             <RefUpload
-              label="Background"
+              label={t("studio.labels.background")}
               value={bgRef}
               onFile={(f) => uploadRef(f, "bg")}
               onClear={() => setBgRef(null)}
             />
             <RefUpload
-              label="Pose / Composition"
+              label={t("studio.labels.pose")}
               value={poseRef}
               onFile={(f) => uploadRef(f, "pose")}
               onClear={() => setPoseRef(null)}
             />
             <RefUpload
-              label="Style (Advanced)"
+              label={t("studio.labels.style")}
               value={styleRef}
               onFile={(f) => uploadRef(f, "style")}
               onClear={() => setStyleRef(null)}
@@ -304,41 +304,41 @@ function GeneratePage() {
         </Panel>
 
         {/* Panel 2: Prompt Controls */}
-        <Panel step={2} title="Prompt Controls" className="lg:col-span-4">
+        <Panel step={2} title={t("studio.panels.controls")} className="lg:col-span-4">
           <div className="space-y-5">
             <PresetGallery
-              label="Pose Strength" sheet="PoseStrength" cfg={cfg}
+              label={t("studio.labels.pose_strength")} sheet="PoseStrength" cfg={cfg}
               value={work.poseStrengthId} onChange={(v) => setWork({ ...work, poseStrengthId: v })}
               variant="chip"
             />
             <PresetGallery
-              label="Camera Angle" sheet="CameraAngle" cfg={cfg}
+              label={t("studio.labels.camera_angle")} sheet="CameraAngle" cfg={cfg}
               value={work.cameraAngleId} onChange={(v) => setWork({ ...work, cameraAngleId: v })}
               variant="card"
             />
             <PresetGallery
-              label="Camera Distance" sheet="CameraDistance" cfg={cfg}
+              label={t("studio.labels.camera_distance")} sheet="CameraDistance" cfg={cfg}
               value={work.cameraDistanceId} onChange={(v) => setWork({ ...work, cameraDistanceId: v })}
               variant="card"
             />
             <PresetGallery
-              label="Camera Position" sheet="CameraPosition" cfg={cfg}
+              label={t("studio.labels.camera_position")} sheet="CameraPosition" cfg={cfg}
               value={work.cameraPositionId} onChange={(v) => setWork({ ...work, cameraPositionId: v })}
               variant="card"
             />
             <PresetGallery
-              label="Emotion" sheet="Emotion" cfg={cfg}
+              label={t("studio.labels.emotion")} sheet="Emotion" cfg={cfg}
               value={work.emotionId} onChange={(v) => setWork({ ...work, emotionId: v })}
               variant="face"
             />
 
             <div className="grid grid-cols-2 gap-2 pt-1">
-              <PresetSelect label="Bg Strength" sheet="BgStrength" cfg={cfg} value={work.bgStrengthId} onChange={(v) => setWork({ ...work, bgStrengthId: v })} />
-              <PresetSelect label="Body Source" sheet="BodySource" cfg={cfg} value={work.bodySourceId} onChange={(v) => setWork({ ...work, bodySourceId: v })} />
-              <PresetSelect label="Focus" sheet="FocusTarget" cfg={cfg} value={work.focusTargetId} onChange={(v) => setWork({ ...work, focusTargetId: v })} />
-              <PresetSelect label="Bg Style" sheet="BgStyle" cfg={cfg} value={work.bgStyleId} onChange={(v) => setWork({ ...work, bgStyleId: v })} />
-              <PresetSelect label="Costume" sheet="CostumeMode" cfg={cfg} value={work.costumeModeId} onChange={(v) => setWork({ ...work, costumeModeId: v })} />
-              <PresetSelect label="Style Finish" sheet="StyleFinish" cfg={cfg} value={work.styleFinishId} onChange={(v) => setWork({ ...work, styleFinishId: v })} />
+              <PresetSelect label={t("studio.labels.bg_strength")} sheet="BgStrength" cfg={cfg} value={work.bgStrengthId} onChange={(v) => setWork({ ...work, bgStrengthId: v })} />
+              <PresetSelect label={t("studio.labels.body_source")} sheet="BodySource" cfg={cfg} value={work.bodySourceId} onChange={(v) => setWork({ ...work, bodySourceId: v })} />
+              <PresetSelect label={t("studio.labels.focus")} sheet="FocusTarget" cfg={cfg} value={work.focusTargetId} onChange={(v) => setWork({ ...work, focusTargetId: v })} />
+              <PresetSelect label={t("studio.labels.bg_style")} sheet="BgStyle" cfg={cfg} value={work.bgStyleId} onChange={(v) => setWork({ ...work, bgStyleId: v })} />
+              <PresetSelect label={t("studio.labels.costume")} sheet="CostumeMode" cfg={cfg} value={work.costumeModeId} onChange={(v) => setWork({ ...work, costumeModeId: v })} />
+              <PresetSelect label={t("studio.labels.style_finish")} sheet="StyleFinish" cfg={cfg} value={work.styleFinishId} onChange={(v) => setWork({ ...work, styleFinishId: v })} />
             </div>
 
             <FieldGroup label="Action">
