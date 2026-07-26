@@ -56,7 +56,14 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border bg-sidebar">
-      <SidebarHeader className="border-none pt-5 pb-2">
+      <div className={`flex items-center px-2 pt-2 ${collapsed ? "justify-center" : "justify-end"}`}>
+        <SidebarTrigger
+          aria-label={t("common.toggle_sidebar")}
+          className="h-7 w-7 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
+        />
+      </div>
+
+      <SidebarHeader className="border-none pt-3 pb-2">
         <div className="flex items-center px-2">
           {!collapsed && (
             <div className="min-w-0">
@@ -69,8 +76,6 @@ export function AppSidebar() {
             </div>
           )}
         </div>
-
-
 
         {!collapsed && (
           <div className="relative mt-5 px-2">
