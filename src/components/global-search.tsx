@@ -13,9 +13,9 @@ import {
   CommandSeparator,
 } from "@/components/ui/command";
 
-type ProjectRow = { id: string; name: string };
-type CharacterRow = { id: string; name: string };
-type EpisodeRow = { id: string; title: string | null; project_id: string };
+type ProjectRow = { id: string; title: string };
+type CharacterRow = { id: string; display_name: string };
+type EpisodeRow = { id: string; title: string; project_id: string };
 
 interface Props {
   trigger?: React.ReactNode;
@@ -48,14 +48,14 @@ export function GlobalSearch({ trigger }: Props) {
     let cancelled = false;
     (async () => {
       const [p, c, e] = await Promise.all([
-        supabase.from("projects").select("id,name").order("created_at", { ascending: false }).limit(50),
-        supabase.from("characters").select("id,name").order("created_at", { ascending: false }).limit(50),
+        supabase.from("projects").select("id,title").order("created_at", { ascending: false }).limit(50),
+        supabase.from("characters").select("id,display_name").order("created_at", { ascending: false }).limit(50),
         supabase.from("episodes").select("id,title,project_id").order("created_at", { ascending: false }).limit(50),
       ]);
       if (cancelled) return;
-      setProjects((p.data as ProjectRow[]) ?? []);
-      setCharacters((c.data as CharacterRow[]) ?? []);
-      setEpisodes((e.data as EpisodeRow[]) ?? []);
+      setProjects((p.data as ProjectRow[] | null) ?? []);
+      setCharacters((c.data as CharacterRow[] | null) ?? []);
+      setEpisodes((e.data as EpisodeRow[] | null) ?? []);
     })();
     return () => {
       cancelled = true;
@@ -118,10 +118,10 @@ export function GlobalSearch({ trigger }: Props) {
                 {projects.map((p) => (
                   <CommandItem
                     key={p.id}
-                    value={`project ${p.name}`}
+                    value={`project ${p.title}`}
                     onSelect={() => go(`/projects/${p.id}`)}
                   >
-                    <Compass className="mr-2 h-4 w-4" /> {p.name}
+                    <Compass className="mr-2 h-4 w-4" /> {p.title}
                   </CommandItem>
                 ))}
               </CommandGroup>
@@ -152,10 +152,10 @@ export function GlobalSearch({ trigger }: Props) {
                 {characters.map((c) => (
                   <CommandItem
                     key={c.id}
-                    value={`character ${c.name}`}
+                    value={`character ${c.display_name}`}
                     onSelect={() => go("/characters")}
                   >
-                    <Users className="mr-2 h-4 w-4" /> {c.name}
+                    <Users className="mr-2 h-4 w-4" /> {c.display_name}
                   </CommandItem>
                 ))}
               </CommandGroup>
