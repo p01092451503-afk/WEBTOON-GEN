@@ -699,29 +699,10 @@ function Panel({
 }) {
   const stepBg = "bg-panel-step-4";
 
-  const stepShadow =
-    {
-      1: "shadow-panel-3d-1",
-      2: "shadow-panel-3d-2",
-      3: "shadow-panel-3d-3",
-      4: "shadow-panel-3d-4",
-    }[step] ?? "shadow-toss-sm";
-
-  const stepLift =
-    {
-      1: "translate-y-0",
-      2: "-translate-y-1",
-      3: "-translate-y-2",
-      4: "-translate-y-3",
-    }[step] ?? "translate-y-0";
-
-  const stepZ =
-    {
-      1: "z-10",
-      2: "z-20",
-      3: "z-30",
-      4: "z-40",
-    }[step] ?? "z-10";
+  // 4개 영역에 동일한 입체감을 부여합니다.
+  const stepShadow = "shadow-panel-3d-4";
+  const stepLift = "-translate-y-3";
+  const stepZ = "z-10";
 
   return (
     <section
