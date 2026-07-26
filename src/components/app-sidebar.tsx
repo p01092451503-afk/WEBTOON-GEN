@@ -17,9 +17,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "@tanstack/react-router";
 
 const items = [
-  { title: "캐릭터", url: "/characters", icon: Users, desc: "라이브러리" },
-  { title: "생성", url: "/generate", icon: Sparkles, desc: "Studio" },
-  { title: "히스토리", url: "/history", icon: History, desc: "결과 기록" },
+  { title: "Characters", url: "/characters", icon: Users, desc: "Library" },
+  { title: "Generate", url: "/generate", icon: Sparkles, desc: "Studio" },
+  { title: "History", url: "/history", icon: History, desc: "Past results" },
 ] as const;
 
 export function AppSidebar() {
@@ -96,11 +96,11 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton
               onClick={handleSignOut}
-              tooltip="로그아웃"
+              tooltip="Sign out"
               className="h-10 rounded-xl text-muted-foreground hover:text-foreground"
             >
               <LogOut className="h-4 w-4" strokeWidth={2.2} />
-              {!collapsed && <span className="text-sm font-medium">로그아웃</span>}
+              {!collapsed && <span className="text-sm font-medium">Sign out</span>}
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

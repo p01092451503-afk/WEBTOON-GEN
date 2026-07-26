@@ -12,7 +12,7 @@ export const Route = createFileRoute("/_authenticated/history")({
   validateSearch: (s: Record<string, unknown>) => ({
     id: typeof s.id === "string" ? s.id : undefined,
   }),
-  head: () => ({ meta: [{ title: "히스토리 · toonpilot" }] }),
+  head: () => ({ meta: [{ title: "History · toonpilot" }] }),
 });
 
 type Row = {
@@ -78,9 +78,9 @@ function HistoryPage() {
   return (
     <main className="mx-auto max-w-6xl px-5 py-8 sm:py-10">
       <header className="min-w-0">
-        <div className="text-xs font-semibold text-primary">활동</div>
-        <h1 className="mt-1 truncate text-3xl font-extrabold tracking-tight">히스토리</h1>
-        <p className="mt-1 text-sm text-muted-foreground">최근 100건의 생성 기록을 볼 수 있어요.</p>
+        <div className="text-xs font-semibold text-primary">Activity</div>
+        <h1 className="mt-1 truncate text-3xl font-extrabold tracking-tight">History</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Your 100 most recent generations.</p>
       </header>
 
       {selected && (
@@ -90,18 +90,19 @@ function HistoryPage() {
       )}
 
       {rows === null ? (
-        <p className="mt-8 text-sm text-muted-foreground">불러오는 중…</p>
+        <p className="mt-8 text-sm text-muted-foreground">Loading…</p>
       ) : rows.length === 0 ? (
         <div className="mt-8 flex flex-col items-center rounded-3xl border border-dashed border-border bg-card p-12 text-center">
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-soft text-primary">
             <Clock className="h-6 w-6" />
           </div>
-          <p className="mt-4 text-sm font-semibold">아직 생성 이력이 없어요</p>
+          <p className="mt-4 text-sm font-semibold">No generations yet</p>
           <p className="mt-1 text-xs text-muted-foreground">
+            Create your first image on the{" "}
             <Link to="/generate" className="font-semibold text-primary underline">
-              생성 화면
+              studio
             </Link>
-            에서 첫 이미지를 만들어보세요.
+            .
           </p>
         </div>
       ) : (
@@ -124,7 +125,7 @@ function HistoryPage() {
                     />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
-                      {r.status === "error" ? "실패" : r.status}
+                      {r.status === "error" ? "failed" : r.status}
                     </div>
                   )}
                   <div className="absolute left-2 top-2">
@@ -134,7 +135,7 @@ function HistoryPage() {
                 <div className="space-y-1 p-3">
                   <div className="truncate text-sm font-bold">{r.work_label}</div>
                   <div className="text-[11px] text-muted-foreground">
-                    {new Date(r.created_at).toLocaleString("ko-KR")}
+                    {new Date(r.created_at).toLocaleString("en-US")}
                   </div>
                 </div>
               </button>
@@ -176,9 +177,9 @@ function DetailCard({ row, onClose }: { row: Row; onClose: () => void }) {
           finalPrompt: row.final_prompt,
         }),
       );
-      toast.success("생성 화면으로 이동하면 옵션이 복원돼요");
+      toast.success("Options will be restored on the studio page");
     } catch {
-      toast.error("복원 데이터 저장 실패");
+      toast.error("Failed to save restore data");
     }
   }
 
@@ -192,7 +193,7 @@ function DetailCard({ row, onClose }: { row: Row; onClose: () => void }) {
         <div className="flex shrink-0 gap-2">
           <Button size="sm" variant="outline" asChild className="rounded-full">
             <Link to="/generate" onClick={loadIntoGenerate}>
-              설정 불러오기
+              Load settings
             </Link>
           </Button>
           <Button size="sm" variant="ghost" className="rounded-full" onClick={onClose}>
@@ -220,18 +221,18 @@ function DetailCard({ row, onClose }: { row: Row; onClose: () => void }) {
         )}
 
         <div className="grid grid-cols-2 gap-3 text-xs md:grid-cols-4">
-          <Meta label="모드" value={row.mode} />
-          <Meta label="비율" value={row.aspect_ratio ?? "-"} />
-          <Meta label="모델" value={row.api_model ?? "-"} />
+          <Meta label="Mode" value={row.mode} />
+          <Meta label="Ratio" value={row.aspect_ratio ?? "-"} />
+          <Meta label="Model" value={row.api_model ?? "-"} />
           <Meta label="Seed" value={row.seed?.toString() ?? "-"} />
-          <Meta label="배치" value={String(row.batch_count)} />
-          <Meta label="생성" value={new Date(row.created_at).toLocaleString("ko-KR")} />
+          <Meta label="Batch" value={String(row.batch_count)} />
+          <Meta label="Created" value={new Date(row.created_at).toLocaleString("en-US")} />
           <Meta
-            label="완료"
-            value={row.completed_at ? new Date(row.completed_at).toLocaleString("ko-KR") : "-"}
+            label="Completed"
+            value={row.completed_at ? new Date(row.completed_at).toLocaleString("en-US") : "-"}
           />
           <Meta
-            label="경고"
+            label="Warnings"
             value={
               Array.isArray(row.warnings) && row.warnings.length ? String(row.warnings.length) : "0"
             }

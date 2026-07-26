@@ -14,9 +14,9 @@ export const Route = createFileRoute("/_authenticated")({
 });
 
 const PAGE_META: Record<string, { title: string; sub: string }> = {
-  "/characters": { title: "캐릭터 라이브러리", sub: "생성에 사용할 캐릭터를 관리하세요" },
-  "/generate": { title: "이미지 생성", sub: "Studio · Seedream 프롬프트 엔진" },
-  "/history": { title: "히스토리", sub: "최근 생성 결과 및 옵션" },
+  "/characters": { title: "Character library", sub: "Manage the characters used in your generations" },
+  "/generate": { title: "Generate image", sub: "Studio · Seedream prompt engine" },
+  "/history": { title: "History", sub: "Recent results and options" },
 };
 
 function AuthenticatedLayout() {
@@ -67,7 +67,7 @@ function AuthenticatedLayout() {
       <main className="flex min-h-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-3 text-sm text-muted-foreground">
           <div className="h-10 w-10 animate-pulse rounded-2xl bg-primary-soft" />
-          {status === "checking" ? "세션 확인 중…" : "워크스페이스 준비 중…"}
+          {status === "checking" ? "Checking session…" : "Preparing your workspace…"}
         </div>
       </main>
     );
@@ -77,10 +77,10 @@ function AuthenticatedLayout() {
     return (
       <main className="flex min-h-screen items-center justify-center bg-background p-6">
         <div className="max-w-md space-y-4 rounded-3xl border border-border bg-card p-8 text-center shadow-toss">
-          <h2 className="text-lg font-bold">온보딩에 실패했어요</h2>
+          <h2 className="text-lg font-bold">Onboarding failed</h2>
           <p className="break-all text-sm text-muted-foreground">{errorMsg}</p>
           <Button onClick={handleSignOut} variant="outline" className="rounded-xl">
-            로그아웃
+            Sign out
           </Button>
         </div>
       </main>
@@ -107,13 +107,13 @@ function AuthenticatedLayout() {
 
             <div className="hidden items-center gap-2 rounded-xl border border-border bg-card px-3 py-1.5 text-sm text-muted-foreground md:flex">
               <Search className="h-4 w-4" />
-              <span className="text-xs">검색…</span>
+              <span className="text-xs">Search…</span>
               <kbd className="ml-3 rounded bg-muted px-1.5 py-0.5 text-[10px] font-semibold">⌘K</kbd>
             </div>
 
             <button
               className="grid h-9 w-9 place-items-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
-              aria-label="알림"
+              aria-label="Notifications"
             >
               <Bell className="h-4 w-4" />
             </button>
