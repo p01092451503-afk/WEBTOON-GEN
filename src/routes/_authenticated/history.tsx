@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/hooks/useTenant";
 import { SignedImage } from "@/components/SignedImage";
@@ -69,40 +70,42 @@ function useHistory(tenantId: string | null) {
 }
 
 function HistoryPage() {
+  const { t, i18n } = useTranslation();
   const { tenantId } = useTenant();
   const rows = useHistory(tenantId);
   const { id } = Route.useSearch();
   const navigate = Route.useNavigate();
   const selected = rows?.find((r) => r.id === id) ?? null;
+  const locale = i18n.language.startsWith("ko") ? "ko-KR" : "en-US";
 
   return (
     <main className="mx-auto max-w-6xl px-5 py-8 sm:py-10">
       <header className="min-w-0">
-        <div className="text-xs font-semibold text-primary">Activity</div>
-        <h1 className="mt-1 truncate text-3xl font-extrabold tracking-tight">History</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Your 100 most recent generations.</p>
+        <div className="text-xs font-semibold text-primary">{t("history.eyebrow")}</div>
+        <h1 className="mt-1 truncate text-3xl font-extrabold tracking-tight">{t("history.title")}</h1>
+        <p className="mt-1 text-sm text-muted-foreground">{t("history.sub")}</p>
       </header>
 
       {selected && (
         <div className="mt-6">
-          <DetailCard row={selected} onClose={() => navigate({ search: {} })} />
+          <DetailCard row={selected} onClose={() => navigate({ search: {} })} locale={locale} />
         </div>
       )}
 
       {rows === null ? (
-        <p className="mt-8 text-sm text-muted-foreground">Loading…</p>
+        <p className="mt-8 text-sm text-muted-foreground">{t("common.loading")}</p>
       ) : rows.length === 0 ? (
         <div className="mt-8 flex flex-col items-center rounded-3xl border border-dashed border-border bg-card p-12 text-center">
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-soft text-primary">
             <Clock className="h-6 w-6" />
           </div>
-          <p className="mt-4 text-sm font-semibold">No generations yet</p>
+          <p className="mt-4 text-sm font-semibold">{t("history.empty_title")}</p>
           <p className="mt-1 text-xs text-muted-foreground">
-            Create your first image on the{" "}
+            {t("history.empty_hint_before")}{" "}
             <Link to="/generate" className="font-semibold text-primary underline">
-              studio
+              {t("history.empty_hint_link")}
             </Link>
-            .
+            {t("history.empty_hint_after")}
           </p>
         </div>
       ) : (
@@ -125,7 +128,7 @@ function HistoryPage() {
                     />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
-                      {r.status === "error" ? "failed" : r.status}
+                      {r.status === "error" ? t("history.failed") : r.status}
                     </div>
                   )}
                   <div className="absolute left-2 top-2">
@@ -135,7 +138,7 @@ function HistoryPage() {
                 <div className="space-y-1 p-3">
                   <div className="truncate text-sm font-bold">{r.work_label}</div>
                   <div className="text-[11px] text-muted-foreground">
-                    {new Date(r.created_at).toLocaleString("en-US")}
+                    {new Date(r.created_at).toLocaleString(locale)}
                   </div>
                 </div>
               </button>
@@ -162,7 +165,8 @@ function StatusPill({ status }: { status: string }) {
   );
 }
 
-function DetailCard({ row, onClose }: { row: Row; onClose: () => void }) {
+function DetailCard({ row, onClose, locale }: { row: Row; onClose: () => void; locale: string }) {
+  const { t } = useTranslation();
   function loadIntoGenerate() {
     try {
       sessionStorage.setItem(
@@ -177,9 +181,9 @@ function DetailCard({ row, onClose }: { row: Row; onClose: () => void }) {
           finalPrompt: row.final_prompt,
         }),
       );
-      toast.success("Options will be restored on the studio page");
+      toast.success(t("history.restore_toast"));
     } catch {
-      toast.error("Failed to save restore data");
+      toast.error(t("history.restore_fail"));
     }
   }
 
@@ -193,7 +197,7 @@ function DetailCard({ row, onClose }: { row: Row; onClose: () => void }) {
         <div className="flex shrink-0 gap-2">
           <Button size="sm" variant="outline" asChild className="rounded-full">
             <Link to="/generate" onClick={loadIntoGenerate}>
-              Load settings
+              {t("history.load_settings")}
             </Link>
           </Button>
           <Button size="sm" variant="ghost" className="rounded-full" onClick={onClose}>
@@ -221,18 +225,18 @@ function DetailCard({ row, onClose }: { row: Row; onClose: () => void }) {
         )}
 
         <div className="grid grid-cols-2 gap-3 text-xs md:grid-cols-4">
-          <Meta label="Mode" value={row.mode} />
-          <Meta label="Ratio" value={row.aspect_ratio ?? "-"} />
-          <Meta label="Model" value={row.api_model ?? "-"} />
-          <Meta label="Seed" value={row.seed?.toString() ?? "-"} />
-          <Meta label="Batch" value={String(row.batch_count)} />
-          <Meta label="Created" value={new Date(row.created_at).toLocaleString("en-US")} />
+          <Meta label={t("history.meta.mode")} value={row.mode} />
+          <Meta label={t("history.meta.ratio")} value={row.aspect_ratio ?? "-"} />
+          <Meta label={t("history.meta.model")} value={row.api_model ?? "-"} />
+          <Meta label={t("history.meta.seed")} value={row.seed?.toString() ?? "-"} />
+          <Meta label={t("history.meta.batch")} value={String(row.batch_count)} />
+          <Meta label={t("history.meta.created")} value={new Date(row.created_at).toLocaleString(locale)} />
           <Meta
-            label="Completed"
-            value={row.completed_at ? new Date(row.completed_at).toLocaleString("en-US") : "-"}
+            label={t("history.meta.completed")}
+            value={row.completed_at ? new Date(row.completed_at).toLocaleString(locale) : "-"}
           />
           <Meta
-            label="Warnings"
+            label={t("history.meta.warnings")}
             value={
               Array.isArray(row.warnings) && row.warnings.length ? String(row.warnings.length) : "0"
             }
@@ -247,7 +251,7 @@ function DetailCard({ row, onClose }: { row: Row; onClose: () => void }) {
 
         {row.final_prompt && (
           <div>
-            <div className="mb-1 text-[11px] font-semibold text-muted-foreground">Final Prompt</div>
+            <div className="mb-1 text-[11px] font-semibold text-muted-foreground">{t("history.final_prompt")}</div>
             <pre className="max-h-64 overflow-auto whitespace-pre-wrap rounded-xl bg-muted/60 p-3 text-xs">
               {row.final_prompt}
             </pre>
