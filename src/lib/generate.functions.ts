@@ -45,9 +45,10 @@ export const generate = createServerFn({ method: "POST" })
     }
 
     // 3) generations row 생성
-    const { aspectRatioToSize, callArk } = await import("@/lib/generate.server");
+    const { aspectRatioToSize, callArk, makeThumbnailWebp } = await import("@/lib/generate.server");
     const size = aspectRatioToSize(data.aspectRatio);
     const seed = data.seed ?? Math.floor(Math.random() * 2_000_000_000);
+    const apiModel = process.env.ARK_ENDPOINT_ID ?? "unknown";
 
     const { data: genRow, error: genErr } = await supabase
       .from("generations")
@@ -59,7 +60,7 @@ export const generate = createServerFn({ method: "POST" })
         mode: data.mode,
         aspect_ratio: data.aspectRatio ?? null,
         api_size: size,
-        api_model: "seedream",
+        api_model: apiModel,
         seed,
         compiled_prompt: data.compiledPrompt ?? null,
         final_prompt: cleanPrompt,
