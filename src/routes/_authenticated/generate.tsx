@@ -173,18 +173,16 @@ function GeneratePage() {
   }
 
   async function handleTranslate() {
-    if (!built.prompt) return;
-    // If we already have a translation, just toggle
+    if (!effectivePrompt) return;
     if (translated) {
       setShowTranslated((v) => !v);
       return;
     }
     setTranslating(true);
     try {
-      // Detect Korean characters -> translate to English, else to Korean
-      const hasKorean = /[\u3131-\uD79D]/.test(built.prompt);
+      const hasKorean = /[\u3131-\uD79D]/.test(effectivePrompt);
       const target: "ko" | "en" = hasKorean ? "en" : "ko";
-      const res = await translateFn({ data: { text: built.prompt, target } });
+      const res = await translateFn({ data: { text: effectivePrompt, target } });
       setTranslated(res.translated);
       setShowTranslated(true);
     } catch (e) {
