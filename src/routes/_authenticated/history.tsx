@@ -32,7 +32,7 @@ type Row = {
   error_message: string | null;
   created_at: string;
   completed_at: string | null;
-  results: { id: string; seq: number; storage_path: string | null }[];
+  results: { id: string; seq: number; storage_path: string | null; thumb_path: string | null }[];
 };
 
 function useHistory(tenantId: string | null) {
@@ -44,7 +44,7 @@ function useHistory(tenantId: string | null) {
       const { data, error } = await supabase
         .from("generations")
         .select(
-          "id, status, mode, work_label, aspect_ratio, api_model, seed, final_prompt, compiled_prompt, options, figure_map, warnings, batch_count, error_message, created_at, completed_at, generation_results(id, seq, storage_path)",
+          "id, status, mode, work_label, aspect_ratio, api_model, seed, final_prompt, compiled_prompt, options, figure_map, warnings, batch_count, error_message, created_at, completed_at, generation_results(id, seq, storage_path, thumb_path)",
         )
         .order("created_at", { ascending: false })
         .limit(100);
@@ -116,10 +116,10 @@ function HistoryPage() {
                 className="group overflow-hidden rounded-2xl border border-border bg-card text-left shadow-toss-sm transition hover:shadow-toss"
               >
                 <div className="relative aspect-square overflow-hidden bg-muted">
-                  {first?.storage_path ? (
+                  {first?.thumb_path || first?.storage_path ? (
                     <SignedImage
                       bucket="generation-outputs"
-                      path={first.storage_path}
+                      path={(first.thumb_path ?? first.storage_path) as string}
                       alt={r.work_label}
                       className="h-full w-full object-cover transition group-hover:scale-[1.02]"
                     />
@@ -207,10 +207,10 @@ function DetailCard({ row, onClose }: { row: Row; onClose: () => void }) {
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             {row.results.map((res) => (
               <div key={res.id} className="overflow-hidden rounded-xl border border-border bg-muted">
-                {res.storage_path && (
+                {(res.thumb_path || res.storage_path) && (
                   <SignedImage
                     bucket="generation-outputs"
-                    path={res.storage_path}
+                    path={(res.thumb_path ?? res.storage_path) as string}
                     alt={`result-${res.seq}`}
                     className="aspect-square w-full object-cover"
                   />
