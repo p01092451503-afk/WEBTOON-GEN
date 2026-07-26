@@ -65,7 +65,7 @@ export function AppSidebar() {
             <Search className="pointer-events-none absolute left-5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <input
               type="text"
-              placeholder={t("common.search") ?? "Search"}
+              placeholder={t("common.search_placeholder")}
               className="h-10 w-full rounded-2xl border border-border bg-card pl-10 pr-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/15"
             />
           </div>
