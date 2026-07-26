@@ -314,7 +314,7 @@ function GeneratePage() {
         </div>
       )}
 
-      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-12">
+      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-12 lg:items-start">
         {/* Panel 1: References */}
         <Panel step={1} title={t("studio.panels.references")} className="lg:col-span-3">
           <div className="space-y-4">
@@ -618,17 +618,21 @@ function Panel({
   return (
     <section
       className={
-        "rounded-3xl border border-border bg-card p-5 shadow-toss-sm " + (className ?? "")
+        "flex flex-col rounded-3xl border border-border bg-card shadow-toss-sm lg:h-[calc(100vh-13rem)] lg:min-h-[520px] " +
+        (className ?? "")
       }
     >
-      <div className="mb-4 flex items-center gap-2">
+      <div className="flex items-center gap-2 border-b border-border/60 px-5 py-4">
         <IconBadge size="sm">{step}</IconBadge>
         <h2 className="text-sm font-bold">{title}</h2>
       </div>
-      {children}
+      <div className="flex-1 overflow-y-auto overscroll-contain px-5 py-4 [scrollbar-width:thin]">
+        {children}
+      </div>
     </section>
   );
 }
+
 
 function FieldGroup({ label, children }: { label: string; children: React.ReactNode }) {
   return (
