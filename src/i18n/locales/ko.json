@@ -33,7 +33,8 @@
     "remove_from_cast": "캐스트에서 제거",
     "lock_seed": "시드 고정",
     "unlock_seed": "시드 잠금 해제",
-    "close_compare": "비교 닫기"
+    "close_compare": "비교 닫기",
+    "toggle_sidebar": "사이드바 접기/펼치기"
   },
   "language": {
     "label": "언어",
