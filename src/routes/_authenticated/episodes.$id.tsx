@@ -12,6 +12,7 @@ import { SignedImage } from "@/components/SignedImage";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { IconTooltip } from "@/components/icon-tooltip";
 import {
   Plus, Trash2, GripVertical, Wand2, Check, ImageIcon, Loader2, ChevronDown,
 } from "lucide-react";
@@ -230,7 +231,7 @@ function PanelCard({
       }
     >
       <div className="flex flex-col items-center gap-2 pt-1 text-muted-foreground">
-        <GripVertical className="h-4 w-4 cursor-grab" />
+        <GripVertical className="h-4 w-4 cursor-grab" aria-label={t("common.drag_to_reorder")} />
         <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary-soft text-xs font-bold text-primary">
           {index + 1}
         </span>
@@ -280,11 +281,13 @@ function PanelCard({
               <Wand2 className="mr-1 h-4 w-4" />
               {panel.chosen ? t("episodes.regenerate") : t("episodes.generate")}
             </Button>
-            <Button size="sm" variant="ghost"
-              onClick={onDelete}
-              className="rounded-lg text-muted-foreground hover:text-destructive">
-              <Trash2 className="h-4 w-4" />
-            </Button>
+            <IconTooltip label={t("common.delete_item")}>
+              <Button size="sm" variant="ghost"
+                onClick={onDelete}
+                className="rounded-lg text-muted-foreground hover:text-destructive">
+                <Trash2 className="h-4 w-4" aria-hidden="true" />
+              </Button>
+            </IconTooltip>
           </div>
         </div>
 
