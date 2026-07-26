@@ -705,7 +705,7 @@ function Panel({
   const stepZ = "z-10";
 
   return (
-    <div className={stepShadow + " " + stepLift + " " + stepZ + " " + (className ?? "")}>
+    <div className={"rounded-3xl " + stepShadow + " " + stepLift + " " + stepZ + " " + (className ?? "")}>
       <section
         className={
           "relative flex flex-col overflow-hidden rounded-3xl transition-all duration-300 ease-out lg:h-[calc(100vh-13rem)] lg:min-h-[520px] " +
