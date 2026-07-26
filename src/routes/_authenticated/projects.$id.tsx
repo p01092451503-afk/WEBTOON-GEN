@@ -69,7 +69,7 @@ function ProjectDetail() {
   const available = characters.filter((c) => !castIds.has(c.id));
 
   return (
-    <div className="mx-auto grid max-w-6xl gap-6 p-6 lg:grid-cols-[1fr_320px]">
+    <div className="grid max-w-6xl gap-6 p-6 lg:grid-cols-[1fr_320px]">
       <section className="space-y-4">
         <div className="flex items-center justify-between">
           <div>

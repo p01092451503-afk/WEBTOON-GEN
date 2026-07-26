@@ -80,7 +80,7 @@ function HistoryPage() {
   const locale = i18n.language.startsWith("ko") ? "ko-KR" : "en-US";
 
   return (
-    <main className="mx-auto max-w-6xl px-5 py-8 sm:py-10">
+    <main className="max-w-6xl px-5 py-8 sm:py-10">
       <header className="min-w-0">
         <div className="text-xs font-semibold text-primary">{t("history.eyebrow")}</div>
         <h1 className="mt-1 truncate text-3xl font-extrabold tracking-tight">{t("history.title")}</h1>
