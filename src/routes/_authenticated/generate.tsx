@@ -156,11 +156,21 @@ function GeneratePage() {
 
   const built = useMemo(() => buildPrompt(work, figureMap, cfg), [work, figureMap, cfg]);
 
+  // 사용자가 편집 중이면 편집본을, 아니면 자동 생성된 프롬프트를 최종값으로 사용
+  const effectivePrompt = editedPrompt ?? built.prompt;
+  const isEdited = editedPrompt !== null && editedPrompt.trim() !== built.prompt.trim();
+  const overLimit = effectivePrompt.length > 4000;
+
   // Reset translation whenever the source prompt changes
   useEffect(() => {
     setTranslated(null);
     setShowTranslated(false);
-  }, [built.prompt]);
+  }, [effectivePrompt]);
+
+  function resetEditedPrompt() {
+    setEditedPrompt(null);
+    setPromptEditMode(false);
+  }
 
   async function handleTranslate() {
     if (!built.prompt) return;
