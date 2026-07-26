@@ -697,13 +697,7 @@ function Panel({
   className?: string;
   children: React.ReactNode;
 }) {
-  const stepBg =
-    {
-      1: "bg-panel-step-1",
-      2: "bg-panel-step-2",
-      3: "bg-panel-step-3",
-      4: "bg-panel-step-4",
-    }[step] ?? "bg-card";
+  const stepBg = "bg-panel-step-4";
 
   const stepShadow =
     {
