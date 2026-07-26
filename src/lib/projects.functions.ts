@@ -110,12 +110,34 @@ export const getEpisode = createServerFn({ method: "GET" })
     const { data: episode, error: eErr } = await context.supabase
       .from("episodes").select("id, title, order_index, project_id, projects(id, title)").eq("id", data.id).single();
     if (eErr) throw new Error(eErr.message);
-    const { data: panels, error: pErr } = await context.supabase
-      .from("panels")
-      .select("id, order_index, caption, status, generation_id, chosen_result_id")
-      .eq("episode_id", data.id).order("order_index");
+
+    const [{ data: panels, error: pErr }, { data: cast, error: cErr }] = await Promise.all([
+      context.supabase
+        .from("panels")
+        .select("id, order_index, caption, status, generation_id, chosen_result_id, chosen:generation_results!panels_chosen_result_id_fkey(id, storage_path, thumb_path)")
+        .eq("episode_id", data.id).order("order_index"),
+      context.supabase
+        .from("project_cast")
+        .select("character_id, role_label, characters(id, display_name, character_images(storage_path, is_primary, seq))")
+        .eq("project_id", (episode as any).project_id),
+    ]);
     if (pErr) throw new Error(pErr.message);
-    return { episode, panels: panels ?? [] };
+    if (cErr) throw new Error(cErr.message);
+
+    const castNormalized = (cast ?? []).map((c: any) => {
+      const imgs = c.characters?.character_images ?? [];
+      const primary =
+        imgs.find((i: any) => i.is_primary)?.storage_path ??
+        imgs.slice().sort((a: any, b: any) => a.seq - b.seq)[0]?.storage_path ?? null;
+      return {
+        character_id: c.character_id,
+        role_label: c.role_label,
+        display_name: c.characters?.display_name ?? "",
+        primary_path: primary,
+      };
+    });
+
+    return { episode, panels: panels ?? [], cast: castNormalized };
   });
 
 export const createPanel = createServerFn({ method: "POST" })
@@ -142,3 +164,58 @@ export const deletePanel = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+export const updatePanel = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({
+      id: z.string().uuid(),
+      caption: z.string().max(500).nullable().optional(),
+      chosen_result_id: z.string().uuid().nullable().optional(),
+      status: z.enum(["empty", "generating", "done"]).optional(),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const patch: Record<string, unknown> = {};
+    if (data.caption !== undefined) patch.caption = data.caption;
+    if (data.chosen_result_id !== undefined) patch.chosen_result_id = data.chosen_result_id;
+    if (data.status !== undefined) patch.status = data.status;
+    if (Object.keys(patch).length === 0) return { ok: true };
+    const { error } = await context.supabase.from("panels").update(patch).eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const reorderPanels = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({
+      episode_id: z.string().uuid(),
+      order: z.array(z.string().uuid()).min(1),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    // 2-phase to avoid unique-index conflicts if we later add one
+    const results = await Promise.all(
+      data.order.map((id, idx) =>
+        context.supabase.from("panels").update({ order_index: idx })
+          .eq("id", id).eq("episode_id", data.episode_id),
+      ),
+    );
+    for (const r of results) if (r.error) throw new Error(r.error.message);
+    return { ok: true };
+  });
+
+export const listPanelGenerations = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ panel_id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { data: rows, error } = await context.supabase
+      .from("generations")
+      .select("id, status, created_at, final_prompt, generation_results(id, seq, storage_path, thumb_path)")
+      .eq("panel_id", data.panel_id)
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    return rows ?? [];
+  });
+
