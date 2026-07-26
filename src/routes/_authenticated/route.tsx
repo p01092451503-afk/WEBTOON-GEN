@@ -118,11 +118,8 @@ function AuthenticatedLayout() {
               <Bell className="h-4 w-4" />
             </button>
 
-            <div className="flex items-center gap-2 rounded-full border border-border bg-card py-1 pl-1 pr-3">
-              <span className="grid h-7 w-7 place-items-center rounded-full bg-primary text-[11px] font-black text-primary-foreground">
-                {initials}
-              </span>
-              <span className="hidden max-w-[140px] truncate text-xs font-semibold text-foreground sm:inline">
+            <div className="flex items-center rounded-full border border-border bg-card px-3 py-1.5">
+              <span className="max-w-[180px] truncate text-xs font-semibold text-foreground">
                 {email || "user"}
               </span>
             </div>

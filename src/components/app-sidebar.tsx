@@ -39,10 +39,7 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
       <SidebarHeader className="border-b border-sidebar-border">
-        <div className="flex items-center gap-2.5 px-2 py-2.5">
-          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary text-sm font-black text-primary-foreground shadow-toss-sm">
-            t
-          </span>
+        <div className="flex items-center px-2 py-2.5">
           {!collapsed && (
             <div className="min-w-0">
               <div className="truncate text-sm font-extrabold tracking-tight">toonpilot</div>
