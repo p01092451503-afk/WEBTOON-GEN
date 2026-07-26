@@ -11,6 +11,8 @@ import { useGeneration } from "@/hooks/useGeneration";
 import { SignedImage } from "@/components/SignedImage";
 import { buildFigureMap, buildPrompt, WARN, type WorkInput, type PresetItem } from "@/lib/promptEngine";
 import { updatePanel } from "@/lib/projects.functions";
+import { translatePrompt } from "@/lib/translate.functions";
+import { Languages, Loader2 } from "lucide-react";
 import {
   ArrowLeft, Lock, Unlock, GitCompare, Check, Sparkles, ImagePlus, X,
   Smile, Meh, Frown, Angry, Laugh, Annoyed, Heart, AlertCircle,
