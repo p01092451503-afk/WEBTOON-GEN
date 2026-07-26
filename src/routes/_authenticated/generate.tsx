@@ -148,7 +148,7 @@ function GeneratePage() {
         .from("character-refs")
         .upload(path, file, { contentType: file.type });
       if (error) {
-        toast.error(`Upload failed: ${error.message}`);
+        toast.error(t("studio.upload_failed", { msg: error.message }));
         return;
       }
       const setter = kind === "bg" ? setBgRef : kind === "pose" ? setPoseRef : setStyleRef;
@@ -159,7 +159,7 @@ function GeneratePage() {
 
   async function handleGenerate(opts?: { keepLocks?: boolean }) {
     if (!charA?.primary_path && !charB?.primary_path) {
-      toast.error("Please select at least Character A or B.");
+      toast.error(t("studio.select_character_error"));
       return;
     }
     const imagePaths: string[] = [];
@@ -193,7 +193,7 @@ function GeneratePage() {
       });
       // Reset compare selection whenever a fresh batch starts; keep locks so user can iterate.
       setCompareIds([]);
-      toast.success(panelId ? "Panel generation submitted" : "Generation submitted");
+      toast.success(panelId ? t("studio.submitted_panel") : t("studio.submitted"));
     } catch (e) {
       toast.error(e instanceof Error ? e.message : String(e));
     }
@@ -219,7 +219,7 @@ function GeneratePage() {
     if (!panelId) return;
     try {
       await updatePanelFn({ data: { id: panelId, chosen_result_id: resultId, status: "done" } });
-      toast.success("Panel updated with this shot.");
+      toast.success(t("studio.panel_use_toast"));
     } catch (e) {
       toast.error(e instanceof Error ? e.message : String(e));
     }
