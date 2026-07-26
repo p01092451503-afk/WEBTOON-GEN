@@ -913,6 +913,7 @@ function VariationGrid({
   onToggleCompare: (id: string) => void;
   onSetAsPanel: ((resultId: string) => void) | null;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="grid grid-cols-2 gap-2">
       {results.map((r) => {
@@ -936,11 +937,11 @@ function VariationGrid({
               <span className="rounded-md bg-black/60 px-1.5 py-0.5 text-[10px] font-mono text-white">
                 #{r.seq + 1} · seed {r.seed ?? "—"}
               </span>
-              <IconTooltip label={locked ? "Unlock this seed" : "Lock this seed"}>
+              <IconTooltip label={locked ? t("common.unlock_seed") : t("common.lock_seed")}>
                 <button
                   type="button"
                   onClick={() => onToggleLock(r.seq, r.seed)}
-                  aria-label={locked ? "Unlock this seed" : "Lock this seed"}
+                  aria-label={locked ? t("common.unlock_seed") : t("common.lock_seed")}
                   disabled={r.seed == null}
                   className={
                     "grid h-6 w-6 place-items-center rounded-md text-white shadow-sm " +
@@ -961,7 +962,7 @@ function VariationGrid({
                 }
               >
                 <GitCompare className="mr-1 inline h-3 w-3" />
-                {inCompare ? "Selected" : "Compare"}
+                {inCompare ? t("studio.labels.selected") : t("studio.labels.compare")}
               </button>
               {onSetAsPanel && (
                 <button
@@ -969,7 +970,7 @@ function VariationGrid({
                   onClick={() => onSetAsPanel(r.id)}
                   className="flex-1 rounded-md bg-primary px-2 py-1 text-[10px] font-bold text-primary-foreground hover:opacity-90"
                 >
-                  Use for panel
+                  {t("studio.labels.use_for_panel")}
                 </button>
               )}
             </div>
@@ -987,14 +988,15 @@ function CompareView({
   ids: string[];
   onClose: () => void;
 }) {
+  const { t } = useTranslation();
   const [a, b] = ids.map((id) => results.find((r) => r.id === id)).filter(Boolean) as typeof results;
   if (!a || !b) return null;
   return (
     <div className="rounded-2xl border border-primary/40 bg-primary-soft/40 p-3">
       <div className="mb-2 flex items-center justify-between">
-        <span className="text-[11px] font-bold text-primary">Compare</span>
-        <IconTooltip label="Close compare">
-          <button onClick={onClose} aria-label="Close compare" className="rounded-full p-1 hover:bg-black/5">
+        <span className="text-[11px] font-bold text-primary">{t("studio.labels.compare_title")}</span>
+        <IconTooltip label={t("common.close_compare")}>
+          <button onClick={onClose} aria-label={t("common.close_compare")} className="rounded-full p-1 hover:bg-black/5">
             <X className="h-3 w-3" aria-hidden="true" />
           </button>
         </IconTooltip>
