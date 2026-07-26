@@ -252,6 +252,8 @@
       "warnings": "Warnings"
     },
     "final_prompt": "Final Prompt",
+    "raw_prompt": "Original auto-prompt",
+    "edited_badge": "Edited",
     "failed": "failed"
   },
   "not_found": {
