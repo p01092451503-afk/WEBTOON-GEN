@@ -47,7 +47,7 @@
     "projects_desc": "Episodes & storyboards",
     "characters": "Characters",
     "characters_desc": "Library",
-    "studio": "Studio",
+    "studio": "Image studio",
     "studio_desc": "Single panel",
     "history": "History",
     "history_desc": "Past results",
@@ -68,8 +68,8 @@
       "sub": "Manage the characters used in your generations"
     },
     "generate": {
-      "title": "Studio",
-      "sub": "Single-panel prompt engine"
+      "title": "Image studio",
+      "sub": "Seedream image generation"
     },
     "history": {
       "title": "History",
@@ -352,5 +352,10 @@
     "toast": {
       "started": "Video job started."
     }
+  },
+  "switcher": {
+    "image": "Image",
+    "video": "Video",
+    "hub": "Studio hub"
   }
 }

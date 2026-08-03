@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,7 +8,9 @@ import { useCharacters } from "@/hooks/useCharacters";
 import { useVideoGeneration } from "@/hooks/useVideoGeneration";
 import { useSignedUrl } from "@/hooks/useSignedUrl";
 import { SignedImage } from "@/components/SignedImage";
+import { StudioSwitcher } from "@/components/studio-switcher";
 import { IconBadge } from "@/components/icon-badge";
+
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -21,7 +23,7 @@ import {
   Loader2,
   Sparkles,
   Download,
-  ArrowLeft,
+
   Clock,
   Ratio,
   MonitorPlay,
@@ -154,17 +156,13 @@ function VideoStudioPage() {
 
   return (
     <main className="px-4 py-5 sm:px-6">
+      <StudioSwitcher active="video" />
       <div className="mb-4 flex items-center gap-3">
-        <Button asChild variant="ghost" size="sm" className="rounded-xl">
-          <Link to="/studio">
-            <ArrowLeft className="mr-1 h-4 w-4" />
-            {t("video.back_to_hub")}
-          </Link>
-        </Button>
         <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-[11px] font-mono font-semibold uppercase tracking-[0.16em] text-muted-foreground">
           <Film className="h-3.5 w-3.5" /> Seedance
         </span>
       </div>
+
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
         {/* 1. Reference frame */}
