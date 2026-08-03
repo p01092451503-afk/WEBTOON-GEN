@@ -354,7 +354,16 @@
     },
     "toast": {
       "started": "동영상 작업을 시작했습니다."
-    }
+    },
+    "upload_last_frame": "마지막 프레임 업로드 (선택)",
+    "last_frame_hint": "마지막 프레임을 지정하면 첫 프레임에서 마지막 프레임으로 자연스럽게 전환됩니다.",
+    "negative_label": "제외할 요소 (선택)",
+    "negative_placeholder": "예) 흐릿함, 왜곡된 손, 텍스트",
+    "shot_size": "샷 크기",
+    "camera_angle": "카메라 앵글",
+    "speed": "속도",
+    "lighting": "조명",
+    "style": "스타일"
   },
   "switcher": {
     "image": "이미지 생성",

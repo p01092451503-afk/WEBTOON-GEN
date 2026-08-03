@@ -23,12 +23,17 @@ import {
   Loader2,
   Sparkles,
   Download,
-
   Clock,
   Ratio,
   MonitorPlay,
   Camera,
+  Crop,
+  Compass,
+  Gauge,
+  Sun,
+  Palette,
 } from "lucide-react";
+
 
 export const Route = createFileRoute("/_authenticated/video")({
   component: VideoStudioPage,
@@ -52,27 +57,99 @@ export const Route = createFileRoute("/_authenticated/video")({
 
 const RATIOS = ["16:9", "9:16", "1:1", "4:3", "3:4", "21:9"] as const;
 const RESOLUTIONS = ["480p", "720p", "1080p"] as const;
-const DURATIONS = [3, 5, 10] as const;
+const DURATIONS = [3, 5, 10, 12] as const;
 
-const MOTION_PRESETS: Array<{ id: string; label: string; text: string }> = [
+type Preset = { id: string; label: string; text: string };
+
+const MOTION_PRESETS: Preset[] = [
   { id: "MOV_ORBIT", label: "Orbit", text: "the camera slowly orbits around the subject" },
   { id: "MOV_DOLLY_IN", label: "Dolly in", text: "the camera slowly dollies in toward the subject" },
   { id: "MOV_DOLLY_OUT", label: "Dolly out", text: "the camera slowly pulls back away from the subject" },
-  { id: "MOV_PAN", label: "Pan", text: "the camera pans smoothly from left to right" },
+  { id: "MOV_PAN_L", label: "Pan left", text: "the camera pans smoothly to the left" },
+  { id: "MOV_PAN_R", label: "Pan right", text: "the camera pans smoothly to the right" },
   { id: "MOV_TILT_UP", label: "Tilt up", text: "the camera tilts upward revealing the scene" },
+  { id: "MOV_TILT_DOWN", label: "Tilt down", text: "the camera tilts downward across the scene" },
+  { id: "MOV_TRACK", label: "Tracking", text: "the camera tracks alongside the subject as it moves" },
+  { id: "MOV_CRANE", label: "Crane up", text: "the camera cranes upward for a rising overview" },
   { id: "MOV_HANDHELD", label: "Handheld", text: "subtle handheld camera shake follows the action" },
   { id: "MOV_STATIC", label: "Static", text: "the camera stays completely static" },
-  { id: "MOV_ZOOM", label: "Zoom", text: "a slow zoom emphasizes the subject" },
+  { id: "MOV_ZOOM_IN", label: "Zoom in", text: "a slow zoom in emphasizes the subject" },
+  { id: "MOV_ZOOM_OUT", label: "Zoom out", text: "a slow zoom out reveals the surroundings" },
+  { id: "MOV_PUSH", label: "Push through", text: "the camera pushes forward through the foreground elements" },
+  { id: "MOV_WHIP", label: "Whip pan", text: "a fast whip pan transitions across the scene" },
+  { id: "MOV_ARC", label: "Arc", text: "the camera arcs around the subject in a wide curve" },
 ];
 
-const AMBIENCE_PRESETS: Array<{ id: string; label: string; text: string }> = [
+const SHOT_PRESETS: Preset[] = [
+  { id: "SHOT_ECU", label: "Extreme close-up", text: "extreme close-up shot" },
+  { id: "SHOT_CU", label: "Close-up", text: "close-up shot" },
+  { id: "SHOT_MS", label: "Medium shot", text: "medium shot" },
+  { id: "SHOT_COWBOY", label: "Cowboy shot", text: "cowboy shot framed from the thighs up" },
+  { id: "SHOT_FULL", label: "Full body", text: "full body shot" },
+  { id: "SHOT_WIDE", label: "Wide", text: "wide establishing shot" },
+  { id: "SHOT_EWIDE", label: "Extreme wide", text: "extreme wide landscape shot" },
+  { id: "SHOT_OTS", label: "Over shoulder", text: "over-the-shoulder shot" },
+  { id: "SHOT_POV", label: "POV", text: "first person point of view shot" },
+  { id: "SHOT_TWO", label: "Two shot", text: "two shot framing both characters" },
+];
+
+const ANGLE_PRESETS: Preset[] = [
+  { id: "ANG_EYE", label: "Eye level", text: "eye level angle" },
+  { id: "ANG_LOW", label: "Low angle", text: "low angle looking up at the subject" },
+  { id: "ANG_HIGH", label: "High angle", text: "high angle looking down at the subject" },
+  { id: "ANG_BIRD", label: "Bird's eye", text: "bird's eye top-down view" },
+  { id: "ANG_WORM", label: "Worm's eye", text: "worm's eye ground level view" },
+  { id: "ANG_DUTCH", label: "Dutch tilt", text: "dutch tilted frame" },
+  { id: "ANG_PROFILE", label: "Profile", text: "side profile framing" },
+  { id: "ANG_BACK", label: "From behind", text: "framed from behind the subject" },
+];
+
+const SPEED_PRESETS: Preset[] = [
+  { id: "SPD_SLOW", label: "Slow motion", text: "slow motion" },
+  { id: "SPD_NORMAL", label: "Normal", text: "" },
+  { id: "SPD_FAST", label: "Fast paced", text: "fast paced energetic motion" },
+  { id: "SPD_TIME", label: "Timelapse", text: "timelapse speed ramp" },
+];
+
+const LIGHT_PRESETS: Preset[] = [
+  { id: "LGT_GOLDEN", label: "Golden hour", text: "warm golden hour lighting" },
+  { id: "LGT_BLUE", label: "Blue hour", text: "cool blue hour lighting" },
+  { id: "LGT_RIM", label: "Rim light", text: "strong rim backlighting" },
+  { id: "LGT_SOFT", label: "Soft daylight", text: "soft diffused daylight" },
+  { id: "LGT_HARD", label: "Hard shadow", text: "hard directional light with deep shadows" },
+  { id: "LGT_NEON", label: "Neon night", text: "neon night lighting with colored reflections" },
+  { id: "LGT_CANDLE", label: "Candlelight", text: "flickering candlelight" },
+  { id: "LGT_MOON", label: "Moonlight", text: "cool moonlight" },
+  { id: "LGT_STUDIO", label: "Studio", text: "clean studio softbox lighting" },
+  { id: "LGT_SIL", label: "Silhouette", text: "silhouette against a bright background" },
+];
+
+const STYLE_PRESETS: Preset[] = [
+  { id: "STY_CINE", label: "Cinematic", text: "cinematic film look with shallow depth of field" },
+  { id: "STY_ANIME", label: "Anime", text: "2D anime animation style" },
+  { id: "STY_3D", label: "3D animation", text: "stylized 3D animated film look" },
+  { id: "STY_WATER", label: "Watercolor", text: "soft watercolor illustration style" },
+  { id: "STY_NOIR", label: "Noir B&W", text: "high contrast black and white noir" },
+  { id: "STY_VHS", label: "VHS retro", text: "retro VHS analog grain look" },
+  { id: "STY_DOC", label: "Documentary", text: "natural documentary realism" },
+  { id: "STY_DREAM", label: "Dreamy bokeh", text: "dreamy soft focus with heavy bokeh" },
+];
+
+const AMBIENCE_PRESETS: Preset[] = [
   { id: "AMB_WIND", label: "Wind", text: "hair and clothing move gently in the wind" },
   { id: "AMB_RAIN", label: "Rain", text: "light rain falls with soft splashes" },
   { id: "AMB_SNOW", label: "Snow", text: "snow drifts slowly through the air" },
   { id: "AMB_LIGHT", label: "Light shift", text: "warm light gradually shifts across the scene" },
   { id: "AMB_DUST", label: "Dust", text: "dust particles float in the light beams" },
   { id: "AMB_CROWD", label: "Crowd", text: "background crowd moves naturally out of focus" },
+  { id: "AMB_FOG", label: "Fog", text: "low fog rolls slowly through the scene" },
+  { id: "AMB_LEAVES", label: "Falling leaves", text: "leaves drift down through the frame" },
+  { id: "AMB_EMBER", label: "Embers", text: "glowing embers float upward" },
+  { id: "AMB_WATER", label: "Water ripples", text: "water ripples and reflections shimmer" },
+  { id: "AMB_FIREFLY", label: "Fireflies", text: "fireflies blink softly around the subject" },
+  { id: "AMB_SMOKE", label: "Smoke", text: "thin smoke curls through the air" },
 ];
+
 
 function VideoStudioPage() {
   const { t } = useTranslation();
@@ -81,10 +158,17 @@ function VideoStudioPage() {
   const gen = useVideoGeneration(tenantId);
 
   const [firstFrame, setFirstFrame] = useState<string | null>(null);
-  const [uploading, setUploading] = useState(false);
+  const [lastFrame, setLastFrame] = useState<string | null>(null);
+  const [uploading, setUploading] = useState<"first" | "last" | null>(null);
   const [actionText, setActionText] = useState("");
+  const [negativeText, setNegativeText] = useState("");
   const [motionIds, setMotionIds] = useState<string[]>([]);
   const [ambienceIds, setAmbienceIds] = useState<string[]>([]);
+  const [shotId, setShotId] = useState<string | null>(null);
+  const [angleId, setAngleId] = useState<string | null>(null);
+  const [speedId, setSpeedId] = useState<string | null>(null);
+  const [lightIds, setLightIds] = useState<string[]>([]);
+  const [styleId, setStyleId] = useState<string | null>(null);
   const [aspectRatio, setAspectRatio] = useState<string>("16:9");
   const [resolution, setResolution] = useState<(typeof RESOLUTIONS)[number]>("720p");
   const [duration, setDuration] = useState<number>(5);
@@ -95,13 +179,26 @@ function VideoStudioPage() {
 
   const builtPrompt = useMemo(() => {
     const parts: string[] = [];
+    const one = (list: Preset[], id: string | null) =>
+      id ? (list.find((p) => p.id === id)?.text ?? "") : "";
+    const many = (list: Preset[], ids: string[]) =>
+      list.filter((p) => ids.includes(p.id)).map((p) => p.text);
+
     if (actionText.trim()) parts.push(actionText.trim());
-    const motion = MOTION_PRESETS.filter((m) => motionIds.includes(m.id)).map((m) => m.text);
-    const ambience = AMBIENCE_PRESETS.filter((a) => ambienceIds.includes(a.id)).map((a) => a.text);
-    parts.push(...motion, ...ambience);
-    if (parts.length === 0) return "";
-    return parts.join(", ") + ".";
-  }, [actionText, motionIds, ambienceIds]);
+    parts.push(one(SHOT_PRESETS, shotId));
+    parts.push(one(ANGLE_PRESETS, angleId));
+    parts.push(...many(MOTION_PRESETS, motionIds));
+    parts.push(one(SPEED_PRESETS, speedId));
+    parts.push(...many(LIGHT_PRESETS, lightIds));
+    parts.push(...many(AMBIENCE_PRESETS, ambienceIds));
+    parts.push(one(STYLE_PRESETS, styleId));
+
+    const cleaned = parts.map((p) => p.trim()).filter(Boolean);
+    if (cleaned.length === 0) return "";
+    let out = cleaned.join(", ") + ".";
+    if (negativeText.trim()) out += ` Avoid: ${negativeText.trim()}.`;
+    return out;
+  }, [actionText, negativeText, shotId, angleId, motionIds, speedId, lightIds, ambienceIds, styleId]);
 
   const finalPrompt = editedPrompt ?? builtPrompt;
   const mode: "t2v" | "i2v" = firstFrame ? "i2v" : "t2v";
@@ -110,21 +207,22 @@ function VideoStudioPage() {
     setList(list.includes(id) ? list.filter((x) => x !== id) : [...list, id]);
   }
 
-  async function handleUpload(file: File) {
+  async function handleUpload(file: File, slot: "first" | "last") {
     if (!tenantId) return;
-    setUploading(true);
+    setUploading(slot);
     try {
       const ext = file.name.split(".").pop()?.toLowerCase() || "png";
-      const path = `${tenantId}/video-refs/${Date.now()}.${ext}`;
+      const path = `${tenantId}/video-refs/${Date.now()}-${slot}.${ext}`;
       const { error } = await supabase.storage
         .from("character-refs")
         .upload(path, file, { contentType: file.type, upsert: false });
       if (error) throw error;
-      setFirstFrame(path);
+      if (slot === "first") setFirstFrame(path);
+      else setLastFrame(path);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : String(e));
     } finally {
-      setUploading(false);
+      setUploading(null);
     }
   }
 
@@ -134,6 +232,9 @@ function VideoStudioPage() {
       return;
     }
     try {
+      const imagePaths = [firstFrame, firstFrame ? lastFrame : null].filter(
+        (p): p is string => Boolean(p),
+      );
       await gen.run({
         workLabel: "V1",
         mode,
@@ -145,14 +246,25 @@ function VideoStudioPage() {
         durationSeconds: duration,
         cameraFixed,
         seed: seedLocked && seed.trim() ? Number(seed) : null,
-        imagePaths: firstFrame ? [firstFrame] : [],
-        options: { motionIds, ambienceIds, actionText },
+        imagePaths,
+        options: {
+          motionIds,
+          ambienceIds,
+          shotId,
+          angleId,
+          speedId,
+          lightIds,
+          styleId,
+          actionText,
+          negativeText,
+        },
       });
       toast.success(t("video.toast.started"));
     } catch (e) {
       toast.error(e instanceof Error ? e.message : String(e));
     }
   }
+
 
   return (
     <main className="px-4 py-5 sm:px-6">
@@ -172,41 +284,29 @@ function VideoStudioPage() {
               {t("video.reference_hint")}
             </p>
 
-            {firstFrame ? (
-              <div className="relative overflow-hidden rounded-2xl border border-border">
-                <SignedImage
-                  bucket="character-refs"
-                  path={firstFrame}
-                  alt={t("video.panels.reference")}
-                  className="h-48 w-full object-cover"
+            <FrameSlot
+              label={t("video.upload_frame")}
+              path={firstFrame}
+              busy={uploading === "first"}
+              onPick={(f) => handleUpload(f, "first")}
+              onClear={() => setFirstFrame(null)}
+              clearLabel={t("common.dismiss")}
+            />
+
+            {firstFrame && (
+              <div className="space-y-1.5">
+                <FrameSlot
+                  label={t("video.upload_last_frame")}
+                  path={lastFrame}
+                  busy={uploading === "last"}
+                  onPick={(f) => handleUpload(f, "last")}
+                  onClear={() => setLastFrame(null)}
+                  clearLabel={t("common.dismiss")}
                 />
-                <button
-                  onClick={() => setFirstFrame(null)}
-                  aria-label={t("common.dismiss")}
-                  className="absolute right-2 top-2 grid h-7 w-7 place-items-center rounded-full bg-background/85 text-foreground shadow"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
+                <p className="text-[12px] text-muted-foreground">{t("video.last_frame_hint")}</p>
               </div>
-            ) : (
-              <label className="flex h-32 cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border text-[13px] font-semibold text-muted-foreground hover:border-primary/40 hover:text-foreground">
-                {uploading ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                ) : (
-                  <ImagePlus className="h-5 w-5" />
-                )}
-                {t("video.upload_frame")}
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    if (f) handleUpload(f);
-                  }}
-                />
-              </label>
             )}
+
 
             <div>
               <Label className="text-[13px] font-bold">{t("video.from_characters")}</Label>
@@ -259,6 +359,16 @@ function VideoStudioPage() {
               />
             </div>
 
+            <div className="space-y-1.5">
+              <Label className="text-[13px] font-bold">{t("video.negative_label")}</Label>
+              <Textarea
+                value={negativeText}
+                onChange={(e) => setNegativeText(e.target.value)}
+                placeholder={t("video.negative_placeholder")}
+                className="min-h-[60px] rounded-2xl text-[13px]"
+              />
+            </div>
+
             <PresetGroup
               title={t("video.camera_motion")}
               icon={<Camera className="h-4 w-4" />}
@@ -267,12 +377,48 @@ function VideoStudioPage() {
               onToggle={(id) => toggle(motionIds, setMotionIds, id)}
             />
             <PresetGroup
+              title={t("video.shot_size")}
+              icon={<Crop className="h-4 w-4" />}
+              items={SHOT_PRESETS}
+              selected={shotId ? [shotId] : []}
+              onToggle={(id) => setShotId(shotId === id ? null : id)}
+            />
+            <PresetGroup
+              title={t("video.camera_angle")}
+              icon={<Compass className="h-4 w-4" />}
+              items={ANGLE_PRESETS}
+              selected={angleId ? [angleId] : []}
+              onToggle={(id) => setAngleId(angleId === id ? null : id)}
+            />
+            <PresetGroup
+              title={t("video.speed")}
+              icon={<Gauge className="h-4 w-4" />}
+              items={SPEED_PRESETS}
+              selected={speedId ? [speedId] : []}
+              onToggle={(id) => setSpeedId(speedId === id ? null : id)}
+            />
+            <PresetGroup
+              title={t("video.lighting")}
+              icon={<Sun className="h-4 w-4" />}
+              items={LIGHT_PRESETS}
+              selected={lightIds}
+              onToggle={(id) => toggle(lightIds, setLightIds, id)}
+            />
+            <PresetGroup
+              title={t("video.style")}
+              icon={<Palette className="h-4 w-4" />}
+              items={STYLE_PRESETS}
+              selected={styleId ? [styleId] : []}
+              onToggle={(id) => setStyleId(styleId === id ? null : id)}
+            />
+            <PresetGroup
               title={t("video.ambience")}
               icon={<Sparkles className="h-4 w-4" />}
               items={AMBIENCE_PRESETS}
               selected={ambienceIds}
               onToggle={(id) => toggle(ambienceIds, setAmbienceIds, id)}
             />
+
           </div>
         </Panel>
 
@@ -392,7 +538,54 @@ function VideoStudioPage() {
   );
 }
 
+function FrameSlot({
+  label,
+  path,
+  busy,
+  onPick,
+  onClear,
+  clearLabel,
+}: {
+  label: string;
+  path: string | null;
+  busy: boolean;
+  onPick: (file: File) => void;
+  onClear: () => void;
+  clearLabel: string;
+}) {
+  if (path) {
+    return (
+      <div className="relative overflow-hidden rounded-2xl border border-border">
+        <SignedImage bucket="character-refs" path={path} alt={label} className="h-44 w-full object-cover" />
+        <button
+          onClick={onClear}
+          aria-label={clearLabel}
+          className="absolute right-2 top-2 grid h-7 w-7 place-items-center rounded-full bg-background/85 text-foreground shadow"
+        >
+          <X className="h-3.5 w-3.5" />
+        </button>
+      </div>
+    );
+  }
+  return (
+    <label className="flex h-32 cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border text-[13px] font-semibold text-muted-foreground hover:border-primary/40 hover:text-foreground">
+      {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <ImagePlus className="h-5 w-5" />}
+      {label}
+      <input
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) onPick(f);
+        }}
+      />
+    </label>
+  );
+}
+
 function VideoResultCard({ path }: { path: string }) {
+
   const { t } = useTranslation();
   const url = useSignedUrl("generation-outputs", path, 300);
   if (!url) {
