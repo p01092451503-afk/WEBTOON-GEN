@@ -12,15 +12,21 @@ export type VideoTaskState = {
 function arkEnv() {
   const ARK_API_KEY = process.env.ARK_API_KEY;
   const ARK_BASE_URL = process.env.ARK_BASE_URL;
-  // Ark inference requests should prefer the account-specific endpoint ID.
-  // A catalog model ID may exist in the environment while that model is not
-  // activated for the account, which causes ModelNotOpen even when a valid
-  // inference endpoint has already been configured.
-  const model = process.env.ARK_VIDEO_ENDPOINT_ID || process.env.ARK_VIDEO_MODEL_ID;
+  // Ark 는 계정마다 사용 가능한 식별자가 다르다.
+  // (1) Online Inference Endpoint ID, (2) 활성화된 카탈로그 모델 ID.
+  // 어떤 값이 유효한지 사전에 알 수 없으므로 후보를 순서대로 시도한다.
+  const candidates = [
+    process.env.ARK_VIDEO_ENDPOINT_ID,
+    process.env.ARK_VIDEO_MODEL_ID,
+    process.env.ARK_ENDPOINT_ID,
+  ]
+    .map((v) => (v ?? "").trim())
+    .filter((v, i, arr) => v.length > 0 && arr.indexOf(v) === i);
+
   if (!ARK_API_KEY || !ARK_BASE_URL) {
     throw new Error("ARK 시크릿이 설정되지 않았습니다.");
   }
-  if (!model) {
+  if (candidates.length === 0) {
     throw new Error(
       "ARK_VIDEO_ENDPOINT_ID 또는 ARK_VIDEO_MODEL_ID가 설정되지 않았습니다. 활성화된 Seedance 엔드포인트 ID를 등록해 주세요.",
     );
@@ -28,9 +34,11 @@ function arkEnv() {
   return {
     key: ARK_API_KEY,
     base: ARK_BASE_URL.replace(/\/$/, ""),
-    model,
+    candidates,
+    model: candidates[0]!,
   };
 }
+
 
 export function buildSeedanceText(params: {
   prompt: string;
@@ -58,7 +66,7 @@ export async function createVideoTask(params: {
   firstFrameUrl?: string | null;
   lastFrameUrl?: string | null;
 }): Promise<{ taskId: string; model: string }> {
-  const { key, base, model } = arkEnv();
+  const { key, base, candidates } = arkEnv();
 
   const content: Array<Record<string, unknown>> = [{ type: "text", text: params.text }];
   if (params.firstFrameUrl) {
@@ -76,32 +84,52 @@ export async function createVideoTask(params: {
     });
   }
 
-  const res = await fetch(`${base}/contents/generations/tasks`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${key}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ model, content }),
-  });
+  const failures: string[] = [];
 
-  if (res.status === 429) {
-    throw new Error("ARK_RATE_LIMITED: 요청량 제한에 도달했습니다. 잠시 후 다시 시도해 주세요.");
-  }
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    if (text.includes("ModelNotOpen") || text.includes("has not activated the model")) {
-      throw new Error(
-        `ARK_MODEL_NOT_ACTIVATED: 현재 등록된 Seedance 엔드포인트/모델 "${model}"을 사용할 수 없습니다. Ark 콘솔에서 활성화된 Online Inference Endpoint ID를 확인한 뒤 ARK_VIDEO_ENDPOINT_ID 값을 갱신해 주세요.`,
-      );
+  for (const model of candidates) {
+    const res = await fetch(`${base}/contents/generations/tasks`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${key}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ model, content }),
+    });
+
+    if (res.status === 429) {
+      throw new Error("ARK_RATE_LIMITED: 요청량 제한에 도달했습니다. 잠시 후 다시 시도해 주세요.");
     }
-    throw new Error(`ARK_HTTP_${res.status}: ${text.slice(0, 500)}`);
+
+    if (res.ok) {
+      const json = (await res.json()) as { id?: string };
+      if (!json?.id) throw new Error("ARK_NO_TASK_ID: 작업 ID를 받지 못했습니다.");
+      return { taskId: json.id, model };
+    }
+
+    const text = await res.text().catch(() => "");
+    failures.push(`${model} → HTTP ${res.status} ${text.slice(0, 200)}`);
+
+    // 접근 불가/미활성 식별자는 다음 후보로 자동 폴백한다.
+    const recoverable =
+      res.status === 403 ||
+      res.status === 404 ||
+      text.includes("ModelNotOpen") ||
+      text.includes("AccessDenied") ||
+      text.includes("has not activated the model");
+    if (!recoverable) {
+      throw new Error(`ARK_HTTP_${res.status}: ${text.slice(0, 500)}`);
+    }
   }
 
-  const json = (await res.json()) as { id?: string };
-  if (!json?.id) throw new Error("ARK_NO_TASK_ID: 작업 ID를 받지 못했습니다.");
-  return { taskId: json.id, model };
+  throw new Error(
+    "ARK_MODEL_NOT_ACTIVATED: 등록된 Seedance 식별자를 모두 시도했지만 사용할 수 없습니다. " +
+      "BytePlus Ark 콘솔 → Online Inference 에서 Seedance 엔드포인트가 '실행 중(Running)' 상태이고, " +
+      "해당 엔드포인트를 만든 프로젝트와 동일한 프로젝트의 API Key 를 사용 중인지 확인한 뒤 " +
+      "ARK_VIDEO_ENDPOINT_ID / ARK_API_KEY 를 갱신해 주세요. 시도 내역: " +
+      failures.join(" | "),
+  );
 }
+
 
 /** Seedance 작업 상태를 조회한다. */
 export async function getVideoTask(taskId: string): Promise<VideoTaskState> {
