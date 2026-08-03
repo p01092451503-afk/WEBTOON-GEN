@@ -1,6 +1,6 @@
 {
   "brand": {
-    "name": "toonpilot",
+    "name": "pilotstudio",
     "tagline": "AI Webtoon Studio"
   },
   "common": {
@@ -87,7 +87,7 @@
   "auth": {
     "checking_session": "Checking session…",
     "preparing_workspace": "Preparing your workspace…",
-    "welcome": "Welcome to toonpilot",
+    "welcome": "Welcome to pilotstudio",
     "sign_in_hint": "Sign in with your email",
     "sign_up_hint": "Create a new account",
     "tab_sign_in": "Sign in",

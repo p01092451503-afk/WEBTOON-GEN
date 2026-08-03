@@ -6,12 +6,12 @@ export const Route = createFileRoute("/_authenticated/studio")({
   component: StudioHub,
   head: () => ({
     meta: [
-      { title: "Studio Hub · toonpilot" },
+      { title: "Studio Hub · pilotstudio" },
       {
         name: "description",
         content: "Choose between Seedream image generation and Seedance video generation.",
       },
-      { property: "og:title", content: "Studio Hub · toonpilot" },
+      { property: "og:title", content: "Studio Hub · pilotstudio" },
       {
         property: "og:description",
         content: "Choose between Seedream image generation and Seedance video generation.",

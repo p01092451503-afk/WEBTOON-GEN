@@ -12,12 +12,12 @@ export const Route = createFileRoute("/")({
   component: Index,
   head: () => ({
     meta: [
-      { title: "toonpilot — Character-driven image generation workspace" },
+      { title: "pilotstudio — Character-driven image generation workspace" },
       {
         name: "description",
         content: "Assemble Seedream images with a reusable character library and a structured prompt engine.",
       },
-      { property: "og:title", content: "toonpilot" },
+      { property: "og:title", content: "pilotstudio" },
       { property: "og:description", content: "Character-based Seedream image generation SaaS" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

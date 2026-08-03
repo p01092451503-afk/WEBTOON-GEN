@@ -14,7 +14,7 @@ export const Route = createFileRoute("/_authenticated/history")({
   validateSearch: (s: Record<string, unknown>) => ({
     id: typeof s.id === "string" ? s.id : undefined,
   }),
-  head: () => ({ meta: [{ title: "History · toonpilot" }] }),
+  head: () => ({ meta: [{ title: "History · pilotstudio" }] }),
 });
 
 type Row = {
