@@ -286,7 +286,9 @@ function GeneratePage() {
 
   return (
     <main className="max-w-[1400px] px-5 py-6 sm:py-8">
+      <StudioSwitcher active="image" />
       <header className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-4 sm:flex sm:flex-wrap sm:justify-between">
+
         <div className="min-w-0">
           <div className="text-xs font-semibold text-primary">{t("studio.eyebrow")}</div>
           <h1 className="mt-1 truncate text-3xl font-extrabold tracking-tight">{t("studio.title")}</h1>
