@@ -23,7 +23,7 @@ import {
   Loader2,
   Sparkles,
   Download,
-  ArrowLeft,
+
   Clock,
   Ratio,
   MonitorPlay,
