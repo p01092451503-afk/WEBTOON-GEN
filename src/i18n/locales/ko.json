@@ -105,9 +105,9 @@
   },
   "landing": {
     "badge": "Seedream + Seedance · 베타",
-    "headline_1": "캐릭터부터 컷까지,",
+    "headline_1": "이미지도 영상도,",
     "headline_2": "모두 ",
-    "subtitle": "캐릭터 기반 이미지 생성과 Seedance 숏클립 영상 생성을 한 곳에서. 모든 결과는 자동으로 히스토리에 저장됩니다.",
+    "subtitle": "Seedream 캐릭터 이미지 생성과 Seedance 숏클립 영상 생성을 하나의 스튜디오에서. 모든 결과는 자동으로 히스토리에 저장됩니다.",
     "get_started": "시작하기",
     "sign_in": "로그인",
     "feature_library": "캐릭터 라이브러리",
@@ -119,7 +119,9 @@
     "feature_image": "이미지 생성 (Seedream)",
     "feature_image_body": "캐릭터 라이브러리 · 프리셋 · 4패널 컨트롤",
     "feature_video": "동영상 생성 (Seedance)",
-    "feature_video_body": "참조 프레임 → 영상, 카메라 무빙 제어"
+    "feature_video_body": "참조 프레임 → 영상, 카메라 무빙 제어",
+    "start_image": "이미지 생성 시작",
+    "start_video": "영상 생성 시작"
   },
   "projects": {
     "eyebrow": "워크스페이스",

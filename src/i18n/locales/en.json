@@ -105,9 +105,9 @@
   },
   "landing": {
     "badge": "Seedream + Seedance · Beta",
-    "headline_1": "From characters to cuts,",
+    "headline_1": "Images and videos,",
     "headline_2": "all in ",
-    "subtitle": "Character-driven image generation and Seedance short clips in one workspace. Every result is saved to your history automatically.",
+    "subtitle": "Seedream character image generation and Seedance short-clip video generation in one studio. Every result is saved to your history automatically.",
     "get_started": "Get started",
     "sign_in": "Sign in",
     "feature_library": "Character library",
@@ -119,7 +119,9 @@
     "feature_image": "Image generation (Seedream)",
     "feature_image_body": "Character library · presets · 4-panel controls",
     "feature_video": "Video generation (Seedance)",
-    "feature_video_body": "Reference frame to clip, camera motion control"
+    "feature_video_body": "Reference frame to clip, camera motion control",
+    "start_image": "Start image studio",
+    "start_video": "Start video studio"
   },
   "projects": {
     "eyebrow": "Workspace",
