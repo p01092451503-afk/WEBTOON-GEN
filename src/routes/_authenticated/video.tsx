@@ -282,65 +282,99 @@ function VideoStudioPage() {
         {/* 1. Reference frame */}
         <Panel step={1} title={t("video.panels.reference")}>
           <div className="space-y-4">
-            <p className="text-[13px] leading-relaxed text-muted-foreground">
-              {t("video.reference_hint")}
-            </p>
+            <div className="flex items-center justify-between rounded-2xl border border-border px-4 py-3">
+              <div className="space-y-0.5">
+                <Label className="text-[13px] font-bold">{t("video.use_reference")}</Label>
+                <p className="text-[12px] text-muted-foreground">
+                  {useReferenceFrame ? t("video.reference_on_hint") : t("video.reference_off_hint")}
+                </p>
+              </div>
+              <Switch
+                checked={useReferenceFrame}
+                onCheckedChange={(v) => {
+                  setUseReferenceFrame(v);
+                  if (!v) {
+                    setFirstFrame(null);
+                    setLastFrame(null);
+                  }
+                }}
+              />
+            </div>
 
-            <FrameSlot
-              label={t("video.upload_frame")}
-              path={firstFrame}
-              busy={uploading === "first"}
-              onPick={(f) => handleUpload(f, "first")}
-              onClear={() => setFirstFrame(null)}
-              clearLabel={t("common.dismiss")}
-            />
-
-            {firstFrame && (
-              <div className="space-y-1.5">
-                <FrameSlot
-                  label={t("video.upload_last_frame")}
-                  path={lastFrame}
-                  busy={uploading === "last"}
-                  onPick={(f) => handleUpload(f, "last")}
-                  onClear={() => setLastFrame(null)}
-                  clearLabel={t("common.dismiss")}
-                />
-                <p className="text-[12px] text-muted-foreground">{t("video.last_frame_hint")}</p>
+            {!useReferenceFrame && (
+              <div className="rounded-2xl border border-border bg-muted/30 px-4 py-4">
+                <div className="flex items-start gap-2 text-[13px] font-semibold text-foreground">
+                  <Info className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                  {t("video.reference_why_title")}
+                </div>
+                <p className="mt-2 text-[12px] leading-relaxed text-muted-foreground">
+                  {t("video.reference_why_body")}
+                </p>
               </div>
             )}
 
+            {useReferenceFrame && (
+              <div className="space-y-4">
+                <p className="text-[13px] leading-relaxed text-muted-foreground">
+                  {t("video.reference_hint")}
+                </p>
 
-            <div>
-              <Label className="text-[13px] font-bold">{t("video.from_characters")}</Label>
-              <div className="mt-2 grid grid-cols-3 gap-2">
-                {characters.slice(0, 12).map((c) => (
-                  <button
-                    key={c.id}
-                    onClick={() => c.primary_path && setFirstFrame(c.primary_path)}
-                    className={
-                      "overflow-hidden rounded-xl border transition-colors " +
-                      (firstFrame === c.primary_path
-                        ? "border-primary ring-2 ring-primary/25"
-                        : "border-border hover:border-primary/40")
-                    }
-                    title={c.display_name}
-                  >
-                    <SignedImage
-                      bucket="character-refs"
-                      path={c.primary_path}
-                      alt={c.display_name}
-                      className="h-16 w-full object-cover"
+                <FrameSlot
+                  label={t("video.upload_frame")}
+                  path={firstFrame}
+                  busy={uploading === "first"}
+                  onPick={(f) => handleUpload(f, "first")}
+                  onClear={() => setFirstFrame(null)}
+                  clearLabel={t("common.dismiss")}
+                />
+
+                {firstFrame && (
+                  <div className="space-y-1.5">
+                    <FrameSlot
+                      label={t("video.upload_last_frame")}
+                      path={lastFrame}
+                      busy={uploading === "last"}
+                      onPick={(f) => handleUpload(f, "last")}
+                      onClear={() => setLastFrame(null)}
+                      clearLabel={t("common.dismiss")}
                     />
-                    <span className="block truncate px-1.5 py-1 text-[11px] font-semibold">
-                      {c.display_name}
-                    </span>
-                  </button>
-                ))}
+                    <p className="text-[12px] text-muted-foreground">{t("video.last_frame_hint")}</p>
+                  </div>
+                )}
+
+                <div>
+                  <Label className="text-[13px] font-bold">{t("video.from_characters")}</Label>
+                  <div className="mt-2 grid grid-cols-3 gap-2">
+                    {characters.slice(0, 12).map((c) => (
+                      <button
+                        key={c.id}
+                        onClick={() => c.primary_path && setFirstFrame(c.primary_path)}
+                        className={
+                          "overflow-hidden rounded-xl border transition-colors " +
+                          (firstFrame === c.primary_path
+                            ? "border-primary ring-2 ring-primary/25"
+                            : "border-border hover:border-primary/40")
+                        }
+                        title={c.display_name}
+                      >
+                        <SignedImage
+                          bucket="character-refs"
+                          path={c.primary_path}
+                          alt={c.display_name}
+                          className="h-16 w-full object-cover"
+                        />
+                        <span className="block truncate px-1.5 py-1 text-[11px] font-semibold">
+                          {c.display_name}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                  {characters.length === 0 && (
+                    <p className="mt-2 text-xs text-muted-foreground">{t("video.no_characters")}</p>
+                  )}
+                </div>
               </div>
-              {characters.length === 0 && (
-                <p className="mt-2 text-xs text-muted-foreground">{t("video.no_characters")}</p>
-              )}
-            </div>
+            )}
 
             <div className="rounded-2xl border border-border bg-muted/40 px-3 py-2 text-[12px] font-semibold text-muted-foreground">
               {mode === "i2v" ? t("video.mode_i2v") : t("video.mode_t2v")}
