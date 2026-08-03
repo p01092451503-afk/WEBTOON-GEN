@@ -301,6 +301,16 @@ function VideoStudioPage() {
               />
             </div>
 
+            <div className="rounded-2xl border border-border bg-muted/30 px-4 py-4">
+              <div className="flex items-start gap-2 text-[13px] font-semibold text-foreground">
+                <Info className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                {useReferenceFrame ? t("video.reference_flow_on_title") : t("video.reference_flow_off_title")}
+              </div>
+              <p className="mt-2 text-[12px] leading-relaxed text-muted-foreground">
+                {useReferenceFrame ? t("video.reference_flow_on_body") : t("video.reference_flow_off_body")}
+              </p>
+            </div>
+
             {!useReferenceFrame && (
               <div className="rounded-2xl border border-border bg-muted/30 px-4 py-4">
                 <div className="flex items-start gap-2 text-[13px] font-semibold text-foreground">
