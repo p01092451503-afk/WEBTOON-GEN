@@ -12,15 +12,21 @@ export type VideoTaskState = {
 function arkEnv() {
   const ARK_API_KEY = process.env.ARK_API_KEY;
   const ARK_BASE_URL = process.env.ARK_BASE_URL;
-  // Ark inference requests should prefer the account-specific endpoint ID.
-  // A catalog model ID may exist in the environment while that model is not
-  // activated for the account, which causes ModelNotOpen even when a valid
-  // inference endpoint has already been configured.
-  const model = process.env.ARK_VIDEO_ENDPOINT_ID || process.env.ARK_VIDEO_MODEL_ID;
+  // Ark 는 계정마다 사용 가능한 식별자가 다르다.
+  // (1) Online Inference Endpoint ID, (2) 활성화된 카탈로그 모델 ID.
+  // 어떤 값이 유효한지 사전에 알 수 없으므로 후보를 순서대로 시도한다.
+  const candidates = [
+    process.env.ARK_VIDEO_ENDPOINT_ID,
+    process.env.ARK_VIDEO_MODEL_ID,
+    process.env.ARK_ENDPOINT_ID,
+  ]
+    .map((v) => (v ?? "").trim())
+    .filter((v, i, arr) => v.length > 0 && arr.indexOf(v) === i);
+
   if (!ARK_API_KEY || !ARK_BASE_URL) {
     throw new Error("ARK 시크릿이 설정되지 않았습니다.");
   }
-  if (!model) {
+  if (candidates.length === 0) {
     throw new Error(
       "ARK_VIDEO_ENDPOINT_ID 또는 ARK_VIDEO_MODEL_ID가 설정되지 않았습니다. 활성화된 Seedance 엔드포인트 ID를 등록해 주세요.",
     );
@@ -28,9 +34,11 @@ function arkEnv() {
   return {
     key: ARK_API_KEY,
     base: ARK_BASE_URL.replace(/\/$/, ""),
-    model,
+    candidates,
+    model: candidates[0]!,
   };
 }
+
 
 export function buildSeedanceText(params: {
   prompt: string;
