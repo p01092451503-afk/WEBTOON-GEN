@@ -23,12 +23,17 @@ import {
   Loader2,
   Sparkles,
   Download,
-
   Clock,
   Ratio,
   MonitorPlay,
   Camera,
+  Crop,
+  Compass,
+  Gauge,
+  Sun,
+  Palette,
 } from "lucide-react";
+
 
 export const Route = createFileRoute("/_authenticated/video")({
   component: VideoStudioPage,
