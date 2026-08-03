@@ -354,6 +354,16 @@ function VideoStudioPage() {
               />
             </div>
 
+            <div className="space-y-1.5">
+              <Label className="text-[13px] font-bold">{t("video.negative_label")}</Label>
+              <Textarea
+                value={negativeText}
+                onChange={(e) => setNegativeText(e.target.value)}
+                placeholder={t("video.negative_placeholder")}
+                className="min-h-[60px] rounded-2xl text-[13px]"
+              />
+            </div>
+
             <PresetGroup
               title={t("video.camera_motion")}
               icon={<Camera className="h-4 w-4" />}
@@ -362,12 +372,48 @@ function VideoStudioPage() {
               onToggle={(id) => toggle(motionIds, setMotionIds, id)}
             />
             <PresetGroup
+              title={t("video.shot_size")}
+              icon={<Crop className="h-4 w-4" />}
+              items={SHOT_PRESETS}
+              selected={shotId ? [shotId] : []}
+              onToggle={(id) => setShotId(shotId === id ? null : id)}
+            />
+            <PresetGroup
+              title={t("video.camera_angle")}
+              icon={<Compass className="h-4 w-4" />}
+              items={ANGLE_PRESETS}
+              selected={angleId ? [angleId] : []}
+              onToggle={(id) => setAngleId(angleId === id ? null : id)}
+            />
+            <PresetGroup
+              title={t("video.speed")}
+              icon={<Gauge className="h-4 w-4" />}
+              items={SPEED_PRESETS}
+              selected={speedId ? [speedId] : []}
+              onToggle={(id) => setSpeedId(speedId === id ? null : id)}
+            />
+            <PresetGroup
+              title={t("video.lighting")}
+              icon={<Sun className="h-4 w-4" />}
+              items={LIGHT_PRESETS}
+              selected={lightIds}
+              onToggle={(id) => toggle(lightIds, setLightIds, id)}
+            />
+            <PresetGroup
+              title={t("video.style")}
+              icon={<Palette className="h-4 w-4" />}
+              items={STYLE_PRESETS}
+              selected={styleId ? [styleId] : []}
+              onToggle={(id) => setStyleId(styleId === id ? null : id)}
+            />
+            <PresetGroup
               title={t("video.ambience")}
               icon={<Sparkles className="h-4 w-4" />}
               items={AMBIENCE_PRESETS}
               selected={ambienceIds}
               onToggle={(id) => toggle(ambienceIds, setAmbienceIds, id)}
             />
+
           </div>
         </Panel>
 
