@@ -527,6 +527,125 @@ export type Database = {
           },
         ]
       }
+      video_generations: {
+        Row: {
+          api_model: string | null
+          aspect_ratio: string | null
+          camera_fixed: boolean
+          completed_at: string | null
+          created_at: string
+          duration_seconds: number
+          error_message: string | null
+          final_prompt: string
+          id: string
+          image_paths: Json
+          mode: string
+          options: Json
+          prompt_edited: boolean
+          raw_prompt: string | null
+          resolution: string | null
+          seed: number | null
+          status: string
+          task_id: string | null
+          tenant_id: string
+          user_id: string
+          work_label: string
+        }
+        Insert: {
+          api_model?: string | null
+          aspect_ratio?: string | null
+          camera_fixed?: boolean
+          completed_at?: string | null
+          created_at?: string
+          duration_seconds?: number
+          error_message?: string | null
+          final_prompt: string
+          id?: string
+          image_paths?: Json
+          mode?: string
+          options?: Json
+          prompt_edited?: boolean
+          raw_prompt?: string | null
+          resolution?: string | null
+          seed?: number | null
+          status?: string
+          task_id?: string | null
+          tenant_id: string
+          user_id: string
+          work_label?: string
+        }
+        Update: {
+          api_model?: string | null
+          aspect_ratio?: string | null
+          camera_fixed?: boolean
+          completed_at?: string | null
+          created_at?: string
+          duration_seconds?: number
+          error_message?: string | null
+          final_prompt?: string
+          id?: string
+          image_paths?: Json
+          mode?: string
+          options?: Json
+          prompt_edited?: boolean
+          raw_prompt?: string | null
+          resolution?: string | null
+          seed?: number | null
+          status?: string
+          task_id?: string | null
+          tenant_id?: string
+          user_id?: string
+          work_label?: string
+        }
+        Relationships: []
+      }
+      video_results: {
+        Row: {
+          created_at: string
+          duration_seconds: number | null
+          height: number | null
+          id: string
+          poster_path: string | null
+          seq: number
+          source_url: string | null
+          storage_path: string
+          video_generation_id: string
+          width: number | null
+        }
+        Insert: {
+          created_at?: string
+          duration_seconds?: number | null
+          height?: number | null
+          id?: string
+          poster_path?: string | null
+          seq?: number
+          source_url?: string | null
+          storage_path: string
+          video_generation_id: string
+          width?: number | null
+        }
+        Update: {
+          created_at?: string
+          duration_seconds?: number | null
+          height?: number | null
+          id?: string
+          poster_path?: string | null
+          seq?: number
+          source_url?: string | null
+          storage_path?: string
+          video_generation_id?: string
+          width?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_results_video_generation_id_fkey"
+            columns: ["video_generation_id"]
+            isOneToOne: false
+            referencedRelation: "video_generations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
