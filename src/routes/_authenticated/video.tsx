@@ -153,10 +153,17 @@ function VideoStudioPage() {
   const gen = useVideoGeneration(tenantId);
 
   const [firstFrame, setFirstFrame] = useState<string | null>(null);
-  const [uploading, setUploading] = useState(false);
+  const [lastFrame, setLastFrame] = useState<string | null>(null);
+  const [uploading, setUploading] = useState<"first" | "last" | null>(null);
   const [actionText, setActionText] = useState("");
+  const [negativeText, setNegativeText] = useState("");
   const [motionIds, setMotionIds] = useState<string[]>([]);
   const [ambienceIds, setAmbienceIds] = useState<string[]>([]);
+  const [shotId, setShotId] = useState<string | null>(null);
+  const [angleId, setAngleId] = useState<string | null>(null);
+  const [speedId, setSpeedId] = useState<string | null>(null);
+  const [lightIds, setLightIds] = useState<string[]>([]);
+  const [styleId, setStyleId] = useState<string | null>(null);
   const [aspectRatio, setAspectRatio] = useState<string>("16:9");
   const [resolution, setResolution] = useState<(typeof RESOLUTIONS)[number]>("720p");
   const [duration, setDuration] = useState<number>(5);
@@ -167,13 +174,26 @@ function VideoStudioPage() {
 
   const builtPrompt = useMemo(() => {
     const parts: string[] = [];
+    const one = (list: Preset[], id: string | null) =>
+      id ? (list.find((p) => p.id === id)?.text ?? "") : "";
+    const many = (list: Preset[], ids: string[]) =>
+      list.filter((p) => ids.includes(p.id)).map((p) => p.text);
+
     if (actionText.trim()) parts.push(actionText.trim());
-    const motion = MOTION_PRESETS.filter((m) => motionIds.includes(m.id)).map((m) => m.text);
-    const ambience = AMBIENCE_PRESETS.filter((a) => ambienceIds.includes(a.id)).map((a) => a.text);
-    parts.push(...motion, ...ambience);
-    if (parts.length === 0) return "";
-    return parts.join(", ") + ".";
-  }, [actionText, motionIds, ambienceIds]);
+    parts.push(one(SHOT_PRESETS, shotId));
+    parts.push(one(ANGLE_PRESETS, angleId));
+    parts.push(...many(MOTION_PRESETS, motionIds));
+    parts.push(one(SPEED_PRESETS, speedId));
+    parts.push(...many(LIGHT_PRESETS, lightIds));
+    parts.push(...many(AMBIENCE_PRESETS, ambienceIds));
+    parts.push(one(STYLE_PRESETS, styleId));
+
+    const cleaned = parts.map((p) => p.trim()).filter(Boolean);
+    if (cleaned.length === 0) return "";
+    let out = cleaned.join(", ") + ".";
+    if (negativeText.trim()) out += ` Avoid: ${negativeText.trim()}.`;
+    return out;
+  }, [actionText, negativeText, shotId, angleId, motionIds, speedId, lightIds, ambienceIds, styleId]);
 
   const finalPrompt = editedPrompt ?? builtPrompt;
   const mode: "t2v" | "i2v" = firstFrame ? "i2v" : "t2v";
@@ -182,21 +202,22 @@ function VideoStudioPage() {
     setList(list.includes(id) ? list.filter((x) => x !== id) : [...list, id]);
   }
 
-  async function handleUpload(file: File) {
+  async function handleUpload(file: File, slot: "first" | "last") {
     if (!tenantId) return;
-    setUploading(true);
+    setUploading(slot);
     try {
       const ext = file.name.split(".").pop()?.toLowerCase() || "png";
-      const path = `${tenantId}/video-refs/${Date.now()}.${ext}`;
+      const path = `${tenantId}/video-refs/${Date.now()}-${slot}.${ext}`;
       const { error } = await supabase.storage
         .from("character-refs")
         .upload(path, file, { contentType: file.type, upsert: false });
       if (error) throw error;
-      setFirstFrame(path);
+      if (slot === "first") setFirstFrame(path);
+      else setLastFrame(path);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : String(e));
     } finally {
-      setUploading(false);
+      setUploading(null);
     }
   }
 
@@ -206,6 +227,9 @@ function VideoStudioPage() {
       return;
     }
     try {
+      const imagePaths = [firstFrame, firstFrame ? lastFrame : null].filter(
+        (p): p is string => Boolean(p),
+      );
       await gen.run({
         workLabel: "V1",
         mode,
@@ -217,14 +241,25 @@ function VideoStudioPage() {
         durationSeconds: duration,
         cameraFixed,
         seed: seedLocked && seed.trim() ? Number(seed) : null,
-        imagePaths: firstFrame ? [firstFrame] : [],
-        options: { motionIds, ambienceIds, actionText },
+        imagePaths,
+        options: {
+          motionIds,
+          ambienceIds,
+          shotId,
+          angleId,
+          speedId,
+          lightIds,
+          styleId,
+          actionText,
+          negativeText,
+        },
       });
       toast.success(t("video.toast.started"));
     } catch (e) {
       toast.error(e instanceof Error ? e.message : String(e));
     }
   }
+
 
   return (
     <main className="px-4 py-5 sm:px-6">
