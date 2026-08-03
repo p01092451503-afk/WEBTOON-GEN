@@ -1,6 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { Users, Sparkles, History, FolderKanban, Search, LayoutGrid, Film } from "lucide-react";
+import { Users, Sparkles, History, FolderKanban, Search, LayoutGrid, Film, Image } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import {
@@ -43,7 +43,7 @@ export function AppSidebar() {
       label: t("sidebar.group_studio"),
       items: [
         { title: t("sidebar.hub"), url: "/studio", icon: LayoutGrid },
-        { title: t("sidebar.studio"), url: "/generate", icon: Sparkles },
+        { title: t("sidebar.studio"), url: "/generate", icon: Image },
         { title: t("sidebar.video"), url: "/video", icon: Film },
       ],
     },
