@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,7 +8,9 @@ import { useCharacters } from "@/hooks/useCharacters";
 import { useVideoGeneration } from "@/hooks/useVideoGeneration";
 import { useSignedUrl } from "@/hooks/useSignedUrl";
 import { SignedImage } from "@/components/SignedImage";
+import { StudioSwitcher } from "@/components/studio-switcher";
 import { IconBadge } from "@/components/icon-badge";
+
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
