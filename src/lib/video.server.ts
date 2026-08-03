@@ -12,13 +12,17 @@ export type VideoTaskState = {
 function arkEnv() {
   const ARK_API_KEY = process.env.ARK_API_KEY;
   const ARK_BASE_URL = process.env.ARK_BASE_URL;
-  const model = process.env.ARK_VIDEO_MODEL_ID || process.env.ARK_VIDEO_ENDPOINT_ID;
+  // Ark inference requests should prefer the account-specific endpoint ID.
+  // A catalog model ID may exist in the environment while that model is not
+  // activated for the account, which causes ModelNotOpen even when a valid
+  // inference endpoint has already been configured.
+  const model = process.env.ARK_VIDEO_ENDPOINT_ID || process.env.ARK_VIDEO_MODEL_ID;
   if (!ARK_API_KEY || !ARK_BASE_URL) {
     throw new Error("ARK 시크릿이 설정되지 않았습니다.");
   }
   if (!model) {
     throw new Error(
-      "ARK_VIDEO_MODEL_ID 시크릿이 설정되지 않았습니다. Seedance 모델/엔드포인트 ID를 등록해 주세요.",
+      "ARK_VIDEO_ENDPOINT_ID 또는 ARK_VIDEO_MODEL_ID가 설정되지 않았습니다. 활성화된 Seedance 엔드포인트 ID를 등록해 주세요.",
     );
   }
   return {
@@ -88,7 +92,7 @@ export async function createVideoTask(params: {
     const text = await res.text().catch(() => "");
     if (text.includes("ModelNotOpen") || text.includes("has not activated the model")) {
       throw new Error(
-        `ARK_MODEL_NOT_ACTIVATED: 현재 등록된 모델 ID "${model}" 이(가) Ark 콘솔에서 활성화되어 있지 않습니다. Ark 콘솔에서 해당 모델을 활성화하거나, 활성화된 Seedance 모델/엔드포인트 ID로 ARK_VIDEO_MODEL_ID 값을 바꿔 주세요.`,
+        `ARK_MODEL_NOT_ACTIVATED: 현재 등록된 Seedance 엔드포인트/모델 "${model}"을 사용할 수 없습니다. Ark 콘솔에서 활성화된 Online Inference Endpoint ID를 확인한 뒤 ARK_VIDEO_ENDPOINT_ID 값을 갱신해 주세요.`,
       );
     }
     throw new Error(`ARK_HTTP_${res.status}: ${text.slice(0, 500)}`);
