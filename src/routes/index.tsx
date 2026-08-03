@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Library, LayoutGrid, History } from "lucide-react";
+import { Image as ImageIcon, Film, History } from "lucide-react";
 import { LanguageToggle } from "@/components/language-toggle";
 
 
