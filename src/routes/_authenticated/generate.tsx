@@ -46,7 +46,7 @@ import { Switch } from "@/components/ui/switch";
 
 export const Route = createFileRoute("/_authenticated/generate")({
   component: GeneratePage,
-  head: () => ({ meta: [{ title: "Studio · toonpilot" }] }),
+  head: () => ({ meta: [{ title: "Studio · pilotstudio" }] }),
 });
 
 type RefState = { path: string; url?: string } | null;

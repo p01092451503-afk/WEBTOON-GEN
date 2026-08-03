@@ -14,7 +14,7 @@ import { FolderPlus, Trash2, ArrowRight, FolderKanban } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/projects/")({
   component: ProjectsIndex,
-  head: () => ({ meta: [{ title: "Projects · toonpilot" }] }),
+  head: () => ({ meta: [{ title: "Projects · pilotstudio" }] }),
 });
 
 function ProjectsIndex() {

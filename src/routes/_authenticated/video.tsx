@@ -32,15 +32,15 @@ export const Route = createFileRoute("/_authenticated/video")({
   component: VideoStudioPage,
   head: () => ({
     meta: [
-      { title: "Video Studio · toonpilot" },
+      { title: "Video Studio · pilotstudio" },
       {
         name: "description",
         content: "Generate character-driven short videos with Seedance from a reference frame and a motion prompt.",
       },
-      { property: "og:title", content: "Video Studio · toonpilot" },
+      { property: "og:title", content: "Video Studio · pilotstudio" },
       {
         property: "og:description",
-        content: "Seedance video generation workspace inside toonpilot.",
+        content: "Seedance video generation workspace inside pilotstudio.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
