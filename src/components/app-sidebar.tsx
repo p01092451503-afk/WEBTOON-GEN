@@ -29,9 +29,11 @@ export function AppSidebar() {
   }, []);
 
   const items = [
+    { title: t("sidebar.hub"), url: "/studio", icon: LayoutGrid },
     { title: t("sidebar.projects"), url: "/projects", icon: FolderKanban },
     { title: t("sidebar.characters"), url: "/characters", icon: Users },
     { title: t("sidebar.studio"), url: "/generate", icon: Sparkles },
+    { title: t("sidebar.video"), url: "/video", icon: Film },
     { title: t("sidebar.history"), url: "/history", icon: History },
   ] as const;
 
