@@ -538,7 +538,54 @@ function VideoStudioPage() {
   );
 }
 
+function FrameSlot({
+  label,
+  path,
+  busy,
+  onPick,
+  onClear,
+  clearLabel,
+}: {
+  label: string;
+  path: string | null;
+  busy: boolean;
+  onPick: (file: File) => void;
+  onClear: () => void;
+  clearLabel: string;
+}) {
+  if (path) {
+    return (
+      <div className="relative overflow-hidden rounded-2xl border border-border">
+        <SignedImage bucket="character-refs" path={path} alt={label} className="h-44 w-full object-cover" />
+        <button
+          onClick={onClear}
+          aria-label={clearLabel}
+          className="absolute right-2 top-2 grid h-7 w-7 place-items-center rounded-full bg-background/85 text-foreground shadow"
+        >
+          <X className="h-3.5 w-3.5" />
+        </button>
+      </div>
+    );
+  }
+  return (
+    <label className="flex h-32 cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border text-[13px] font-semibold text-muted-foreground hover:border-primary/40 hover:text-foreground">
+      {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <ImagePlus className="h-5 w-5" />}
+      {label}
+      <input
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) onPick(f);
+        }}
+      />
+    </label>
+  );
+}
+
 function VideoResultCard({ path }: { path: string }) {
+
   const { t } = useTranslation();
   const url = useSignedUrl("generation-outputs", path, 300);
   if (!url) {
