@@ -354,7 +354,16 @@
     },
     "toast": {
       "started": "Video job started."
-    }
+    },
+    "upload_last_frame": "Upload last frame (optional)",
+    "last_frame_hint": "Setting a last frame makes the clip transition from the first frame to it.",
+    "negative_label": "Avoid (optional)",
+    "negative_placeholder": "e.g. blurry, distorted hands, text",
+    "shot_size": "Shot size",
+    "camera_angle": "Camera angle",
+    "speed": "Speed",
+    "lighting": "Lighting",
+    "style": "Style"
   },
   "switcher": {
     "image": "Image",
