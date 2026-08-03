@@ -101,10 +101,10 @@
     "terms": "By continuing, you agree to the terms of service."
   },
   "landing": {
-    "badge": "Seedream 4.0 · Beta",
+    "badge": "Seedream + Seedance · Beta",
     "headline_1": "From characters to cuts,",
     "headline_2": "all in ",
-    "subtitle": "The easiest way to assemble references, poses, camera, and style into a structured prompt. Every result is saved to your history automatically.",
+    "subtitle": "Character-driven image generation and Seedance short clips in one workspace. Every result is saved to your history automatically.",
     "get_started": "Get started",
     "sign_in": "Sign in",
     "feature_library": "Character library",
@@ -112,7 +112,11 @@
     "feature_panels": "4-panel controls",
     "feature_panels_body": "References · Prompt · Figure · Final",
     "feature_history": "Auto history",
-    "feature_history_body": "Restore options and regenerate instantly"
+    "feature_history_body": "Restore options and regenerate instantly",
+    "feature_image": "Image generation (Seedream)",
+    "feature_image_body": "Character library · presets · 4-panel controls",
+    "feature_video": "Video generation (Seedance)",
+    "feature_video_body": "Reference frame to clip, camera motion control"
   },
   "projects": {
     "eyebrow": "Workspace",
