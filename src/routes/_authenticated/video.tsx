@@ -279,41 +279,29 @@ function VideoStudioPage() {
               {t("video.reference_hint")}
             </p>
 
-            {firstFrame ? (
-              <div className="relative overflow-hidden rounded-2xl border border-border">
-                <SignedImage
-                  bucket="character-refs"
-                  path={firstFrame}
-                  alt={t("video.panels.reference")}
-                  className="h-48 w-full object-cover"
+            <FrameSlot
+              label={t("video.upload_frame")}
+              path={firstFrame}
+              busy={uploading === "first"}
+              onPick={(f) => handleUpload(f, "first")}
+              onClear={() => setFirstFrame(null)}
+              clearLabel={t("common.dismiss")}
+            />
+
+            {firstFrame && (
+              <div className="space-y-1.5">
+                <FrameSlot
+                  label={t("video.upload_last_frame")}
+                  path={lastFrame}
+                  busy={uploading === "last"}
+                  onPick={(f) => handleUpload(f, "last")}
+                  onClear={() => setLastFrame(null)}
+                  clearLabel={t("common.dismiss")}
                 />
-                <button
-                  onClick={() => setFirstFrame(null)}
-                  aria-label={t("common.dismiss")}
-                  className="absolute right-2 top-2 grid h-7 w-7 place-items-center rounded-full bg-background/85 text-foreground shadow"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
+                <p className="text-[12px] text-muted-foreground">{t("video.last_frame_hint")}</p>
               </div>
-            ) : (
-              <label className="flex h-32 cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border text-[13px] font-semibold text-muted-foreground hover:border-primary/40 hover:text-foreground">
-                {uploading ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                ) : (
-                  <ImagePlus className="h-5 w-5" />
-                )}
-                {t("video.upload_frame")}
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    if (f) handleUpload(f);
-                  }}
-                />
-              </label>
             )}
+
 
             <div>
               <Label className="text-[13px] font-bold">{t("video.from_characters")}</Label>
