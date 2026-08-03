@@ -69,15 +69,15 @@ function Index() {
         <div className="mt-16 grid w-full max-w-3xl grid-cols-1 gap-4 sm:grid-cols-3">
           <FeatureCard
             index="01"
-            icon={<Library className="h-4 w-4" strokeWidth={1.75} />}
-            title={t("landing.feature_library")}
-            body={t("landing.feature_library_body")}
+            icon={<ImageIcon className="h-4 w-4" strokeWidth={1.75} />}
+            title={t("landing.feature_image")}
+            body={t("landing.feature_image_body")}
           />
           <FeatureCard
             index="02"
-            icon={<LayoutGrid className="h-4 w-4" strokeWidth={1.75} />}
-            title={t("landing.feature_panels")}
-            body={t("landing.feature_panels_body")}
+            icon={<Film className="h-4 w-4" strokeWidth={1.75} />}
+            title={t("landing.feature_video")}
+            body={t("landing.feature_video_body")}
           />
           <FeatureCard
             index="03"
