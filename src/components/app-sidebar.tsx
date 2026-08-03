@@ -98,30 +98,42 @@ export function AppSidebar() {
 
 
       <SidebarContent className="px-2 pt-4">
-        <SidebarMenu className="gap-1.5">
-          {items.map((item) => {
-            const active = isActive(item.url);
-            return (
-              <SidebarMenuItem key={item.url}>
-                <SidebarMenuButton
-                  asChild
-                  isActive={active}
-                  tooltip={item.title}
-                  className="h-12 rounded-2xl px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground data-[active=true]:border data-[active=true]:border-border data-[active=true]:bg-card data-[active=true]:font-semibold data-[active=true]:text-foreground data-[active=true]:shadow-toss-sm"
-                >
-                  <Link to={item.url} className="flex items-center gap-3">
-                    <item.icon
-                      className={`h-5 w-5 shrink-0 ${active ? "text-primary" : ""}`}
-                      strokeWidth={2}
-                    />
-                    {!collapsed && <span className="truncate">{item.title}</span>}
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            );
-          })}
-        </SidebarMenu>
+        {groups.map((group) => (
+          <SidebarGroup key={group.label} className="px-0 py-1">
+            {!collapsed && (
+              <SidebarGroupLabel className="px-3 text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70">
+                {group.label}
+              </SidebarGroupLabel>
+            )}
+            <SidebarGroupContent>
+              <SidebarMenu className="gap-1.5">
+                {group.items.map((item) => {
+                  const active = isActive(item.url);
+                  return (
+                    <SidebarMenuItem key={item.url}>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={active}
+                        tooltip={item.title}
+                        className="h-12 rounded-2xl px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground data-[active=true]:border data-[active=true]:border-border data-[active=true]:bg-card data-[active=true]:font-semibold data-[active=true]:text-foreground data-[active=true]:shadow-toss-sm"
+                      >
+                        <Link to={item.url} className="flex items-center gap-3">
+                          <item.icon
+                            className={`h-5 w-5 shrink-0 ${active ? "text-primary" : ""}`}
+                            strokeWidth={2}
+                          />
+                          {!collapsed && <span className="truncate">{item.title}</span>}
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
       </SidebarContent>
+
 
     </Sidebar>
   );
