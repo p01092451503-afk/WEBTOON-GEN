@@ -45,14 +45,17 @@
     "workspace": "Workspace",
     "projects": "Projects",
     "projects_desc": "Episodes & storyboards",
-    "characters": "Characters",
+    "characters": "Character library",
     "characters_desc": "Library",
     "studio": "Image studio",
     "studio_desc": "Single panel",
     "history": "History",
     "history_desc": "Past results",
     "hub": "Studio hub",
-    "video": "Video studio"
+    "video": "Video studio",
+    "group_assets": "Assets",
+    "group_studio": "Studios",
+    "group_records": "Records"
   },
   "header": {
     "projects": {

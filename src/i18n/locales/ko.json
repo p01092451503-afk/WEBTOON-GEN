@@ -45,14 +45,17 @@
     "workspace": "워크스페이스",
     "projects": "프로젝트",
     "projects_desc": "에피소드 & 스토리보드",
-    "characters": "캐릭터",
+    "characters": "캐릭터 라이브러리",
     "characters_desc": "라이브러리",
     "studio": "이미지 스튜디오",
     "studio_desc": "단일 패널 생성",
     "history": "히스토리",
     "history_desc": "지난 결과",
     "hub": "스튜디오 홈",
-    "video": "동영상 스튜디오"
+    "video": "동영상 스튜디오",
+    "group_assets": "에셋",
+    "group_studio": "스튜디오",
+    "group_records": "기록"
   },
   "header": {
     "projects": {
