@@ -30,6 +30,8 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { StudioSwitcher } from "@/components/studio-switcher";
+
 import { IconTooltip } from "@/components/icon-tooltip";
 import { IconBadge } from "@/components/icon-badge";
 import { Label } from "@/components/ui/label";
