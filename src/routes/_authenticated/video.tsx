@@ -32,6 +32,7 @@ import {
   Gauge,
   Sun,
   Palette,
+  Info,
 } from "lucide-react";
 
 
@@ -159,6 +160,7 @@ function VideoStudioPage() {
 
   const [firstFrame, setFirstFrame] = useState<string | null>(null);
   const [lastFrame, setLastFrame] = useState<string | null>(null);
+  const [useReferenceFrame, setUseReferenceFrame] = useState(false);
   const [uploading, setUploading] = useState<"first" | "last" | null>(null);
   const [actionText, setActionText] = useState("");
   const [negativeText, setNegativeText] = useState("");
