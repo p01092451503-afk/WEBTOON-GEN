@@ -58,13 +58,23 @@ function Index() {
         </p>
 
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-          <Button asChild size="lg" className="h-12 rounded-full px-8 text-base font-semibold shadow-toss">
-            <Link to="/auth">{t("landing.get_started")}</Link>
+          <Button asChild size="lg" className="h-12 rounded-full px-7 text-base font-semibold shadow-toss">
+            <Link to="/auth">
+              <ImageIcon className="mr-2 h-4 w-4" strokeWidth={2} />
+              {t("landing.start_image")}
+            </Link>
+          </Button>
+          <Button asChild size="lg" variant="secondary" className="h-12 rounded-full px-7 text-base font-semibold">
+            <Link to="/auth">
+              <Film className="mr-2 h-4 w-4" strokeWidth={2} />
+              {t("landing.start_video")}
+            </Link>
           </Button>
           <Button asChild size="lg" variant="ghost" className="h-12 rounded-full px-6 text-base font-semibold">
             <Link to="/auth">{t("landing.sign_in")}</Link>
           </Button>
         </div>
+
 
         <div className="mt-16 grid w-full max-w-3xl grid-cols-1 gap-4 sm:grid-cols-3">
           <FeatureCard
