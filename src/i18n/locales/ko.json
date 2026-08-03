@@ -101,10 +101,10 @@
     "terms": "계속 진행하면 이용약관에 동의하는 것으로 간주됩니다."
   },
   "landing": {
-    "badge": "Seedream 4.0 · 베타",
+    "badge": "Seedream + Seedance · 베타",
     "headline_1": "캐릭터부터 컷까지,",
     "headline_2": "모두 ",
-    "subtitle": "레퍼런스, 포즈, 카메라, 스타일을 구조화된 프롬프트로 조합하는 가장 쉬운 방법. 모든 결과는 자동으로 히스토리에 저장됩니다.",
+    "subtitle": "캐릭터 기반 이미지 생성과 Seedance 숏클립 영상 생성을 한 곳에서. 모든 결과는 자동으로 히스토리에 저장됩니다.",
     "get_started": "시작하기",
     "sign_in": "로그인",
     "feature_library": "캐릭터 라이브러리",
@@ -112,7 +112,11 @@
     "feature_panels": "4패널 컨트롤",
     "feature_panels_body": "레퍼런스 · 프롬프트 · 피규어 · 최종",
     "feature_history": "자동 히스토리",
-    "feature_history_body": "옵션을 복원하고 즉시 재생성"
+    "feature_history_body": "옵션을 복원하고 즉시 재생성",
+    "feature_image": "이미지 생성 (Seedream)",
+    "feature_image_body": "캐릭터 라이브러리 · 프리셋 · 4패널 컨트롤",
+    "feature_video": "동영상 생성 (Seedance)",
+    "feature_video_body": "참조 프레임 → 영상, 카메라 무빙 제어"
   },
   "projects": {
     "eyebrow": "워크스페이스",
