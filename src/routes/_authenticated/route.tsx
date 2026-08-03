@@ -26,10 +26,12 @@ export const Route = createFileRoute("/_authenticated")({
 });
 
 const PAGE_META_KEYS: Record<string, string> = {
+  "/studio": "header.studio_hub",
   "/projects": "header.projects",
   "/episodes": "header.episodes",
   "/characters": "header.characters",
   "/generate": "header.generate",
+  "/video": "header.video",
   "/history": "header.history",
 };
 

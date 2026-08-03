@@ -48,7 +48,7 @@ function AuthPage() {
         const { error } = await supabase.auth.signInWithPassword({ email: em, password: pw });
         if (error) throw error;
       }
-      navigate({ to: "/characters", replace: true });
+      navigate({ to: "/studio", replace: true });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : String(err));
     } finally {
