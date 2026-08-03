@@ -31,7 +31,7 @@ function Index() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!loading && user) navigate({ to: "/characters", replace: true });
+    if (!loading && user) navigate({ to: "/studio", replace: true });
   }, [user, loading, navigate]);
 
   return (
