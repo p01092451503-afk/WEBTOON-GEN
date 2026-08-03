@@ -328,6 +328,11 @@
       "result": "Result"
     },
     "reference_hint": "Pick a character or upload an image to use as the first frame. Without an image the clip is generated from text only.",
+    "use_reference": "Use reference image",
+    "reference_why_title": "Why use a reference frame?",
+    "reference_why_body": "A reference image tells the video model exactly what the first frame should look like. Use it to keep a character, costume, or pose consistent. Without it, the clip is created from your text description alone.",
+    "reference_off_hint": "Text-to-video mode",
+    "reference_on_hint": "Image-to-video mode",
     "upload_frame": "Upload first frame",
     "from_characters": "From character library",
     "no_characters": "No characters yet.",
