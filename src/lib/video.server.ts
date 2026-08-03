@@ -86,8 +86,14 @@ export async function createVideoTask(params: {
   }
   if (!res.ok) {
     const text = await res.text().catch(() => "");
+    if (text.includes("ModelNotOpen") || text.includes("has not activated the model")) {
+      throw new Error(
+        `ARK_MODEL_NOT_ACTIVATED: 현재 등록된 모델 ID "${model}" 이(가) Ark 콘솔에서 활성화되어 있지 않습니다. Ark 콘솔에서 해당 모델을 활성화하거나, 활성화된 Seedance 모델/엔드포인트 ID로 ARK_VIDEO_MODEL_ID 값을 바꿔 주세요.`,
+      );
+    }
     throw new Error(`ARK_HTTP_${res.status}: ${text.slice(0, 500)}`);
   }
+
   const json = (await res.json()) as { id?: string };
   if (!json?.id) throw new Error("ARK_NO_TASK_ID: 작업 ID를 받지 못했습니다.");
   return { taskId: json.id, model };
