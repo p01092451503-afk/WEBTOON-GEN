@@ -1241,6 +1241,34 @@ function VideoStudioPage() {
 function VideoResultCard({ path }: { path: string }) {
   const { t } = useTranslation();
   const url = useSignedUrl("generation-outputs", path, 300);
+  const [downloading, setDownloading] = useState(false);
+
+  async function downloadVideo() {
+    setDownloading(true);
+    try {
+      const sourceName = path.split("/").pop() || "pilotstudio-video.mp4";
+      const fileName = sourceName.toLowerCase().endsWith(".mp4") ? sourceName : `${sourceName}.mp4`;
+      const { data, error } = await supabase.storage
+        .from("generation-outputs")
+        .createSignedUrl(path, 60, { download: fileName });
+
+      if (error || !data?.signedUrl) {
+        throw new Error(error?.message || "Could not prepare the video download.");
+      }
+
+      const link = document.createElement("a");
+      link.href = data.signedUrl;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Video download failed.");
+    } finally {
+      setDownloading(false);
+    }
+  }
+
   if (!url) {
     return <div className="h-44 animate-pulse rounded-2xl bg-muted" />;
   }
@@ -1248,15 +1276,18 @@ function VideoResultCard({ path }: { path: string }) {
     <div className="space-y-2">
       <video src={url} controls playsInline className="w-full rounded-2xl border border-border" />
       <Button
-        asChild
         variant="outline"
         size="sm"
         className="w-full rounded-xl text-xs font-semibold"
+        onClick={downloadVideo}
+        disabled={downloading}
       >
-        <a href={url} download>
+        {downloading ? (
+          <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
+        ) : (
           <Download className="mr-1 h-3.5 w-3.5" />
-          {t("video.download")}
-        </a>
+        )}
+        {t("video.download")}
       </Button>
     </div>
   );
