@@ -10,8 +10,7 @@ const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/videos";
 /** taskId 앞에 붙는 프로바이더 표식. poll 시 어떤 API 로 조회할지 구분한다. */
 export const LOVABLE_TASK_PREFIX = "lovable:";
 
-export const DEFAULT_LOVABLE_VIDEO_MODEL =
-  process.env.LOVABLE_VIDEO_MODEL?.trim() || "google/veo-3.1-fast";
+export const DEFAULT_LOVABLE_VIDEO_MODEL = "google/veo-3.1-fast";
 
 function apiKey() {
   const key = process.env.LOVABLE_API_KEY;
