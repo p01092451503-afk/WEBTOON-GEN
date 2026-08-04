@@ -5,8 +5,8 @@ import type { VideoTaskState } from "@/lib/video.server";
 
 const startSchema = z.object({
   workLabel: z.string().default("V1"),
-  /** 영상 생성 프로바이더. replicate = Replicate 직접 연동 (기본) */
-  provider: z.enum(["auto", "seedance", "lovable", "replicate"]).default("replicate"),
+  /** 영상 생성 프로바이더. t2v 기본값은 프롬프트 충실도가 높은 Veo다. */
+  provider: z.enum(["auto", "seedance", "lovable", "replicate"]).default("lovable"),
   mode: z.enum(["t2v", "i2v"]).default("t2v"),
 
   finalPrompt: z.string().min(1).max(4000),
@@ -38,7 +38,8 @@ export const startVideoGeneration = createServerFn({ method: "POST" })
     const tenantId = profile.tenant_id as string;
 
     const prompt = data.finalPrompt.trim();
-    const negativePrompt = data.negativePrompt?.trim() || null;
+    const { DEFAULT_VIDEO_NEGATIVE_PROMPT } = await import("@/lib/video-constants");
+    const negativePrompt = data.negativePrompt?.trim() || DEFAULT_VIDEO_NEGATIVE_PROMPT;
     if (!prompt) throw new Error("EMPTY_PROMPT");
     if (/(^|\s)@[A-Za-z0-9_-]+/.test(prompt)) throw new Error("UNRESOLVED_MEDIA_MENTION");
 
@@ -86,35 +87,71 @@ export const startVideoGeneration = createServerFn({ method: "POST" })
         signedUrls.push(signed.signedUrl);
       }
 
-      const replicateInput = {
-          prompt,
-          negativePrompt,
-          aspectRatio: data.aspectRatio,
-          resolution: data.resolution,
-          durationSeconds: data.durationSeconds,
-          firstFrameUrl: signedUrls[0] ?? null,
-          lastFrameUrl: signedUrls[1] ?? null,
-          seed,
-      }
-      const { createReplicateWithRetry, recoveryAttempt } = await import(
-        "@/lib/video-recovery.server"
-      );
+      const provider =
+        data.provider === "auto" ? (data.mode === "t2v" ? "lovable" : "replicate") : data.provider;
+      const providerInput = {
+        prompt,
+        negativePrompt,
+        aspectRatio: data.aspectRatio,
+        resolution: data.resolution,
+        durationSeconds: data.durationSeconds,
+        firstFrameUrl: signedUrls[0] ?? null,
+        lastFrameUrl: signedUrls[1] ?? null,
+        cameraFixed: data.cameraFixed,
+        seed,
+      };
+      const { recoveryAttempt } = await import("@/lib/video-recovery.server");
       let taskId: string;
       let model: string;
       let modelVersion: string | null;
       let recoveryAttempts: Array<Record<string, string>> = [];
       let recoveryNotice: string | null = null;
 
-      try {
-        const started = await createReplicateWithRetry(replicateInput);
-        taskId = started.task.taskId;
-        model = started.task.model;
-        modelVersion = started.task.modelVersion;
-        recoveryAttempts = started.attempts;
-        if (started.attempts.length > 0) {
-          recoveryNotice = "A temporary provider error occurred, but the automatic retry succeeded.";
-        }
-      } catch (primaryError) {
+      console.info("[video-generation-dispatch]", {
+        videoGenerationId: videoId,
+        provider,
+        mode: data.mode,
+        prompt,
+        negative_prompt: negativePrompt,
+      });
+
+      if (provider === "lovable") {
+        const { createLovableVideoTask } = await import("@/lib/video-lovable.server");
+        const started = await createLovableVideoTask(providerInput);
+        taskId = started.taskId;
+        model = started.model;
+        modelVersion = null;
+      } else if (provider === "seedance") {
+         const { buildSeedanceText, createVideoTask } = await import("@/lib/video.server");
+         const started = await createVideoTask({
+           text: buildSeedanceText({
+             prompt,
+             aspectRatio: data.aspectRatio,
+             resolution: data.resolution,
+             durationSeconds: data.durationSeconds,
+             cameraFixed: data.cameraFixed,
+             seed,
+             hasFirstFrame: Boolean(signedUrls[0]),
+           }),
+           firstFrameUrl: signedUrls[0] ?? null,
+           lastFrameUrl: signedUrls[1] ?? null,
+         });
+         taskId = started.taskId;
+         model = started.model;
+         modelVersion = null;
+      } else try {
+         const { createReplicateWithRetry, recoveryAttempt } = await import(
+           "@/lib/video-recovery.server"
+         );
+         const started = await createReplicateWithRetry(providerInput);
+         taskId = started.task.taskId;
+         model = started.task.model;
+         modelVersion = started.task.modelVersion;
+         recoveryAttempts = started.attempts;
+         if (started.attempts.length > 0) {
+           recoveryNotice = "A temporary provider error occurred, but the automatic retry succeeded.";
+         }
+       } catch (primaryError) {
         const primaryReason = primaryError instanceof Error ? primaryError.message : String(primaryError);
         const priorAttempts =
           primaryError && typeof primaryError === "object" && "recoveryAttempts" in primaryError
@@ -158,7 +195,12 @@ export const startVideoGeneration = createServerFn({ method: "POST" })
           task_id: taskId,
           api_model: model,
           api_model_version: modelVersion,
-          options: { ...data.options, recoveryAttempts, fallbackUsed: modelVersion === null },
+           options: {
+             ...data.options,
+             selectedProvider: provider,
+             recoveryAttempts,
+             fallbackUsed: provider === "replicate" && modelVersion === null,
+           },
         })
         .eq("id", videoId);
 
