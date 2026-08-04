@@ -58,18 +58,19 @@ export const Route = createFileRoute("/_authenticated/video")({
       { title: "Video Studio · pilotstudio" },
       {
         name: "description",
-        content: "Generate character-driven short videos with Seedance from a reference frame and a motion prompt.",
+        content: "Generate character-driven short videos with Replicate from a reference frame and a motion prompt.",
       },
       { property: "og:title", content: "Video Studio · pilotstudio" },
       {
         property: "og:description",
-        content: "Seedance video generation workspace inside pilotstudio.",
+        content: "Replicate video generation workspace inside pilotstudio.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
 });
+
 
 const RATIOS = ["16:9", "9:16", "1:1", "4:3", "3:4", "21:9"] as const;
 const RESOLUTIONS = ["480p", "720p", "1080p"] as const;
