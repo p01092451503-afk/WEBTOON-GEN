@@ -87,10 +87,26 @@ export const startVideoGeneration = createServerFn({ method: "POST" })
         signedUrls.push(signed.signedUrl);
       }
 
-      // Veo is not currently exposed by Lovable AI Gateway. Keep accepting the
-      // legacy value so an already-open browser cannot trigger a known 400.
-      const provider =
-        data.provider === "auto" || data.provider === "lovable" ? "replicate" : data.provider;
+      const requestedProvider = data.provider === "auto" ? "lovable" : data.provider;
+      let provider = requestedProvider;
+      if (requestedProvider === "lovable" || requestedProvider === "replicate") {
+        const { probeLovableVideoModel, probeReplicate } = await import(
+          "@/lib/video-health.server"
+        );
+        const selectedHealth =
+          requestedProvider === "lovable"
+            ? await probeLovableVideoModel("google/veo-3.1-fast", "Google Veo 3.1 Fast")
+            : await probeReplicate();
+        if (selectedHealth.status === "unavailable") {
+          const alternateHealth =
+            requestedProvider === "lovable"
+              ? await probeReplicate()
+              : await probeLovableVideoModel("google/veo-3.1-fast", "Google Veo 3.1 Fast");
+          if (alternateHealth.status === "available") {
+            provider = requestedProvider === "lovable" ? "replicate" : "lovable";
+          }
+        }
+      }
       const providerInput = {
         prompt,
         negativePrompt,
@@ -111,13 +127,20 @@ export const startVideoGeneration = createServerFn({ method: "POST" })
 
       console.info("[video-generation-dispatch]", {
         videoGenerationId: videoId,
+        requestedProvider,
         provider,
         mode: data.mode,
         prompt,
         negative_prompt: negativePrompt,
       });
 
-      if (provider === "seedance") {
+      if (provider === "lovable") {
+         const { createLovableVideoTask } = await import("@/lib/video-lovable.server");
+         const started = await createLovableVideoTask(providerInput);
+         taskId = started.taskId;
+         model = started.model;
+         modelVersion = null;
+      } else if (provider === "seedance") {
          const { buildSeedanceText, createVideoTask } = await import("@/lib/video.server");
          const started = await createVideoTask({
            text: buildSeedanceText({

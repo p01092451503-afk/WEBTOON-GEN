@@ -17,7 +17,7 @@ type VideoHealth = {
   }>;
 };
 
-type VideoProvider = "replicate";
+type VideoProvider = "lovable" | "replicate";
 
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -244,7 +244,7 @@ function VideoStudioPage() {
   const [seed, setSeed] = useState<string>("");
   const [editedPrompt, setEditedPrompt] = useState<string | null>(null);
   const [composingPrompt, setComposingPrompt] = useState(false);
-  const [provider, setProvider] = useState<VideoProvider>("replicate");
+  const [provider, setProvider] = useState<VideoProvider>("lovable");
   const [tourOpen, setTourOpen] = useState(false);
   const composePromptFn = useServerFn(composeVideoPrompt);
 
@@ -288,6 +288,49 @@ function VideoStudioPage() {
     } finally {
       setHealthLoading(false);
     }
+  }
+
+  useEffect(() => {
+    void runHealthCheck();
+    const interval = window.setInterval(() => void runHealthCheck(), 30_000);
+    return () => window.clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (!health) return;
+    const selected = health.models.find((model) => model.provider === provider);
+    if (selected?.status !== "unavailable") return;
+    const alternate = health.models.find(
+      (model) =>
+        (model.provider === "lovable" || model.provider === "replicate") &&
+        model.provider !== provider &&
+        model.status === "available",
+    );
+    if (!alternate) return;
+    setProvider(alternate.provider as VideoProvider);
+    toast.info(`${selected.label} is unavailable. Switched to ${alternate.label}.`);
+  }, [health, provider]);
+
+  function selectProvider(value: string) {
+    const requested = value as VideoProvider;
+    const requestedHealth = health?.models.find((model) => model.provider === requested);
+    if (requestedHealth?.status !== "unavailable") {
+      setProvider(requested);
+      return;
+    }
+    const alternate = health?.models.find(
+      (model) =>
+        (model.provider === "lovable" || model.provider === "replicate") &&
+        model.provider !== requested &&
+        model.status === "available",
+    );
+    if (alternate) {
+      setProvider(alternate.provider as VideoProvider);
+      toast.info(`${requestedHealth.label} is unavailable. Using ${alternate.label}.`);
+      return;
+    }
+    setProvider(requested);
   }
 
   /** Replace "@name" tokens with wording the video model understands. */
@@ -952,16 +995,22 @@ function VideoStudioPage() {
               icon={<Video className="h-4 w-4" />}
               options={[
                 {
+                  id: "lovable",
+                  label: `Google Veo 3.1 Fast · ${health?.models.find((m) => m.provider === "lovable")?.status ?? "checking"}`,
+                },
+                {
                   id: "replicate",
-                  label: mode === "t2v" ? "LTX Video · Text to video" : "WAN 2.2 · Image to video",
+                  label: `${mode === "t2v" ? "LTX Video · Text to video" : "WAN 2.2 · Image to video"} · ${health?.models.find((m) => m.provider === "replicate")?.status ?? "checking"}`,
                 },
               ]}
               value={provider}
-              onChange={(value) => setProvider(value as VideoProvider)}
+              onChange={selectProvider}
             />
             <div className="space-y-2 rounded-2xl border border-border px-4 py-3">
               <div className="flex items-center justify-between gap-3">
-                <Label className="text-[13px] font-bold">{t("video.health_title")}</Label>
+                <Label className="text-[13px] font-bold">
+                  {t("video.health_title")} · {t("video.health_live")}
+                </Label>
                 <Button
                   type="button"
                   size="sm"

@@ -377,6 +377,7 @@
     "lighting": "Lighting",
     "style": "Style",
     "health_title": "Model availability check",
+    "health_live": "Live · refreshes every 30s",
     "health_check": "Run check",
     "health_status_available": "Available",
     "health_status_unavailable": "Unavailable",
