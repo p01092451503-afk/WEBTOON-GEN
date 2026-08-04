@@ -418,10 +418,12 @@ function HistoryPage() {
 function VideoDetailCard({
   row,
   onClose,
+  onDelete,
   locale,
 }: {
   row: VideoRow;
   onClose: () => void;
+  onDelete: () => void;
   locale: string;
 }) {
   const { t } = useTranslation();
@@ -436,6 +438,20 @@ function VideoDetailCard({
           <Button size="sm" variant="outline" asChild className="rounded-full">
             <Link to="/video">{t("nav.video", "Video studio")}</Link>
           </Button>
+          <ConfirmDelete
+            title="Delete this video?"
+            description="This generation and its stored video file will be permanently removed."
+            onConfirm={onDelete}
+          >
+            <Button
+              size="sm"
+              variant="ghost"
+              aria-label="Delete generation"
+              className="rounded-full text-destructive hover:bg-destructive/10"
+            >
+              <Trash2 className="h-4 w-4" aria-hidden="true" />
+            </Button>
+          </ConfirmDelete>
           <IconTooltip label={t("common.close_details")}>
             <Button size="sm" variant="ghost" className="rounded-full" onClick={onClose}>
               <X className="h-4 w-4" aria-hidden="true" />
@@ -443,6 +459,7 @@ function VideoDetailCard({
           </IconTooltip>
         </div>
       </header>
+
 
       <div className="space-y-5">
         {row.results.map((res) => (
