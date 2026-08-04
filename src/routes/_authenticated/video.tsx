@@ -9,11 +9,12 @@ type VideoHealth = {
   models: Array<{
     id: string;
     label: string;
-    provider: "lovable" | "seedance";
+    provider: "lovable" | "seedance" | "replicate";
     status: "available" | "unavailable" | "unknown";
     detail: string;
   }>;
 };
+
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
