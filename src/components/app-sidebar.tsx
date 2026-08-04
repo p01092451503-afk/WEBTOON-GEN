@@ -43,7 +43,7 @@ export function AppSidebar() {
       label: t("sidebar.group_studio"),
       items: [
         { title: t("sidebar.hub"), url: "/studio", icon: LayoutGrid },
-        { title: t("sidebar.studio"), url: "/generate", icon: Image },
+
         { title: t("sidebar.video"), url: "/video", icon: Film },
       ],
     },
