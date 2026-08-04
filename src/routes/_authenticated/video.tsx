@@ -313,9 +313,10 @@ function VideoStudioPage() {
       <StudioSwitcher active="video" />
       <div className="mb-4 flex items-center gap-3">
         <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-[11px] font-mono font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-          <Film className="h-3.5 w-3.5" /> Seedance
+          <Film className="h-3.5 w-3.5" /> Replicate
         </span>
       </div>
+
 
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
