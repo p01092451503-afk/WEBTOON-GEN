@@ -110,16 +110,17 @@ export async function createReplicateVideoTask(params: {
 
   if (isImageToVideo) {
     input.image = params.firstFrameUrl;
+    if (params.lastFrameUrl) input.last_image = params.lastFrameUrl;
+    input.resolution = params.resolution === "480p" ? "480p" : "720p";
+    if (params.durationSeconds) input.num_frames = wanFrames(params.durationSeconds);
   } else {
-    const size = computeSize(params.aspectRatio || "16:9", params.resolution || "720p");
-    input.width = size.width;
-    input.height = size.height;
-    if (params.durationSeconds) {
-      input.num_frames = computeFrames(params.durationSeconds);
-    }
+    input.aspect_ratio = ltxAspectRatio(params.aspectRatio || "16:9");
+    input.target_size = ltxTargetSize(params.resolution || "720p");
+    if (params.durationSeconds) input.length = ltxLength(params.durationSeconds);
   }
 
-  const res = await fetch(`${REPLICATE_API_URL}/models/${encodeURIComponent(model)}/predictions`, {
+  // 모델 경로의 '/' 는 인코딩하면 안 된다(404 원인).
+  const res = await fetch(`${REPLICATE_API_URL}/models/${model}/predictions`, {
     method: "POST",
     headers: headers(),
     body: JSON.stringify({ input }),
