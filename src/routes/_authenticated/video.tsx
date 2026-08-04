@@ -532,6 +532,125 @@ function VideoStudioPage() {
               </div>
             )}
 
+            {/* Reference study: learn look & motion from uploaded images / videos */}
+            <div className="space-y-3 rounded-2xl border border-border px-4 py-4">
+              <div className="flex items-start gap-2">
+                <Wand2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                <div className="space-y-1">
+                  <Label className="text-[13px] font-bold">Reference study</Label>
+                  <p className="text-[12px] leading-relaxed text-muted-foreground">
+                    Upload reference images or a short reference video. pilotstudio samples the video
+                    into ordered frames, reads the look and the motion, and writes those details into
+                    your prompt so the result matches your intent more closely.
+                  </p>
+                </div>
+              </div>
+
+              <label className="flex h-24 cursor-pointer flex-col items-center justify-center gap-1.5 rounded-2xl border-2 border-dashed border-border text-[12.5px] font-semibold text-muted-foreground hover:border-primary/40 hover:text-foreground">
+                {studyUploading ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <Video className="h-5 w-5" />
+                )}
+                {studyUploading ? "Reading references…" : "Add reference images or video"}
+                <span className="text-[11px] font-normal">Up to 8 frames · jpg, png, mp4</span>
+                <input
+                  type="file"
+                  accept="image/*,video/*"
+                  multiple
+                  className="hidden"
+                  onChange={(e) => {
+                    if (e.target.files?.length) void handleStudyFiles(e.target.files);
+                    e.target.value = "";
+                  }}
+                />
+              </label>
+
+              {studyPaths.length > 0 && (
+                <>
+                  <div className="grid grid-cols-4 gap-2">
+                    {studyPaths.map((p) => (
+                      <div key={p} className="relative overflow-hidden rounded-xl border border-border">
+                        <SignedImage
+                          bucket="character-refs"
+                          path={p}
+                          alt="Reference"
+                          className="h-14 w-full object-cover"
+                        />
+                        <button
+                          onClick={() => setStudyPaths((prev) => prev.filter((x) => x !== p))}
+                          aria-label="Remove reference"
+                          className="absolute right-1 top-1 grid h-5 w-5 place-items-center rounded-full bg-background/85 text-foreground shadow"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={handleAnalyze}
+                      disabled={analyzing}
+                      className="flex-1 rounded-xl text-[12.5px] font-bold"
+                    >
+                      {analyzing ? (
+                        <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Wand2 className="mr-1.5 h-3.5 w-3.5" />
+                      )}
+                      {analyzing ? "Studying references…" : "Study references"}
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="rounded-xl"
+                      aria-label="Clear references"
+                      onClick={() => {
+                        setStudyPaths([]);
+                        setStudyHasVideo(false);
+                        setBrief(null);
+                      }}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </>
+              )}
+
+              {brief && (
+                <div className="space-y-2 rounded-2xl bg-muted/50 px-3 py-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[12.5px] font-bold">Reference brief</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11.5px] text-muted-foreground">Use in prompt</span>
+                      <Switch checked={applyBrief} onCheckedChange={setApplyBrief} />
+                    </div>
+                  </div>
+                  {(
+                    [
+                      ["Subject", brief.subject],
+                      ["Style", brief.style],
+                      ["Lighting", brief.lighting],
+                      ["Camera", brief.camera],
+                      ["Motion", brief.motion],
+                      ["Avoid", brief.negative],
+                    ] as const
+                  )
+                    .filter(([, v]) => Boolean(v))
+                    .map(([k, v]) => (
+                      <p key={k} className="text-[11.5px] leading-relaxed text-muted-foreground">
+                        <span className="font-bold text-foreground">{k}:</span> {v}
+                      </p>
+                    ))}
+                </div>
+              )}
+            </div>
+
+
             <div className="rounded-2xl border border-border bg-muted/40 px-3 py-2 text-[12px] font-semibold text-muted-foreground">
               {mode === "i2v" ? t("video.mode_i2v") : t("video.mode_t2v")}
             </div>
