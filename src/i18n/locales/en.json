@@ -354,8 +354,7 @@
     "provider_auto": "Auto (Google video first)",
     "provider_seedance": "Seedance (BytePlus)",
     "provider_lovable": "Google video (Lovable AI)",
-    "provider_hint": "Auto tries the Google video model (Lovable AI) first and falls back to Seedance if it fails. The existing Seedance setup stays untouched.",
-
+    "provider_hint": "All videos are generated through the Lovable AI gateway (Google video model). The Seedance path is disabled.",
     "camera_fixed": "Fixed camera",
     "seed_lock": "Lock seed",
     "final_prompt": "Final prompt",

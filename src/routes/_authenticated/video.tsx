@@ -178,7 +178,7 @@ function VideoStudioPage() {
   const [seedLocked, setSeedLocked] = useState(false);
   const [seed, setSeed] = useState<string>("");
   const [editedPrompt, setEditedPrompt] = useState<string | null>(null);
-  const [provider, setProvider] = useState<"auto" | "seedance" | "lovable">("auto");
+  const provider = "lovable" as const;
 
 
   const builtPrompt = useMemo(() => {
@@ -499,17 +499,6 @@ function VideoStudioPage() {
               onChange={(v) => setDuration(Number(v))}
             />
             <div className="space-y-2">
-              <ChipRow
-                title={t("video.provider")}
-                icon={<MonitorPlay className="h-4 w-4" />}
-                options={[
-                  { id: "auto", label: t("video.provider_auto") },
-                  { id: "lovable", label: t("video.provider_lovable") },
-                  { id: "seedance", label: t("video.provider_seedance") },
-                ]}
-                value={provider}
-                onChange={(v) => setProvider(v as "auto" | "seedance" | "lovable")}
-              />
               <p className="px-1 text-[12px] leading-relaxed text-muted-foreground">
                 {t("video.provider_hint")}
               </p>

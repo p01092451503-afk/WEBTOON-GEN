@@ -354,8 +354,7 @@
     "provider_auto": "자동 (Google 영상 우선)",
     "provider_seedance": "Seedance (BytePlus)",
     "provider_lovable": "Google 영상 (Lovable AI)",
-    "provider_hint": "자동은 Google 영상 모델(Lovable AI)로 먼저 시도하고, 실패하면 Seedance로 자동 전환합니다. 기존 Seedance 설정은 그대로 유지됩니다.",
-
+    "provider_hint": "모든 영상은 Lovable AI 게이트웨이(Google 영상 모델)로 생성됩니다. Seedance 경로는 비활성화되었습니다.",
     "camera_fixed": "카메라 고정",
     "seed_lock": "시드 고정",
     "final_prompt": "최종 프롬프트",
