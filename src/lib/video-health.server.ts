@@ -4,12 +4,13 @@
 export type ModelHealth = {
   id: string;
   label: string;
-  provider: "lovable" | "seedance";
+  provider: "lovable" | "seedance" | "replicate";
   status: "available" | "unavailable" | "unknown";
   detail: string;
 };
 
 const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/videos";
+
 
 /**
  * 빈 프롬프트로 프로브를 보낸다.
@@ -115,3 +116,6 @@ export async function probeSeedance(): Promise<ModelHealth> {
     };
   }
 }
+
+export { probeReplicate } from "@/lib/video-replicate.server";
+

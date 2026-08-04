@@ -84,8 +84,9 @@
     },
     "video": {
       "title": "Video studio",
-      "sub": "Seedance motion generation"
+      "sub": "Replicate video generation"
     }
+
   },
   "auth": {
     "checking_session": "Checking session…",
@@ -331,7 +332,7 @@
     "use_reference": "Use reference image",
     "reference_why_title": "Why use a reference frame?",
     "reference_why_body": "A reference image tells the video model exactly what the first frame should look like. Use it to keep a character, costume, or pose consistent. Without it, the clip is created from your text description alone.",
-    "reference_off_hint": "Only the text prompt is sent to Seedance.",
+    "reference_off_hint": "Only the text prompt is sent to Replicate.",
     "reference_on_hint": "The reference image is included as the first frame.",
     "reference_flow_off_title": "Text → video flow",
     "reference_flow_off_body": "Your action/scene description and the camera, shot, and ambience options you select below are combined into the prompt as-is. Without an image, the first frame is invented from text, so character, costume, or pose may vary each time. You can still choose aspect ratio, resolution, and duration below.",
@@ -351,19 +352,22 @@
     "resolution": "Resolution",
     "duration": "Duration",
     "provider": "Generation engine",
-    "provider_auto": "Auto (Google video first)",
+    "provider_auto": "Auto (Replicate first)",
     "provider_seedance": "Seedance (BytePlus)",
     "provider_lovable": "Google video (Lovable AI)",
-    "provider_hint": "All videos are generated through the Lovable AI gateway (Google video model). The Seedance path is disabled.",
+    "provider_replicate": "Replicate (Lovable direct)",
+    "provider_hint": "All videos are generated through the direct Replicate integration. Seedance and Lovable AI Gateway routes are kept as fallbacks depending on workspace status.",
     "camera_fixed": "Fixed camera",
     "seed_lock": "Lock seed",
     "final_prompt": "Final prompt",
-    "final_prompt_placeholder": "The prompt sent to Seedance",
+    "final_prompt_placeholder": "The prompt sent to Replicate",
+
     "reset_prompt": "Reset to auto prompt",
     "generate": "Generate video",
     "generating": "Generating…",
-    "generating_hint": "Rendering usually takes 1–3 minutes. Keep this page open.",
+    "generating_hint": "Rendering usually takes 30 seconds to 2 minutes. Keep this page open.",
     "result_empty": "Your clip will appear here.",
+
     "download": "Download MP4",
     "errors": {
       "empty_prompt": "Write an action or pick a motion preset first."
