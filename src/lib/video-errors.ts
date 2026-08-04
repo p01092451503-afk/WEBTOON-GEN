@@ -56,7 +56,7 @@ function pick(raw: string): { title: string; hint: string } {
   if (r.includes("replicate_http_429")) {
     return {
       title: "Replicate 요청량 제한에 걸렸습니다.",
-      hint: "잠시 후 다시 시도해 주세요. 또는 replicate.com/account/billing 에서 상위 플랜을 확인해 주세요.",
+      hint: "결제 수단이 등록되지 않은 계정은 분당 요청 수가 매우 낮게 제한됩니다. replicate.com/account/billing 에서 카드 등록·크레딧 충전 후 다시 시도해 주세요.",
     };
   }
   if (r.includes("replicate_no_task_id")) {
