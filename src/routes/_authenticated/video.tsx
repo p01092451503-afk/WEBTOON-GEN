@@ -194,7 +194,8 @@ function VideoStudioPage() {
   const [seedLocked, setSeedLocked] = useState(false);
   const [seed, setSeed] = useState<string>("");
   const [editedPrompt, setEditedPrompt] = useState<string | null>(null);
-  const provider = "lovable" as const;
+  const provider = "replicate" as const;
+
 
   // 모델 가용 상태 점검
   const checkHealth = useServerFn(checkVideoModelHealth);
