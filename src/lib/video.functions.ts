@@ -83,13 +83,7 @@ export const startVideoGeneration = createServerFn({ method: "POST" })
         signedUrls.push(signed.signedUrl);
       }
 
-      // Seedance(ARK) 경로는 비활성화됨. 코드는 src/lib/video.server.ts 에 보존.
-      // Lovable AI Gateway 경로도 현재 워크스페이스에서 영상 모델이 열려 있지 않아 비활성화.
-      // 기본 생성 경로는 Replicate 직접 연동.
-
-      const runReplicate = async () => {
-        const { createReplicateVideoTask } = await import("@/lib/video-replicate.server");
-        return createReplicateVideoTask({
+      const replicateInput = {
           prompt,
           aspectRatio: data.aspectRatio,
           resolution: data.resolution,
@@ -97,17 +91,74 @@ export const startVideoGeneration = createServerFn({ method: "POST" })
           firstFrameUrl: signedUrls[0] ?? null,
           lastFrameUrl: signedUrls[1] ?? null,
           seed,
-        });
-      };
+      }
+      const { createReplicateWithRetry, recoveryAttempt } = await import(
+        "@/lib/video-recovery.server"
+      );
+      let taskId: string;
+      let model: string;
+      let modelVersion: string | null;
+      let recoveryAttempts: Array<Record<string, string>> = [];
+      let recoveryNotice: string | null = null;
 
-      const { taskId, model, modelVersion } = await runReplicate();
+      try {
+        const started = await createReplicateWithRetry(replicateInput);
+        taskId = started.task.taskId;
+        model = started.task.model;
+        modelVersion = started.task.modelVersion;
+        recoveryAttempts = started.attempts;
+        if (started.attempts.length > 0) {
+          recoveryNotice = "A temporary provider error occurred, but the automatic retry succeeded.";
+        }
+      } catch (primaryError) {
+        const primaryReason = primaryError instanceof Error ? primaryError.message : String(primaryError);
+        const priorAttempts =
+          primaryError && typeof primaryError === "object" && "recoveryAttempts" in primaryError
+            ? (primaryError.recoveryAttempts as Array<Record<string, string>>)
+            : [recoveryAttempt("replicate", "start", "failed", primaryReason)];
+        recoveryAttempts = priorAttempts;
+
+        try {
+          const { buildSeedanceText, createVideoTask } = await import("@/lib/video.server");
+          const fallback = await createVideoTask({
+            text: buildSeedanceText({
+              prompt,
+              aspectRatio: data.aspectRatio,
+              resolution: data.resolution,
+              durationSeconds: data.durationSeconds,
+              cameraFixed: data.cameraFixed,
+              seed,
+              hasFirstFrame: Boolean(signedUrls[0]),
+            }),
+            firstFrameUrl: signedUrls[0] ?? null,
+            lastFrameUrl: signedUrls[1] ?? null,
+          });
+          taskId = fallback.taskId;
+          model = fallback.model;
+          modelVersion = null;
+          recoveryAttempts.push(
+            recoveryAttempt("seedance", "fallback", "started", "Replicate start failed"),
+          );
+          recoveryNotice =
+            "Replicate could not start the job, so generation automatically switched to Seedance.";
+        } catch (fallbackError) {
+          const fallbackReason =
+            fallbackError instanceof Error ? fallbackError.message : String(fallbackError);
+          throw new Error(`${primaryReason} || FALLBACK_FAILED: ${fallbackReason}`);
+        }
+      };
 
       await supabase
         .from("video_generations")
-        .update({ task_id: taskId, api_model: model, api_model_version: modelVersion })
+        .update({
+          task_id: taskId,
+          api_model: model,
+          api_model_version: modelVersion,
+          options: { ...data.options, recoveryAttempts, fallbackUsed: modelVersion === null },
+        })
         .eq("id", videoId);
 
-      return { videoGenerationId: videoId, status: "running" as const };
+      return { videoGenerationId: videoId, status: "running" as const, recoveryNotice };
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       const { formatVideoError } = await import("@/lib/video-errors");
@@ -134,7 +185,7 @@ export const pollVideoGeneration = createServerFn({ method: "POST" })
 
     const { data: row } = await supabase
       .from("video_generations")
-      .select("id, tenant_id, status, task_id, duration_seconds, error_message, moderation_status")
+      .select("id, tenant_id, status, task_id, duration_seconds, error_message, moderation_status, final_prompt, aspect_ratio, resolution, camera_fixed, seed, image_paths, options")
       .eq("id", data.videoGenerationId)
       .maybeSingle();
     if (!row) throw new Error("VIDEO_NOT_FOUND");
@@ -146,33 +197,133 @@ export const pollVideoGeneration = createServerFn({ method: "POST" })
     const { isLovableTaskId, getLovableVideoTask } = await import("@/lib/video-lovable.server");
     const { isReplicateTaskId, getReplicateVideoTask } =
       await import("@/lib/video-replicate.server");
-    const { getVideoTask } = await import("@/lib/video.server");
+    const { createVideoTask, getVideoTask } = await import("@/lib/video.server");
+    const options =
+      row.options && typeof row.options === "object" && !Array.isArray(row.options)
+        ? (row.options as Record<string, unknown>)
+        : {};
+    const {
+      isRetryableVideoError,
+      readRecoveryAttempts,
+      recoveryAttempt,
+      recoveryMessage,
+    } = await import("@/lib/video-recovery.server");
+    const recoveryAttempts = readRecoveryAttempts(options);
     let state: VideoTaskState;
-    if (isReplicateTaskId(row.task_id)) {
-      state = await getReplicateVideoTask(row.task_id);
-    } else if (isLovableTaskId(row.task_id)) {
-      state = await getLovableVideoTask(row.task_id);
-    } else {
-      state = await getVideoTask(row.task_id);
+    try {
+      if (isReplicateTaskId(row.task_id)) {
+        state = await getReplicateVideoTask(row.task_id);
+      } else if (isLovableTaskId(row.task_id)) {
+        state = await getLovableVideoTask(row.task_id);
+      } else {
+        state = await getVideoTask(row.task_id);
+      }
+    } catch (pollError) {
+      const reason = pollError instanceof Error ? pollError.message : String(pollError);
+      const pollRetries = recoveryAttempts.filter(
+        (item) => item.provider === "replicate" && item.stage === "poll",
+      ).length;
+      if (isReplicateTaskId(row.task_id) && isRetryableVideoError(pollError) && pollRetries < 2) {
+        recoveryAttempts.push(recoveryAttempt("replicate", "poll", "retrying", reason));
+        await supabase
+          .from("video_generations")
+          .update({ options: { ...options, recoveryAttempts } })
+          .eq("id", row.id);
+        return {
+          status: "running" as const,
+          error: null,
+          recoveryNotice: "The provider is temporarily unavailable. Retrying automatically…",
+        };
+      }
+      state = { status: "failed", error: reason };
     }
 
     if (state.status === "queued" || state.status === "running") {
-      return { status: "running" as const, error: null };
+      return { status: "running" as const, error: null, recoveryNotice: recoveryMessage(recoveryAttempts) };
     }
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     if (state.status !== "succeeded" || !state.videoUrl) {
       const message = state.error ?? `VIDEO_TASK_${state.status.toUpperCase()}`;
+      const fallbackAlreadyUsed = options.fallbackUsed === true || !isReplicateTaskId(row.task_id);
+      if (!fallbackAlreadyUsed) {
+        try {
+          const imagePaths = Array.isArray(row.image_paths)
+            ? row.image_paths.filter((path): path is string => typeof path === "string")
+            : [];
+          const signedUrls: string[] = [];
+          for (const path of imagePaths) {
+            const { data: signed, error: signedError } = await supabase.storage
+              .from("character-refs")
+              .createSignedUrl(path, 3600);
+            if (signedError || !signed?.signedUrl) throw new Error(`SIGNED_URL_FAILED: ${path}`);
+            signedUrls.push(signed.signedUrl);
+          }
+          const fallback = await createVideoTask({
+            text: (await import("@/lib/video.server")).buildSeedanceText({
+              prompt: row.final_prompt,
+              aspectRatio: row.aspect_ratio,
+              resolution: row.resolution,
+              durationSeconds: row.duration_seconds,
+              cameraFixed: row.camera_fixed,
+              seed: row.seed,
+              hasFirstFrame: Boolean(signedUrls[0]),
+            }),
+            firstFrameUrl: signedUrls[0] ?? null,
+            lastFrameUrl: signedUrls[1] ?? null,
+          });
+          recoveryAttempts.push(recoveryAttempt("replicate", "poll", "failed", message));
+          recoveryAttempts.push(
+            recoveryAttempt("seedance", "fallback", "started", "Primary task failed"),
+          );
+          await supabaseAdmin
+            .from("video_generations")
+            .update({
+              task_id: fallback.taskId,
+              api_model: fallback.model,
+              api_model_version: null,
+              error_message: null,
+              options: { ...options, fallbackUsed: true, recoveryAttempts },
+            })
+            .eq("id", row.id);
+          return {
+            status: "running" as const,
+            error: null,
+            recoveryNotice:
+              "The primary pipeline failed. Generation automatically switched to Seedance.",
+          };
+        } catch (fallbackError) {
+          const fallbackReason =
+            fallbackError instanceof Error ? fallbackError.message : String(fallbackError);
+          const combined = `${message} || FALLBACK_FAILED: ${fallbackReason}`;
+          const { formatVideoError } = await import("@/lib/video-errors");
+          const friendly = formatVideoError(combined);
+          recoveryAttempts.push(recoveryAttempt("replicate", "poll", "failed", message));
+          recoveryAttempts.push(recoveryAttempt("seedance", "fallback", "failed", fallbackReason));
+          await supabaseAdmin
+            .from("video_generations")
+            .update({
+              status: "error",
+              error_message: friendly.slice(0, 1000),
+              options: { ...options, fallbackUsed: true, recoveryAttempts },
+              completed_at: new Date().toISOString(),
+            })
+            .eq("id", row.id);
+          return { status: "error" as const, error: friendly, recoveryNotice: null };
+        }
+      }
+      const { formatVideoError } = await import("@/lib/video-errors");
+      const friendly = formatVideoError(message);
       await supabaseAdmin
         .from("video_generations")
         .update({
           status: "error",
-          error_message: message.slice(0, 1000),
+          error_message: friendly.slice(0, 1000),
           completed_at: new Date().toISOString(),
         })
         .eq("id", row.id);
-      return { status: "error" as const, error: message };
+      return { status: "error" as const, error: friendly, recoveryNotice: null };
     }
 
     try {

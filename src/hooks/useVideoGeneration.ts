@@ -16,6 +16,7 @@ export type VideoGenerationRow = {
   status: string;
   error_message: string | null;
   final_prompt: string | null;
+  options: Record<string, unknown> | null;
   results: VideoResult[];
 };
 
@@ -47,6 +48,7 @@ export function useVideoGeneration(tenantId: string | null) {
   const [row, setRow] = useState<VideoGenerationRow | null>(null);
   const [running, setRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [recoveryNotice, setRecoveryNotice] = useState<string | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Resume a job that was still running before this component remounted.
@@ -63,7 +65,7 @@ export function useVideoGeneration(tenantId: string | null) {
     const { data } = await supabase
       .from("video_generations")
       .select(
-        "id, status, error_message, final_prompt, video_results(id, seq, storage_path, poster_path, duration_seconds)",
+        "id, status, error_message, final_prompt, options, video_results(id, seq, storage_path, poster_path, duration_seconds)",
       )
       .eq("id", id)
       .maybeSingle();
@@ -73,6 +75,10 @@ export function useVideoGeneration(tenantId: string | null) {
       status: data.status,
       error_message: data.error_message,
       final_prompt: data.final_prompt,
+      options:
+        data.options && typeof data.options === "object" && !Array.isArray(data.options)
+          ? (data.options as Record<string, unknown>)
+          : null,
       results: ((data as any).video_results ?? []).sort((a: any, b: any) => a.seq - b.seq),
     };
     setRow(next);
@@ -88,6 +94,7 @@ export function useVideoGeneration(tenantId: string | null) {
       if (cancelled) return;
       try {
         const res = await pollFn({ data: { videoGenerationId: currentId } });
+        if ("recoveryNotice" in res) setRecoveryNotice(res.recoveryNotice ?? null);
         await load(currentId);
         if (res.status === "running") {
           timer.current = setTimeout(tick, 5000);
@@ -116,10 +123,12 @@ export function useVideoGeneration(tenantId: string | null) {
     if (!tenantId) throw new Error("NO_TENANT");
     setRunning(true);
     setError(null);
+    setRecoveryNotice(null);
     setRow(null);
     setCurrentId(null);
     try {
       const res = await startFn({ data: input });
+      setRecoveryNotice(res.recoveryNotice ?? null);
       writeStoredId(res.videoGenerationId);
       setCurrentId(res.videoGenerationId);
       return res;
@@ -132,5 +141,5 @@ export function useVideoGeneration(tenantId: string | null) {
   }
 
 
-  return { run, running, row, currentId, error };
+  return { run, running, row, currentId, error, recoveryNotice };
 }
