@@ -19,6 +19,27 @@ export type VideoGenerationRow = {
   results: VideoResult[];
 };
 
+const STORAGE_KEY = "pilotstudio.video.running";
+
+function readStoredId(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return window.sessionStorage.getItem(STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredId(id: string | null) {
+  if (typeof window === "undefined") return;
+  try {
+    if (id) window.sessionStorage.setItem(STORAGE_KEY, id);
+    else window.sessionStorage.removeItem(STORAGE_KEY);
+  } catch {
+    /* storage unavailable */
+  }
+}
+
 export function useVideoGeneration(tenantId: string | null) {
   const startFn = useServerFn(startVideoGeneration);
   const pollFn = useServerFn(pollVideoGeneration);
@@ -27,6 +48,16 @@ export function useVideoGeneration(tenantId: string | null) {
   const [running, setRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Resume a job that was still running before this component remounted.
+  useEffect(() => {
+    const stored = readStoredId();
+    if (stored) {
+      setCurrentId(stored);
+      setRunning(true);
+    }
+  }, []);
+
 
   const load = useCallback(async (id: string) => {
     const { data } = await supabase
