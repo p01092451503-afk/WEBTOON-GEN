@@ -119,12 +119,20 @@ export async function createReplicateVideoTask(params: {
     if (params.durationSeconds) input.length = ltxLength(params.durationSeconds);
   }
 
+  // 커뮤니티 모델은 version 해시로, 공식 모델은 모델 경로로 호출해야 한다.
   // 모델 경로의 '/' 는 인코딩하면 안 된다(404 원인).
-  const res = await fetch(`${REPLICATE_API_URL}/models/${model}/predictions`, {
-    method: "POST",
-    headers: headers(),
-    body: JSON.stringify({ input }),
-  });
+  const versionId = await getLatestVersionId(model);
+  const res = versionId
+    ? await fetch(`${REPLICATE_API_URL}/predictions`, {
+        method: "POST",
+        headers: headers(),
+        body: JSON.stringify({ version: versionId, input }),
+      })
+    : await fetch(`${REPLICATE_API_URL}/models/${model}/predictions`, {
+        method: "POST",
+        headers: headers(),
+        body: JSON.stringify({ input }),
+      });
 
   if (res.status === 402) {
     throw new Error("REPLICATE_NO_CREDITS: Replicate 계정에 크레딧이 부족합니다. replicate.com/account/billing 에서 결제 정보를 등록해 주세요.");
