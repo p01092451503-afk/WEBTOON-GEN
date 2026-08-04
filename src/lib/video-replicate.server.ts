@@ -87,6 +87,19 @@ function extractVideoUrl(json: ReplicatePrediction): string | undefined {
   return undefined;
 }
 
+/** 커뮤니티 모델이면 최신 version 해시를, 공식 모델이면 undefined 를 돌려준다. */
+async function getLatestVersionId(model: string): Promise<string | undefined> {
+  const res = await fetch(`${REPLICATE_API_URL}/models/${model}`, {
+    headers: { Authorization: headers()["Authorization"] },
+  });
+  if (!res.ok) {
+    const message = await readError(res);
+    throw new Error(`REPLICATE_HTTP_${res.status}: ${model} — ${message.slice(0, 300)}`);
+  }
+  const json = (await res.json()) as { latest_version?: { id?: string } | null };
+  return json.latest_version?.id ?? undefined;
+}
+
 /** Replicate prediction 을 생성한다. */
 export async function createReplicateVideoTask(params: {
   prompt: string;
