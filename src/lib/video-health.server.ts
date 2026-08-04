@@ -116,3 +116,6 @@ export async function probeSeedance(): Promise<ModelHealth> {
     };
   }
 }
+
+export { probeReplicate } from "@/lib/video-replicate.server";
+
