@@ -39,9 +39,9 @@ export type WorkInput = {
 export type SelectedChar = { displayName: string };
 
 export const WARN = {
-  WRN_002: '⚠ 정확 복제 모드는 카메라/구도 지시를 덮을 수 있습니다.(실험값 기록)',
-  WRN_004: '⚠ 프롬프트가 150단어를 초과합니다. 80~150단어 권장.',
-  WRN_005: '⚠ 사진 포즈 레퍼런스는 인물 정체성 오염 위험. 선화/스케치 권장.',
+  WRN_002: '⚠ Exact replication mode can override camera / composition instructions. (logged as an experiment)',
+  WRN_004: '⚠ Prompt exceeds 150 words. 80–150 words is recommended.',
+  WRN_005: '⚠ Photo pose references risk contaminating character identity. Line art or sketches are recommended.',
 };
 
 // 편집된 최종 프롬프트에 대한 서버측 안전성 가드
