@@ -48,7 +48,13 @@ import {
   Sun,
   Palette,
   Info,
+  Video,
+  Wand2,
+  Trash2,
 } from "lucide-react";
+import { analyzeReferences, type ReferenceBrief } from "@/lib/reference-analysis.functions";
+import { extractVideoFrames } from "@/lib/videoFrames";
+
 
 
 export const Route = createFileRoute("/_authenticated/video")({
@@ -196,6 +202,16 @@ function VideoStudioPage() {
   const [editedPrompt, setEditedPrompt] = useState<string | null>(null);
   const provider = "replicate" as const;
 
+  // --- Reference study (learn from uploaded images / video) ---
+  const analyzeFn = useServerFn(analyzeReferences);
+  const [studyPaths, setStudyPaths] = useState<string[]>([]);
+  const [studyHasVideo, setStudyHasVideo] = useState(false);
+  const [studyUploading, setStudyUploading] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [brief, setBrief] = useState<ReferenceBrief | null>(null);
+  const [applyBrief, setApplyBrief] = useState(true);
+
+
 
   // 모델 가용 상태 점검
   const checkHealth = useServerFn(checkVideoModelHealth);
@@ -234,11 +250,28 @@ function VideoStudioPage() {
     parts.push(one(STYLE_PRESETS, styleId));
 
     const cleaned = parts.map((p) => p.trim()).filter(Boolean);
-    if (cleaned.length === 0) return "";
-    let out = cleaned.join(", ") + ".";
-    if (negativeText.trim()) out += ` Avoid: ${negativeText.trim()}.`;
+    const suffix = applyBrief ? (brief?.promptSuffix ?? "").trim() : "";
+    if (cleaned.length === 0 && !suffix) return "";
+    let out = (suffix ? [...cleaned, suffix] : cleaned).join(", ") + ".";
+    const avoid = [negativeText.trim(), applyBrief ? (brief?.negative ?? "").trim() : ""]
+      .filter(Boolean)
+      .join(", ");
+    if (avoid) out += ` Avoid: ${avoid}.`;
     return out;
-  }, [actionText, negativeText, shotId, angleId, motionIds, speedId, lightIds, ambienceIds, styleId]);
+  }, [
+    actionText,
+    negativeText,
+    shotId,
+    angleId,
+    motionIds,
+    speedId,
+    lightIds,
+    ambienceIds,
+    styleId,
+    brief,
+    applyBrief,
+  ]);
+
 
   const finalPrompt = editedPrompt ?? builtPrompt;
   const mode: "t2v" | "i2v" = firstFrame ? "i2v" : "t2v";
@@ -266,6 +299,74 @@ function VideoStudioPage() {
     }
   }
 
+  async function uploadStudyBlob(blob: Blob, name: string) {
+    const path = `${tenantId}/video-refs/study/${Date.now()}-${name}`;
+    const { error } = await supabase.storage
+      .from("character-refs")
+      .upload(path, blob, { contentType: blob.type || "image/jpeg", upsert: false });
+    if (error) throw error;
+    return path;
+  }
+
+  /** Add reference stills. Videos are sampled into ordered frames in the browser. */
+  async function handleStudyFiles(files: FileList) {
+    if (!tenantId) return;
+    setStudyUploading(true);
+    try {
+      const added: string[] = [];
+      let sawVideo = false;
+      for (const file of Array.from(files)) {
+        if (studyPaths.length + added.length >= 8) break;
+        if (file.type.startsWith("video/")) {
+          sawVideo = true;
+          const frames = await extractVideoFrames(file, 3);
+          let i = 0;
+          for (const frame of frames) {
+            if (studyPaths.length + added.length >= 8) break;
+            added.push(await uploadStudyBlob(frame, `frame-${i++}.jpg`));
+          }
+        } else if (file.type.startsWith("image/")) {
+          const ext = file.name.split(".").pop()?.toLowerCase() || "png";
+          added.push(await uploadStudyBlob(file, `ref.${ext}`));
+        }
+      }
+      if (added.length === 0) {
+        toast.error("Pick an image or video file.");
+        return;
+      }
+      setStudyPaths((prev) => [...prev, ...added].slice(0, 8));
+      if (sawVideo) setStudyHasVideo(true);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : String(e));
+    } finally {
+      setStudyUploading(false);
+    }
+  }
+
+  async function handleAnalyze() {
+    if (studyPaths.length === 0) return;
+    setAnalyzing(true);
+    try {
+      const res = (await analyzeFn({
+        data: {
+          imagePaths: studyPaths,
+          intent: actionText.trim() || undefined,
+          hasVideoFrames: studyHasVideo,
+        },
+      })) as ReferenceBrief;
+      setBrief(res);
+      setApplyBrief(true);
+      setEditedPrompt(null);
+      toast.success("Reference brief ready — it is now part of your prompt.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : String(e));
+    } finally {
+      setAnalyzing(false);
+    }
+  }
+
+
+
   async function handleGenerate() {
     if (!finalPrompt.trim()) {
       toast.error(t("video.errors.empty_prompt"));
@@ -290,6 +391,10 @@ function VideoStudioPage() {
         seed: seedLocked && seed.trim() ? Number(seed) : null,
         imagePaths,
         options: {
+          referenceStudyPaths: studyPaths,
+          referenceHasVideo: studyHasVideo,
+          referenceBrief: applyBrief ? brief : null,
+
           motionIds,
           ambienceIds,
           shotId,
@@ -426,6 +531,125 @@ function VideoStudioPage() {
                 </div>
               </div>
             )}
+
+            {/* Reference study: learn look & motion from uploaded images / videos */}
+            <div className="space-y-3 rounded-2xl border border-border px-4 py-4">
+              <div className="flex items-start gap-2">
+                <Wand2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                <div className="space-y-1">
+                  <Label className="text-[13px] font-bold">Reference study</Label>
+                  <p className="text-[12px] leading-relaxed text-muted-foreground">
+                    Upload reference images or a short reference video. pilotstudio samples the video
+                    into ordered frames, reads the look and the motion, and writes those details into
+                    your prompt so the result matches your intent more closely.
+                  </p>
+                </div>
+              </div>
+
+              <label className="flex h-24 cursor-pointer flex-col items-center justify-center gap-1.5 rounded-2xl border-2 border-dashed border-border text-[12.5px] font-semibold text-muted-foreground hover:border-primary/40 hover:text-foreground">
+                {studyUploading ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <Video className="h-5 w-5" />
+                )}
+                {studyUploading ? "Reading references…" : "Add reference images or video"}
+                <span className="text-[11px] font-normal">Up to 8 frames · jpg, png, mp4</span>
+                <input
+                  type="file"
+                  accept="image/*,video/*"
+                  multiple
+                  className="hidden"
+                  onChange={(e) => {
+                    if (e.target.files?.length) void handleStudyFiles(e.target.files);
+                    e.target.value = "";
+                  }}
+                />
+              </label>
+
+              {studyPaths.length > 0 && (
+                <>
+                  <div className="grid grid-cols-4 gap-2">
+                    {studyPaths.map((p) => (
+                      <div key={p} className="relative overflow-hidden rounded-xl border border-border">
+                        <SignedImage
+                          bucket="character-refs"
+                          path={p}
+                          alt="Reference"
+                          className="h-14 w-full object-cover"
+                        />
+                        <button
+                          onClick={() => setStudyPaths((prev) => prev.filter((x) => x !== p))}
+                          aria-label="Remove reference"
+                          className="absolute right-1 top-1 grid h-5 w-5 place-items-center rounded-full bg-background/85 text-foreground shadow"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={handleAnalyze}
+                      disabled={analyzing}
+                      className="flex-1 rounded-xl text-[12.5px] font-bold"
+                    >
+                      {analyzing ? (
+                        <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Wand2 className="mr-1.5 h-3.5 w-3.5" />
+                      )}
+                      {analyzing ? "Studying references…" : "Study references"}
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="rounded-xl"
+                      aria-label="Clear references"
+                      onClick={() => {
+                        setStudyPaths([]);
+                        setStudyHasVideo(false);
+                        setBrief(null);
+                      }}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </>
+              )}
+
+              {brief && (
+                <div className="space-y-2 rounded-2xl bg-muted/50 px-3 py-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[12.5px] font-bold">Reference brief</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11.5px] text-muted-foreground">Use in prompt</span>
+                      <Switch checked={applyBrief} onCheckedChange={setApplyBrief} />
+                    </div>
+                  </div>
+                  {(
+                    [
+                      ["Subject", brief.subject],
+                      ["Style", brief.style],
+                      ["Lighting", brief.lighting],
+                      ["Camera", brief.camera],
+                      ["Motion", brief.motion],
+                      ["Avoid", brief.negative],
+                    ] as const
+                  )
+                    .filter(([, v]) => Boolean(v))
+                    .map(([k, v]) => (
+                      <p key={k} className="text-[11.5px] leading-relaxed text-muted-foreground">
+                        <span className="font-bold text-foreground">{k}:</span> {v}
+                      </p>
+                    ))}
+                </div>
+              )}
+            </div>
+
 
             <div className="rounded-2xl border border-border bg-muted/40 px-3 py-2 text-[12px] font-semibold text-muted-foreground">
               {mode === "i2v" ? t("video.mode_i2v") : t("video.mode_t2v")}
