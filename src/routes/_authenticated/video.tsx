@@ -299,6 +299,74 @@ function VideoStudioPage() {
     }
   }
 
+  async function uploadStudyBlob(blob: Blob, name: string) {
+    const path = `${tenantId}/video-refs/study/${Date.now()}-${name}`;
+    const { error } = await supabase.storage
+      .from("character-refs")
+      .upload(path, blob, { contentType: blob.type || "image/jpeg", upsert: false });
+    if (error) throw error;
+    return path;
+  }
+
+  /** Add reference stills. Videos are sampled into ordered frames in the browser. */
+  async function handleStudyFiles(files: FileList) {
+    if (!tenantId) return;
+    setStudyUploading(true);
+    try {
+      const added: string[] = [];
+      let sawVideo = false;
+      for (const file of Array.from(files)) {
+        if (studyPaths.length + added.length >= 8) break;
+        if (file.type.startsWith("video/")) {
+          sawVideo = true;
+          const frames = await extractVideoFrames(file, 3);
+          let i = 0;
+          for (const frame of frames) {
+            if (studyPaths.length + added.length >= 8) break;
+            added.push(await uploadStudyBlob(frame, `frame-${i++}.jpg`));
+          }
+        } else if (file.type.startsWith("image/")) {
+          const ext = file.name.split(".").pop()?.toLowerCase() || "png";
+          added.push(await uploadStudyBlob(file, `ref.${ext}`));
+        }
+      }
+      if (added.length === 0) {
+        toast.error("Pick an image or video file.");
+        return;
+      }
+      setStudyPaths((prev) => [...prev, ...added].slice(0, 8));
+      if (sawVideo) setStudyHasVideo(true);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : String(e));
+    } finally {
+      setStudyUploading(false);
+    }
+  }
+
+  async function handleAnalyze() {
+    if (studyPaths.length === 0) return;
+    setAnalyzing(true);
+    try {
+      const res = (await analyzeFn({
+        data: {
+          imagePaths: studyPaths,
+          intent: actionText.trim() || undefined,
+          hasVideoFrames: studyHasVideo,
+        },
+      })) as ReferenceBrief;
+      setBrief(res);
+      setApplyBrief(true);
+      setEditedPrompt(null);
+      toast.success("Reference brief ready — it is now part of your prompt.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : String(e));
+    } finally {
+      setAnalyzing(false);
+    }
+  }
+
+
+
   async function handleGenerate() {
     if (!finalPrompt.trim()) {
       toast.error(t("video.errors.empty_prompt"));
