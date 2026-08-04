@@ -4,7 +4,6 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Image as ImageIcon, Film, History } from "lucide-react";
-import { LanguageToggle } from "@/components/language-toggle";
 
 
 export const Route = createFileRoute("/")({
@@ -37,7 +36,6 @@ function Index() {
   return (
     <main className="min-h-screen bg-background">
       <div className="absolute right-5 top-5">
-        <LanguageToggle />
       </div>
       <div className="mx-auto flex min-h-screen max-w-5xl flex-col items-center justify-center px-6 py-16 text-center">
         

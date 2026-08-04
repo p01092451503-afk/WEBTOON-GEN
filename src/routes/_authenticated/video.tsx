@@ -670,7 +670,7 @@ function VideoStudioPage() {
                         <p
                           key={i}
                           className={
-                            l.startsWith("(원본")
+                            l.startsWith("(raw:")
                               ? "break-all text-[11px] opacity-60"
                               : "leading-relaxed opacity-90"
                           }

@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { LanguageToggle } from "@/components/language-toggle";
 
 
 export const Route = createFileRoute("/auth")({
@@ -67,7 +66,6 @@ function AuthPage() {
   return (
     <main className="min-h-screen bg-background">
       <div className="absolute right-5 top-5">
-        <LanguageToggle />
       </div>
       <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-5 py-10">
         <div className="mb-8 flex flex-col items-center">

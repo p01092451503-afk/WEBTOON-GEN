@@ -36,11 +36,6 @@
     "close_compare": "Close compare",
     "toggle_sidebar": "Toggle sidebar"
   },
-  "language": {
-    "label": "Language",
-    "en": "English",
-    "ko": "한국어"
-  },
   "sidebar": {
     "workspace": "Workspace",
     "projects": "Projects",
@@ -86,7 +81,6 @@
       "title": "Video studio",
       "sub": "Replicate video generation"
     }
-
   },
   "auth": {
     "checking_session": "Checking session…",
@@ -361,13 +355,11 @@
     "seed_lock": "Lock seed",
     "final_prompt": "Final prompt",
     "final_prompt_placeholder": "The prompt sent to Replicate",
-
     "reset_prompt": "Reset to auto prompt",
     "generate": "Generate video",
     "generating": "Generating…",
     "generating_hint": "Rendering usually takes 30 seconds to 2 minutes. Keep this page open.",
     "result_empty": "Your clip will appear here.",
-
     "download": "Download MP4",
     "errors": {
       "empty_prompt": "Write an action or pick a motion preset first."
