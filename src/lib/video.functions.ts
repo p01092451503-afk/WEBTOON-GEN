@@ -137,17 +137,20 @@ export const startVideoGeneration = createServerFn({ method: "POST" })
       return { videoGenerationId: videoId, status: "running" as const };
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
+      const { formatVideoError } = await import("@/lib/video-errors");
+      const friendly = formatVideoError(message);
       await supabase
         .from("video_generations")
         .update({
           status: "error",
-          error_message: message.slice(0, 1000),
+          error_message: friendly.slice(0, 1000),
           completed_at: new Date().toISOString(),
         })
         .eq("id", videoId);
-      throw new Error(message);
+      throw new Error(friendly);
     }
   });
+
 
 const pollSchema = z.object({ videoGenerationId: z.string().uuid() });
 
