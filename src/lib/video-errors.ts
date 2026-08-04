@@ -13,6 +13,10 @@ export type VideoErrorInfo = {
 function pick(raw: string): { title: string; hint: string } {
   const r = raw.toLowerCase();
 
+  if (r.includes("content_blocked")) return { title: "This request cannot be generated.", hint: "Remove explicit, exploitative, non-consensual, hateful, or graphically violent content and try again." };
+  if (r.includes("content_check")) return { title: "The safety check is temporarily unavailable.", hint: "Your request was not sent to the video provider. Try again shortly." };
+  if (r.includes("unresolved_media_mention")) return { title: "A media mention could not be resolved.", hint: "Choose the reference again from the @ menu before generating." };
+
   // Lovable AI Gateway
   if (r.includes("model is not available") || r.includes("invalid model")) {
     return {

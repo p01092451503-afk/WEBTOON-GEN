@@ -8,12 +8,12 @@ const REPLICATE_API_URL = "https://api.replicate.com/v1";
 export const REPLICATE_TASK_PREFIX = "replicate:";
 
 /** 텍스트→영상 기본 모델. 환경 변수로 덮어쓸 수 있다. */
-export const DEFAULT_REPLICATE_TEXT_MODEL =
-  process.env.REPLICATE_TEXT_TO_VIDEO_MODEL?.trim() || "lightricks/ltx-video";
+export const DEFAULT_REPLICATE_TEXT_MODEL = "lightricks/ltx-video";
+export const DEFAULT_REPLICATE_TEXT_VERSION = "8c47da666861d081eeb4d1261853087de23923a268a69b63febdf5dc1dee08e4";
 
 /** 이미지→영상 기본 모델. 환경 변수로 덮어쓸 수 있다. */
-export const DEFAULT_REPLICATE_IMAGE_MODEL =
-  process.env.REPLICATE_IMAGE_TO_VIDEO_MODEL?.trim() || "wan-video/wan-2.2-i2v-fast";
+export const DEFAULT_REPLICATE_IMAGE_MODEL = "wan-video/wan-2.2-i2v-fast";
+export const DEFAULT_REPLICATE_IMAGE_VERSION = "4eaf2b01d3bf70d8a2e00b219efeb7cb415855ad18b7dacdc4cae664a73a6eea";
 
 function apiKey() {
   const key = process.env.REPLICATE_API_KEY;
@@ -87,19 +87,6 @@ function extractVideoUrl(json: ReplicatePrediction): string | undefined {
   return undefined;
 }
 
-/** 커뮤니티 모델이면 최신 version 해시를, 공식 모델이면 undefined 를 돌려준다. */
-async function getLatestVersionId(model: string): Promise<string | undefined> {
-  const res = await fetch(`${REPLICATE_API_URL}/models/${model}`, {
-    headers: { Authorization: headers()["Authorization"] },
-  });
-  if (!res.ok) {
-    const message = await readError(res);
-    throw new Error(`REPLICATE_HTTP_${res.status}: ${model} — ${message.slice(0, 300)}`);
-  }
-  const json = (await res.json()) as { latest_version?: { id?: string } | null };
-  return json.latest_version?.id ?? undefined;
-}
-
 /** Replicate prediction 을 생성한다. */
 export async function createReplicateVideoTask(params: {
   prompt: string;
@@ -109,9 +96,10 @@ export async function createReplicateVideoTask(params: {
   firstFrameUrl?: string | null;
   lastFrameUrl?: string | null;
   seed?: number | null;
-}): Promise<{ taskId: string; model: string }> {
+}): Promise<{ taskId: string; model: string; modelVersion: string }> {
   const isImageToVideo = Boolean(params.firstFrameUrl);
   const model = isImageToVideo ? DEFAULT_REPLICATE_IMAGE_MODEL : DEFAULT_REPLICATE_TEXT_MODEL;
+  const modelVersion = isImageToVideo ? DEFAULT_REPLICATE_IMAGE_VERSION : DEFAULT_REPLICATE_TEXT_VERSION;
 
   const input: Record<string, unknown> = {
     prompt: params.prompt,
@@ -126,26 +114,18 @@ export async function createReplicateVideoTask(params: {
     if (params.lastFrameUrl) input.last_image = params.lastFrameUrl;
     input.resolution = params.resolution === "480p" ? "480p" : "720p";
     if (params.durationSeconds) input.num_frames = wanFrames(params.durationSeconds);
+    input.disable_safety_checker = false;
   } else {
     input.aspect_ratio = ltxAspectRatio(params.aspectRatio || "16:9");
     input.target_size = ltxTargetSize(params.resolution || "720p");
     if (params.durationSeconds) input.length = ltxLength(params.durationSeconds);
   }
 
-  // 커뮤니티 모델은 version 해시로, 공식 모델은 모델 경로로 호출해야 한다.
-  // 모델 경로의 '/' 는 인코딩하면 안 된다(404 원인).
-  const versionId = await getLatestVersionId(model);
-  const res = versionId
-    ? await fetch(`${REPLICATE_API_URL}/predictions`, {
-        method: "POST",
-        headers: headers(),
-        body: JSON.stringify({ version: versionId, input }),
-      })
-    : await fetch(`${REPLICATE_API_URL}/models/${model}/predictions`, {
-        method: "POST",
-        headers: headers(),
-        body: JSON.stringify({ input }),
-      });
+  const res = await fetch(`${REPLICATE_API_URL}/predictions`, {
+    method: "POST",
+    headers: headers(),
+    body: JSON.stringify({ version: modelVersion, input }),
+  });
 
   if (res.status === 402) {
     throw new Error("REPLICATE_NO_CREDITS: Replicate 계정에 크레딧이 부족합니다. replicate.com/account/billing 에서 결제 정보를 등록해 주세요.");
@@ -158,7 +138,7 @@ export async function createReplicateVideoTask(params: {
   const json = (await res.json()) as ReplicatePrediction;
   const id = json.id;
   if (!id) throw new Error("REPLICATE_NO_TASK_ID: Replicate 작업 ID 를 받지 못했습니다.");
-  return { taskId: `${REPLICATE_TASK_PREFIX}${id}`, model };
+  return { taskId: `${REPLICATE_TASK_PREFIX}${id}`, model, modelVersion };
 }
 
 /** Replicate 작업 상태를 조회한다. */
