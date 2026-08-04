@@ -54,6 +54,27 @@ import {
 } from "lucide-react";
 import { analyzeReferences, type ReferenceBrief } from "@/lib/reference-analysis.functions";
 import { extractVideoFrames } from "@/lib/videoFrames";
+import { MentionTextarea } from "@/components/MentionTextarea";
+
+/** An uploaded reference image or video that can be mentioned in the prompt with @name. */
+type MediaAsset = {
+  id: string;
+  name: string;
+  kind: "image" | "video";
+  /** thumbnail / frame used as an actual model input */
+  coverPath: string;
+  /** all frames kept for AI study (images have one) */
+  framePaths: string[];
+  role: "first" | "last" | "style";
+  /** optional user note describing how this media should be used */
+  note: string;
+};
+
+const ROLES: Array<{ id: MediaAsset["role"]; label: string; hint: string }> = [
+  { id: "first", label: "First frame", hint: "the video starts from this image" },
+  { id: "last", label: "Last frame", hint: "the video ends on this image" },
+  { id: "style", label: "Style only", hint: "used as look / motion reference" },
+];
 
 
 
