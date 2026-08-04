@@ -92,9 +92,11 @@ function AuthenticatedLayout() {
 
 
   async function handleSignOut() {
+    bootstrapCache = null;
     await supabase.auth.signOut();
     navigate({ to: "/auth", replace: true });
   }
+
 
   if (status === "checking" || status === "onboarding") {
     return (
