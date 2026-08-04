@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { checkVideoModelHealth } from "@/lib/video-health.functions";
@@ -29,6 +29,7 @@ import { useSignedUrl } from "@/hooks/useSignedUrl";
 import { SignedImage } from "@/components/SignedImage";
 import { StudioSwitcher } from "@/components/studio-switcher";
 import { IconBadge } from "@/components/icon-badge";
+import { VideoOnboardingTour, shouldStartVideoTour } from "@/components/video-onboarding-tour";
 
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -56,6 +57,7 @@ import {
   Video,
   Wand2,
   Trash2,
+  CircleHelp,
 } from "lucide-react";
 import { analyzeReferences, type ReferenceBrief } from "@/lib/reference-analysis.functions";
 import { extractVideoFrames } from "@/lib/videoFrames";
@@ -243,7 +245,12 @@ function VideoStudioPage() {
   const [editedPrompt, setEditedPrompt] = useState<string | null>(null);
   const [composingPrompt, setComposingPrompt] = useState(false);
   const [provider, setProvider] = useState<VideoProvider>("lovable");
+  const [tourOpen, setTourOpen] = useState(false);
   const composePromptFn = useServerFn(composeVideoPrompt);
+
+  useEffect(() => {
+    if (shouldStartVideoTour()) setTourOpen(true);
+  }, []);
 
   // --- Reference study (learn from the mentioned media) ---
   const analyzeFn = useServerFn(analyzeReferences);
@@ -589,15 +596,18 @@ function VideoStudioPage() {
   return (
     <main className="px-4 py-5 sm:px-6">
       <StudioSwitcher active="video" />
-      <div className="mb-4 flex items-center gap-3">
+      <div className="mb-4 flex items-center justify-between gap-3">
         <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-[11px] font-mono font-semibold uppercase tracking-[0.16em] text-muted-foreground">
           <Film className="h-3.5 w-3.5" /> Replicate
         </span>
+        <Button type="button" variant="outline" size="sm" onClick={() => setTourOpen(true)}>
+          <CircleHelp className="h-4 w-4" /> Quick tour
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
         {/* 1. Reference media library */}
-        <Panel step={1} title="Reference media">
+        <Panel step={1} title="Reference media" tourId="references">
           <div className="space-y-4">
             <div className="rounded-2xl border border-border bg-muted/30 px-4 py-4">
               <div className="flex items-start gap-2 text-[13px] font-semibold text-foreground">
@@ -808,7 +818,7 @@ function VideoStudioPage() {
         </Panel>
 
         {/* 2. Motion */}
-        <Panel step={2} title={t("video.panels.motion")}>
+        <Panel step={2} title={t("video.panels.motion")} tourId="prompt">
           <div className="space-y-5">
             <div className="space-y-1.5">
               <Label className="text-[13px] font-bold">{t("video.action_label")}</Label>
@@ -912,7 +922,7 @@ function VideoStudioPage() {
         </Panel>
 
         {/* 3. Output settings + prompt */}
-        <Panel step={3} title={t("video.panels.output")}>
+        <Panel step={3} title={t("video.panels.output")} tourId="settings">
           <div className="space-y-5">
             <ChipRow
               title={t("video.aspect_ratio")}
@@ -1024,7 +1034,7 @@ function VideoStudioPage() {
               )}
             </div>
 
-            <div className="space-y-1.5">
+            <div className="space-y-1.5" data-video-tour="compose">
               <div className="flex items-center justify-between gap-3">
                 <Label className="text-[13px] font-bold">{t("video.final_prompt")}</Label>
                 <Button
@@ -1066,7 +1076,7 @@ function VideoStudioPage() {
         </Panel>
 
         {/* 4. Result */}
-        <Panel step={4} title={t("video.panels.result")}>
+        <Panel step={4} title={t("video.panels.result")} tourId="generate">
           <div className="space-y-4">
             <section className="space-y-3 border-b border-border pb-4" aria-label="Server prompt preview">
               <div className="flex items-center justify-between gap-3">
@@ -1184,6 +1194,7 @@ function VideoStudioPage() {
           </div>
         </Panel>
       </div>
+      <VideoOnboardingTour open={tourOpen} onOpenChange={setTourOpen} />
     </main>
   );
 }
@@ -1305,13 +1316,15 @@ function Panel({
   step,
   title,
   children,
+  tourId,
 }: {
   step: number;
   title: string;
   children: React.ReactNode;
+  tourId?: string;
 }) {
   return (
-    <section className="relative flex flex-col overflow-hidden rounded-3xl bg-card lg:h-[calc(100vh-13rem)] lg:min-h-[520px]">
+    <section data-video-tour={tourId} className="relative flex flex-col overflow-hidden rounded-3xl bg-card lg:h-[calc(100vh-13rem)] lg:min-h-[520px]">
       <div className="flex items-center gap-2 rounded-t-3xl border-b border-border/60 bg-gradient-to-b from-white/45 to-transparent px-5 py-4">
         <IconBadge size="sm">{step}</IconBadge>
         <h2 className="text-sm font-bold">{title}</h2>
