@@ -751,13 +751,42 @@ function VideoStudioPage() {
           <div className="space-y-5">
             <div className="space-y-1.5">
               <Label className="text-[13px] font-bold">{t("video.action_label")}</Label>
-              <Textarea
+              <MentionTextarea
                 value={actionText}
-                onChange={(e) => setActionText(e.target.value)}
-                placeholder={t("video.action_placeholder")}
-                className="min-h-[96px] rounded-2xl text-[14px]"
+                onChange={(v) => setActionText(v)}
+                items={assets.map((a) => ({
+                  name: a.name,
+                  coverPath: a.coverPath,
+                  hint:
+                    (a.kind === "video" ? "video · " : "image · ") +
+                    (ROLES.find((r) => r.id === a.role)?.label ?? ""),
+                }))}
+                placeholder={
+                  assets.length
+                    ? "Type @ to reference your uploaded media, then describe the shot freely."
+                    : t("video.action_placeholder")
+                }
+                className="min-h-[120px] rounded-2xl text-[14px]"
               />
+              <p className="text-[12px] leading-relaxed text-muted-foreground">
+                Type <span className="font-bold text-foreground">@</span> to mention uploaded media
+                (e.g. “@img1 slowly turns her head and smiles, lighting like @video1”). Mentions
+                decide which media the model actually uses.
+              </p>
+              {mentioned.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 pt-0.5">
+                  {mentioned.map((a) => (
+                    <span
+                      key={a.id}
+                      className="rounded-full bg-primary-soft px-2.5 py-1 text-[11.5px] font-bold text-primary"
+                    >
+                      @{a.name}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
+
 
             <div className="space-y-1.5">
               <Label className="text-[13px] font-bold">{t("video.negative_label")}</Label>
