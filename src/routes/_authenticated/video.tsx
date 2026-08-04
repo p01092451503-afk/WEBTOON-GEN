@@ -202,6 +202,16 @@ function VideoStudioPage() {
   const [editedPrompt, setEditedPrompt] = useState<string | null>(null);
   const provider = "replicate" as const;
 
+  // --- Reference study (learn from uploaded images / video) ---
+  const analyzeFn = useServerFn(analyzeReferences);
+  const [studyPaths, setStudyPaths] = useState<string[]>([]);
+  const [studyHasVideo, setStudyHasVideo] = useState(false);
+  const [studyUploading, setStudyUploading] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [brief, setBrief] = useState<ReferenceBrief | null>(null);
+  const [applyBrief, setApplyBrief] = useState(true);
+
+
 
   // 모델 가용 상태 점검
   const checkHealth = useServerFn(checkVideoModelHealth);
