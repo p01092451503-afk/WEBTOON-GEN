@@ -48,7 +48,13 @@ import {
   Sun,
   Palette,
   Info,
+  Video,
+  Wand2,
+  Trash2,
 } from "lucide-react";
+import { analyzeReferences, type ReferenceBrief } from "@/lib/reference-analysis.functions";
+import { extractVideoFrames } from "@/lib/videoFrames";
+
 
 
 export const Route = createFileRoute("/_authenticated/video")({
