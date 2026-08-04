@@ -15,7 +15,11 @@ export const checkVideoModelHealth = createServerFn({ method: "POST" })
       probeReplicate(),
     ]);
 
+    console.log("[video-health] replicate probe:", JSON.stringify(replicate));
+    console.log("[video-health] REPLICATE_API_KEY present?", Boolean(process.env.REPLICATE_API_KEY));
+
     const models = [fast, standard, seedance, replicate];
+
     return {
       checkedAt: new Date().toISOString(),
       canGenerate: models.some((m) => m.status === "available"),
