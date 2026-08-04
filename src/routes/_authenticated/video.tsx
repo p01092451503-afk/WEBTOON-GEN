@@ -265,6 +265,23 @@ function VideoStudioPage() {
 
 
 
+  /** Replace "@name" tokens with wording the video model understands. */
+  const resolveMentions = (text: string) =>
+    text.replace(/(^|\s)@([A-Za-z0-9_-]+)/g, (full, sp: string, name: string) => {
+      const a = assets.find((x) => x.name.toLowerCase() === name.toLowerCase());
+      if (!a) return full;
+      const label =
+        a.note.trim() ||
+        (a.role === "first"
+          ? "the subject shown in the first reference frame"
+          : a.role === "last"
+            ? "the composition of the last reference frame"
+            : a.kind === "video"
+              ? "the look and motion of the reference video"
+              : "the look of the reference image");
+      return `${sp}${label}`;
+    });
+
   const builtPrompt = useMemo(() => {
     const parts: string[] = [];
     const one = (list: Preset[], id: string | null) =>
@@ -272,7 +289,8 @@ function VideoStudioPage() {
     const many = (list: Preset[], ids: string[]) =>
       list.filter((p) => ids.includes(p.id)).map((p) => p.text);
 
-    if (actionText.trim()) parts.push(actionText.trim());
+    const action = resolveMentions(actionText).trim();
+    if (action) parts.push(action);
     parts.push(one(SHOT_PRESETS, shotId));
     parts.push(one(ANGLE_PRESETS, angleId));
     parts.push(...many(MOTION_PRESETS, motionIds));
@@ -290,8 +308,10 @@ function VideoStudioPage() {
       .join(", ");
     if (avoid) out += ` Avoid: ${avoid}.`;
     return out;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     actionText,
+    assets,
     negativeText,
     shotId,
     angleId,
