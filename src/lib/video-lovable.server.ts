@@ -59,6 +59,7 @@ async function readError(res: Response) {
  */
 export async function createLovableVideoTask(params: {
   prompt: string;
+  negativePrompt?: string | null;
   aspectRatio?: string | null;
   durationSeconds?: number | null;
   firstFrameUrl?: string | null;
@@ -73,6 +74,7 @@ export async function createLovableVideoTask(params: {
   if (params.aspectRatio && !params.firstFrameUrl) body.aspect_ratio = params.aspectRatio;
   if (params.durationSeconds) body.duration_seconds = params.durationSeconds;
   if (params.firstFrameUrl) body.image_url = params.firstFrameUrl;
+  if (params.negativePrompt?.trim()) body.negative_prompt = params.negativePrompt.trim();
 
   const res = await fetch(GATEWAY_URL, {
     method: "POST",

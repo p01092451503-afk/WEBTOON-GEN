@@ -10,6 +10,7 @@ const startSchema = z.object({
   mode: z.enum(["t2v", "i2v"]).default("t2v"),
 
   finalPrompt: z.string().min(1).max(4000),
+  negativePrompt: z.string().max(2000).optional(),
   rawPrompt: z.string().max(4000).optional(),
   promptEdited: z.boolean().default(false),
   aspectRatio: z.string().default("16:9"),
@@ -37,6 +38,7 @@ export const startVideoGeneration = createServerFn({ method: "POST" })
     const tenantId = profile.tenant_id as string;
 
     const prompt = data.finalPrompt.trim();
+    const negativePrompt = data.negativePrompt?.trim() || null;
     if (!prompt) throw new Error("EMPTY_PROMPT");
     if (/(^|\s)@[A-Za-z0-9_-]+/.test(prompt)) throw new Error("UNRESOLVED_MEDIA_MENTION");
 
@@ -56,6 +58,7 @@ export const startVideoGeneration = createServerFn({ method: "POST" })
         status: "running",
         mode: data.mode,
         final_prompt: prompt,
+        negative_prompt: negativePrompt,
         raw_prompt: data.rawPrompt ?? null,
         prompt_edited: data.promptEdited,
         aspect_ratio: data.aspectRatio,
@@ -85,6 +88,7 @@ export const startVideoGeneration = createServerFn({ method: "POST" })
 
       const replicateInput = {
           prompt,
+          negativePrompt,
           aspectRatio: data.aspectRatio,
           resolution: data.resolution,
           durationSeconds: data.durationSeconds,
@@ -185,7 +189,7 @@ export const pollVideoGeneration = createServerFn({ method: "POST" })
 
     const { data: row } = await supabase
       .from("video_generations")
-      .select("id, tenant_id, status, task_id, duration_seconds, error_message, moderation_status, final_prompt, aspect_ratio, resolution, camera_fixed, seed, image_paths, options")
+      .select("id, tenant_id, status, task_id, duration_seconds, error_message, moderation_status, final_prompt, negative_prompt, aspect_ratio, resolution, camera_fixed, seed, image_paths, options")
       .eq("id", data.videoGenerationId)
       .maybeSingle();
     if (!row) throw new Error("VIDEO_NOT_FOUND");
