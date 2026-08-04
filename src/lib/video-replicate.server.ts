@@ -204,7 +204,7 @@ export async function probeReplicate(): Promise<{
   if (!key) {
     return {
       id: "replicate",
-      label: "Replicate (Lovable 직접 연동)",
+      label: "Replicate\u00a0",
       provider: "replicate",
       status: "unavailable",
       detail: "REPLICATE_API_KEY 가 설정되지 않았습니다.",
@@ -219,7 +219,7 @@ export async function probeReplicate(): Promise<{
     if (res.status === 401 || res.status === 403) {
       return {
         id: "replicate",
-        label: "Replicate (Lovable 직접 연동)",
+        label: "Replicate\u00a0",
         provider: "replicate",
         status: "unavailable",
         detail: "API 키 인증에 실패했습니다(401/403). 키 값을 다시 확인해 주세요.",
@@ -228,7 +228,7 @@ export async function probeReplicate(): Promise<{
     if (res.status === 402) {
       return {
         id: "replicate",
-        label: "Replicate (Lovable 직접 연동)",
+        label: "Replicate\u00a0",
         provider: "replicate",
         status: "unavailable",
         detail:
@@ -238,7 +238,7 @@ export async function probeReplicate(): Promise<{
     if (!res.ok) {
       return {
         id: "replicate",
-        label: "Replicate (Lovable 직접 연동)",
+        label: "Replicate\u00a0",
         provider: "replicate",
         status: "unknown",
         detail: `HTTP ${res.status}: ${text.slice(0, 160)}`,
@@ -246,7 +246,7 @@ export async function probeReplicate(): Promise<{
     }
     return {
       id: "replicate",
-      label: "Replicate (Lovable 직접 연동)",
+      label: "Replicate\u00a0",
       provider: "replicate",
       status: "available",
       detail: "API 인증 및 모델 조회가 정상입니다. 영상 생성이 가능합니다.",
