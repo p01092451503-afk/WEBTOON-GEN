@@ -201,10 +201,8 @@ function VideoStudioPage() {
   const { data: characters = [] } = useCharacters();
   const gen = useVideoGeneration(tenantId);
 
-  const [firstFrame, setFirstFrame] = useState<string | null>(null);
-  const [lastFrame, setLastFrame] = useState<string | null>(null);
-  const [useReferenceFrame, setUseReferenceFrame] = useState(false);
-  const [uploading, setUploading] = useState<"first" | "last" | null>(null);
+  const [assets, setAssets] = useState<MediaAsset[]>([]);
+  const [uploading, setUploading] = useState(false);
   const [actionText, setActionText] = useState("");
   const [negativeText, setNegativeText] = useState("");
   const [motionIds, setMotionIds] = useState<string[]>([]);
@@ -223,14 +221,27 @@ function VideoStudioPage() {
   const [editedPrompt, setEditedPrompt] = useState<string | null>(null);
   const provider = "replicate" as const;
 
-  // --- Reference study (learn from uploaded images / video) ---
+  // --- Reference study (learn from the mentioned media) ---
   const analyzeFn = useServerFn(analyzeReferences);
-  const [studyPaths, setStudyPaths] = useState<string[]>([]);
-  const [studyHasVideo, setStudyHasVideo] = useState(false);
-  const [studyUploading, setStudyUploading] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [brief, setBrief] = useState<ReferenceBrief | null>(null);
   const [applyBrief, setApplyBrief] = useState(true);
+
+  /** media actually mentioned with @ inside the prompt */
+  const mentioned = useMemo(() => {
+    const names = new Set(
+      Array.from(actionText.matchAll(/(^|\s)@([A-Za-z0-9_-]+)/g)).map((m) => m[2].toLowerCase()),
+    );
+    return assets.filter((a) => names.has(a.name.toLowerCase()));
+  }, [actionText, assets]);
+
+  const activeAssets = mentioned.length > 0 ? mentioned : assets;
+
+  const firstFrame =
+    assets.find((a) => a.role === "first")?.coverPath ?? mentioned[0]?.coverPath ?? null;
+  const lastFrame = assets.find((a) => a.role === "last")?.coverPath ?? null;
+  const studyPaths = activeAssets.flatMap((a) => a.framePaths).slice(0, 8);
+  const studyHasVideo = activeAssets.some((a) => a.kind === "video");
 
 
 
