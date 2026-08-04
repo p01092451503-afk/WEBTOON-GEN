@@ -178,6 +178,8 @@ function VideoStudioPage() {
   const [seedLocked, setSeedLocked] = useState(false);
   const [seed, setSeed] = useState<string>("");
   const [editedPrompt, setEditedPrompt] = useState<string | null>(null);
+  const [provider, setProvider] = useState<"auto" | "seedance" | "lovable">("auto");
+
 
   const builtPrompt = useMemo(() => {
     const parts: string[] = [];
