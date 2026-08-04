@@ -64,13 +64,18 @@ export async function createLovableVideoTask(params: {
   aspectRatio?: string | null;
   durationSeconds?: number | null;
   firstFrameUrl?: string | null;
+  cameraFixed?: boolean;
   model?: string;
 }): Promise<{ taskId: string; model: string }> {
   const model = params.model?.trim() || DEFAULT_LOVABLE_VIDEO_MODEL;
+  const prompt = buildLovableVideoPrompt({
+    prompt: params.prompt,
+    cameraFixed: params.cameraFixed,
+  });
 
   const body: Record<string, unknown> = {
     model,
-    prompt: params.prompt,
+    prompt,
   };
   if (params.aspectRatio && !params.firstFrameUrl) body.aspect_ratio = params.aspectRatio;
   if (params.durationSeconds) body.duration_seconds = params.durationSeconds;
@@ -83,7 +88,9 @@ export async function createLovableVideoTask(params: {
     model,
     prompt: body.prompt,
     negative_prompt: body.negative_prompt,
-    body,
+    aspect_ratio: body.aspect_ratio,
+    duration_seconds: body.duration_seconds,
+    has_image: Boolean(body.image_url),
   });
 
   const res = await fetch(GATEWAY_URL, {

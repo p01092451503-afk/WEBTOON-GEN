@@ -147,7 +147,11 @@ export async function createReplicateVideoTask(params: {
     modelVersion,
     prompt: input.prompt,
     negative_prompt: input.negative_prompt,
-    input,
+    aspect_ratio: input.aspect_ratio,
+    target_size: input.target_size,
+    length: input.length,
+    resolution: input.resolution,
+    num_frames: input.num_frames,
   });
 
   const res = await fetch(`${REPLICATE_API_URL}/predictions`, {

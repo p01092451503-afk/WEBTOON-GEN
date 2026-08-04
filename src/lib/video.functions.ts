@@ -87,41 +87,41 @@ export const startVideoGeneration = createServerFn({ method: "POST" })
         signedUrls.push(signed.signedUrl);
       }
 
-       const provider = data.provider === "auto" ? (data.mode === "t2v" ? "lovable" : "replicate") : data.provider;
-       const providerInput = {
-          prompt,
-          negativePrompt,
-          aspectRatio: data.aspectRatio,
-          resolution: data.resolution,
-          durationSeconds: data.durationSeconds,
-          firstFrameUrl: signedUrls[0] ?? null,
-          lastFrameUrl: signedUrls[1] ?? null,
-          seed,
-      }
-      const { createReplicateWithRetry, recoveryAttempt } = await import(
-        "@/lib/video-recovery.server"
-      );
+      const provider =
+        data.provider === "auto" ? (data.mode === "t2v" ? "lovable" : "replicate") : data.provider;
+      const providerInput = {
+        prompt,
+        negativePrompt,
+        aspectRatio: data.aspectRatio,
+        resolution: data.resolution,
+        durationSeconds: data.durationSeconds,
+        firstFrameUrl: signedUrls[0] ?? null,
+        lastFrameUrl: signedUrls[1] ?? null,
+        cameraFixed: data.cameraFixed,
+        seed,
+      };
+      const { recoveryAttempt } = await import("@/lib/video-recovery.server");
       let taskId: string;
       let model: string;
       let modelVersion: string | null;
       let recoveryAttempts: Array<Record<string, string>> = [];
       let recoveryNotice: string | null = null;
 
-       console.info("[video-generation-dispatch]", {
-         videoGenerationId: videoId,
-         provider,
-         mode: data.mode,
-         prompt,
-         negative_prompt: negativePrompt,
-       });
+      console.info("[video-generation-dispatch]", {
+        videoGenerationId: videoId,
+        provider,
+        mode: data.mode,
+        prompt,
+        negative_prompt: negativePrompt,
+      });
 
-       if (provider === "lovable") {
-         const { createLovableVideoTask } = await import("@/lib/video-lovable.server");
-         const started = await createLovableVideoTask(providerInput);
-         taskId = started.taskId;
-         model = started.model;
-         modelVersion = null;
-       } else if (provider === "seedance") {
+      if (provider === "lovable") {
+        const { createLovableVideoTask } = await import("@/lib/video-lovable.server");
+        const started = await createLovableVideoTask(providerInput);
+        taskId = started.taskId;
+        model = started.model;
+        modelVersion = null;
+      } else if (provider === "seedance") {
          const { buildSeedanceText, createVideoTask } = await import("@/lib/video.server");
          const started = await createVideoTask({
            text: buildSeedanceText({
@@ -139,7 +139,7 @@ export const startVideoGeneration = createServerFn({ method: "POST" })
          taskId = started.taskId;
          model = started.model;
          modelVersion = null;
-       } else try {
+      } else try {
          const { createReplicateWithRetry, recoveryAttempt } = await import(
            "@/lib/video-recovery.server"
          );
