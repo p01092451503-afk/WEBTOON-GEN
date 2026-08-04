@@ -7,7 +7,6 @@ import { bootstrapTenant } from "@/lib/onboarding.functions";
 import { Button } from "@/components/ui/button";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
-import { LanguageToggle } from "@/components/language-toggle";
 import { IconTooltip } from "@/components/icon-tooltip";
 import { GlobalSearch } from "@/components/global-search";
 import { Bell, LogOut, User as UserIcon, ChevronDown } from "lucide-react";
@@ -140,7 +139,6 @@ function AuthenticatedLayout() {
 
             <GlobalSearch />
 
-            <LanguageToggle />
 
             <IconTooltip label={t("common.notifications")}>
               <button
