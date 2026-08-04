@@ -1,21 +1,81 @@
 import { useEffect, useState } from "react";
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/hooks/useTenant";
 import { SignedImage } from "@/components/SignedImage";
+import { SignedVideo } from "@/components/SignedVideo";
 import { Button } from "@/components/ui/button";
 import { IconTooltip } from "@/components/icon-tooltip";
 import { toast } from "sonner";
-import { Clock, X } from "lucide-react";
+import { Clock, X, Film } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/history")({
   component: HistoryPage,
   validateSearch: (s: Record<string, unknown>) => ({
     id: typeof s.id === "string" ? s.id : undefined,
+    tab: s.tab === "video" ? ("video" as const) : ("image" as const),
   }),
   head: () => ({ meta: [{ title: "History · pilotstudio" }] }),
 });
+
+type VideoRow = {
+  id: string;
+  status: string;
+  mode: string;
+  work_label: string;
+  aspect_ratio: string | null;
+  resolution: string | null;
+  duration_seconds: number | null;
+  api_model: string | null;
+  seed: number | null;
+  final_prompt: string | null;
+  raw_prompt: string | null;
+  prompt_edited: boolean;
+  error_message: string | null;
+  created_at: string;
+  completed_at: string | null;
+  results: {
+    id: string;
+    seq: number;
+    storage_path: string;
+    poster_path: string | null;
+    duration_seconds: number | null;
+  }[];
+};
+
+function useVideoHistory(tenantId: string | null) {
+  const [rows, setRows] = useState<VideoRow[] | null>(null);
+  useEffect(() => {
+    if (!tenantId) return;
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase
+        .from("video_generations")
+        .select(
+          "id, status, mode, work_label, aspect_ratio, resolution, duration_seconds, api_model, seed, final_prompt, raw_prompt, prompt_edited, error_message, created_at, completed_at, video_results(id, seq, storage_path, poster_path, duration_seconds)",
+        )
+        .order("created_at", { ascending: false })
+        .limit(100);
+      if (cancelled) return;
+      if (error) {
+        toast.error(error.message);
+        setRows([]);
+        return;
+      }
+      setRows(
+        (data ?? []).map((r: any) => ({
+          ...r,
+          results: (r.video_results ?? []).sort((a: any, b: any) => a.seq - b.seq),
+        })),
+      );
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [tenantId]);
+  return rows;
+}
 
 type Row = {
   id: string;
