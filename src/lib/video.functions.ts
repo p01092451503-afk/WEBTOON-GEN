@@ -4,7 +4,10 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const startSchema = z.object({
   workLabel: z.string().default("V1"),
+  /** 영상 생성 프로바이더. auto = Seedance 우선, 실패 시 Lovable AI Gateway 폴백 */
+  provider: z.enum(["auto", "seedance", "lovable"]).default("auto"),
   mode: z.enum(["t2v", "i2v"]).default("t2v"),
+
   finalPrompt: z.string().min(1).max(4000),
   rawPrompt: z.string().max(4000).optional(),
   promptEdited: z.boolean().default(false),
@@ -71,26 +74,64 @@ export const startVideoGeneration = createServerFn({ method: "POST" })
         signedUrls.push(signed.signedUrl);
       }
 
-      const { buildSeedanceText, createVideoTask } = await import("@/lib/video.server");
-      const text = buildSeedanceText({
-        prompt,
-        aspectRatio: data.aspectRatio,
-        resolution: data.resolution,
-        durationSeconds: data.durationSeconds,
-        cameraFixed: data.cameraFixed,
-        seed,
-        hasFirstFrame: signedUrls.length > 0,
-      });
-      const { taskId, model } = await createVideoTask({
-        text,
-        firstFrameUrl: signedUrls[0] ?? null,
-        lastFrameUrl: signedUrls[1] ?? null,
-      });
+      const runSeedance = async () => {
+        const { buildSeedanceText, createVideoTask } = await import("@/lib/video.server");
+        const text = buildSeedanceText({
+          prompt,
+          aspectRatio: data.aspectRatio,
+          resolution: data.resolution,
+          durationSeconds: data.durationSeconds,
+          cameraFixed: data.cameraFixed,
+          seed,
+          hasFirstFrame: signedUrls.length > 0,
+        });
+        return createVideoTask({
+          text,
+          firstFrameUrl: signedUrls[0] ?? null,
+          lastFrameUrl: signedUrls[1] ?? null,
+        });
+      };
+
+      const runLovable = async () => {
+        const { buildLovableVideoPrompt, createLovableVideoTask } = await import(
+          "@/lib/video-lovable.server"
+        );
+        return createLovableVideoTask({
+          prompt: buildLovableVideoPrompt({ prompt, cameraFixed: data.cameraFixed, seed }),
+          aspectRatio: data.aspectRatio,
+          durationSeconds: data.durationSeconds,
+          firstFrameUrl: signedUrls[0] ?? null,
+        });
+      };
+
+      // 프로바이더 선택: seedance(기존) / lovable(AI Gateway) / auto(Seedance 실패 시 폴백)
+      let taskId: string;
+      let model: string;
+      if (data.provider === "lovable") {
+        ({ taskId, model } = await runLovable());
+      } else if (data.provider === "seedance") {
+        ({ taskId, model } = await runSeedance());
+      } else {
+        try {
+          ({ taskId, model } = await runSeedance());
+        } catch (seedanceErr) {
+          const seedanceMessage =
+            seedanceErr instanceof Error ? seedanceErr.message : String(seedanceErr);
+          try {
+            ({ taskId, model } = await runLovable());
+          } catch (lovableErr) {
+            const lovableMessage =
+              lovableErr instanceof Error ? lovableErr.message : String(lovableErr);
+            throw new Error(`${seedanceMessage} || FALLBACK_LOVABLE: ${lovableMessage}`);
+          }
+        }
+      }
 
       await supabase
         .from("video_generations")
         .update({ task_id: taskId, api_model: model })
         .eq("id", videoId);
+
 
       return { videoGenerationId: videoId, status: "running" as const };
     } catch (err) {
@@ -126,8 +167,12 @@ export const pollVideoGeneration = createServerFn({ method: "POST" })
     }
     if (!row.task_id) return { status: "running" as const, error: null };
 
+    const { isLovableTaskId, getLovableVideoTask } = await import("@/lib/video-lovable.server");
     const { getVideoTask } = await import("@/lib/video.server");
-    const state = await getVideoTask(row.task_id);
+    const state = isLovableTaskId(row.task_id)
+      ? await getLovableVideoTask(row.task_id)
+      : await getVideoTask(row.task_id);
+
 
     if (state.status === "queued" || state.status === "running") {
       return { status: "running" as const, error: null };

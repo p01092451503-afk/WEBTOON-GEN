@@ -178,6 +178,8 @@ function VideoStudioPage() {
   const [seedLocked, setSeedLocked] = useState(false);
   const [seed, setSeed] = useState<string>("");
   const [editedPrompt, setEditedPrompt] = useState<string | null>(null);
+  const [provider, setProvider] = useState<"auto" | "seedance" | "lovable">("auto");
+
 
   const builtPrompt = useMemo(() => {
     const parts: string[] = [];
@@ -239,7 +241,9 @@ function VideoStudioPage() {
       );
       await gen.run({
         workLabel: "V1",
+        provider,
         mode,
+
         finalPrompt,
         rawPrompt: builtPrompt || undefined,
         promptEdited: editedPrompt != null && editedPrompt !== builtPrompt,
@@ -494,6 +498,24 @@ function VideoStudioPage() {
               value={String(duration)}
               onChange={(v) => setDuration(Number(v))}
             />
+            <div className="space-y-2">
+              <ChipRow
+                title={t("video.provider")}
+                icon={<MonitorPlay className="h-4 w-4" />}
+                options={[
+                  { id: "auto", label: t("video.provider_auto") },
+                  { id: "seedance", label: t("video.provider_seedance") },
+                  { id: "lovable", label: t("video.provider_lovable") },
+                ]}
+                value={provider}
+                onChange={(v) => setProvider(v as "auto" | "seedance" | "lovable")}
+              />
+              <p className="px-1 text-[12px] leading-relaxed text-muted-foreground">
+                {t("video.provider_hint")}
+              </p>
+            </div>
+
+
 
             <div className="flex items-center justify-between rounded-2xl border border-border px-4 py-3">
               <Label className="text-[13px] font-bold">{t("video.camera_fixed")}</Label>

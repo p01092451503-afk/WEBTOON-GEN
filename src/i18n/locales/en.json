@@ -350,6 +350,12 @@
     "ratio_from_image": "Ratio follows the reference image.",
     "resolution": "Resolution",
     "duration": "Duration",
+    "provider": "Generation engine",
+    "provider_auto": "Auto (Seedance first)",
+    "provider_seedance": "Seedance (BytePlus)",
+    "provider_lovable": "Lovable AI",
+    "provider_hint": "Auto tries Seedance first and automatically falls back to the Lovable AI Gateway if it fails. The Seedance setup stays untouched.",
+
     "camera_fixed": "Fixed camera",
     "seed_lock": "Lock seed",
     "final_prompt": "Final prompt",
