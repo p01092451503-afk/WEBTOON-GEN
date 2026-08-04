@@ -79,7 +79,7 @@
     },
     "video": {
       "title": "Video studio",
-      "sub": "Replicate video generation"
+      "sub": "AI video generation"
     }
   },
   "auth": {
@@ -350,7 +350,7 @@
     "provider_seedance": "Seedance (BytePlus)",
     "provider_lovable": "Google video (Lovable AI)",
     "provider_replicate": "Replicate (Lovable direct)",
-    "provider_hint": "All videos are generated through the direct Replicate integration. Seedance and Lovable AI Gateway routes are kept as fallbacks depending on workspace status.",
+    "provider_hint": "Choose Veo for prompt fidelity or Replicate for a fast preview. Text-to-video defaults to Veo 3.1 Fast.",
     "camera_fixed": "Fixed camera",
     "seed_lock": "Lock seed",
     "final_prompt": "Final prompt",

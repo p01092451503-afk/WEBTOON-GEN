@@ -89,12 +89,12 @@ export const Route = createFileRoute("/_authenticated/video")({
       {
         name: "description",
         content:
-          "Generate character-driven short videos with Replicate from a reference frame and a motion prompt.",
+          "Generate character-driven short videos from a reference frame and a motion prompt.",
       },
       { property: "og:title", content: "Video Studio · pilotstudio" },
       {
         property: "og:description",
-        content: "Replicate video generation workspace inside pilotstudio.",
+        content: "AI video generation workspace inside pilotstudio.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -1050,8 +1050,8 @@ function VideoStudioPage() {
                 className="min-h-[110px] rounded-2xl font-mono text-[12.5px]"
               />
               <p className="text-[11.5px] leading-relaxed text-muted-foreground">
-                Lovable AI rewrites your subject, action, camera, lighting, and style controls into
-                one LTX-ready English paragraph. You stay in control of the final wording.
+                 Lovable AI rewrites your subject, action, camera, lighting, and style controls into
+                 one video-ready English paragraph. You stay in control of the final wording.
               </p>
               {editedPrompt != null && (
                 <button
