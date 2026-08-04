@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { ImageIcon, Film, ArrowRight, Users, FolderKanban, History } from "lucide-react";
+import { Film, ArrowRight, Users, FolderKanban, History } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/studio")({
   component: StudioHub,
@@ -9,12 +9,12 @@ export const Route = createFileRoute("/_authenticated/studio")({
       { title: "Studio Hub · pilotstudio" },
       {
         name: "description",
-        content: "Choose between Seedream image generation and Seedance video generation.",
+        content: "Generate cinematic short-clip videos from text prompts in pilotstudio.",
       },
       { property: "og:title", content: "Studio Hub · pilotstudio" },
       {
         property: "og:description",
-        content: "Choose between Seedream image generation and Seedance video generation.",
+        content: "Generate cinematic short-clip videos from text prompts in pilotstudio.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -32,19 +32,10 @@ function StudioHub() {
           {t("hub.badge")}
         </span>
         <h1 className="mt-5 text-4xl font-extrabold tracking-tight">{t("hub.title")}</h1>
-        <p className="mt-3 text-sm text-muted-foreground sm:text-base">{t("hub.subtitle")}</p>
+        <p className="mt-3 text-sm text-muted-foreground sm:text-base">{t("hub.video_body")}</p>
       </header>
 
-      <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-2">
-        <HubCard
-          to="/generate"
-          icon={<ImageIcon className="h-6 w-6" strokeWidth={1.75} />}
-          eyebrow="Seedream"
-          title={t("hub.image_title")}
-          body={t("hub.image_body")}
-          cta={t("hub.image_cta")}
-          bullets={[t("hub.image_b1"), t("hub.image_b2"), t("hub.image_b3")]}
-        />
+      <div className="mx-auto mt-12 grid max-w-xl grid-cols-1 gap-6">
         <HubCard
           to="/video"
           icon={<Film className="h-6 w-6" strokeWidth={1.75} />}
@@ -64,6 +55,7 @@ function StudioHub() {
     </main>
   );
 }
+
 
 function HubCard({
   to,
