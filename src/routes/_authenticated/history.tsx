@@ -153,19 +153,8 @@ function HistoryPage() {
         <p className="mt-1 text-sm text-muted-foreground">{t("history.sub")}</p>
       </header>
 
-      <div className="mt-5 inline-flex rounded-full border border-border bg-card p-1">
-        {(["image", "video"] as const).map((k) => (
-          <button
-            key={k}
-            onClick={() => navigate({ search: { tab: k } })}
-            className={`rounded-full px-4 py-1.5 text-sm font-semibold transition ${
-              tab === k ? "bg-primary text-primary-foreground" : "text-muted-foreground"
-            }`}
-          >
-            {k === "image" ? "Images" : "Videos"}
-          </button>
-        ))}
-      </div>
+      {/* Image history is hidden while the platform demos video generation only. */}
+
 
       {selected && (
         <div className="mt-6">
