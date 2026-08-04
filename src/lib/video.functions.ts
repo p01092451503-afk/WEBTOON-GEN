@@ -4,8 +4,8 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const startSchema = z.object({
   workLabel: z.string().default("V1"),
-  /** 영상 생성 프로바이더. auto = Seedance 우선, 실패 시 Lovable AI Gateway 폴백 */
-  provider: z.enum(["auto", "seedance", "lovable"]).default("auto"),
+  /** 영상 생성 프로바이더. replicate = Replicate 직접 연동 (기본) */
+  provider: z.enum(["auto", "seedance", "lovable", "replicate"]).default("replicate"),
   mode: z.enum(["t2v", "i2v"]).default("t2v"),
 
   finalPrompt: z.string().min(1).max(4000),
@@ -75,27 +75,28 @@ export const startVideoGeneration = createServerFn({ method: "POST" })
       }
 
       // Seedance(ARK) 경로는 비활성화됨. 코드는 src/lib/video.server.ts 에 보존.
+      // Lovable AI Gateway 경로도 현재 워크스페이스에서 영상 모델이 열려 있지 않아 비활성화.
+      // 기본 생성 경로는 Replicate 직접 연동.
 
-      const runLovable = async () => {
-        const { buildLovableVideoPrompt, createLovableVideoTask } = await import(
-          "@/lib/video-lovable.server"
-        );
-        return createLovableVideoTask({
-          prompt: buildLovableVideoPrompt({ prompt, cameraFixed: data.cameraFixed, seed }),
+      const runReplicate = async () => {
+        const { createReplicateVideoTask } = await import("@/lib/video-replicate.server");
+        return createReplicateVideoTask({
+          prompt,
           aspectRatio: data.aspectRatio,
+          resolution: data.resolution,
           durationSeconds: data.durationSeconds,
           firstFrameUrl: signedUrls[0] ?? null,
+          lastFrameUrl: signedUrls[1] ?? null,
+          seed,
         });
       };
 
-      // 항상 Lovable AI Gateway(Google 영상 모델)로 생성한다.
-      const { taskId, model } = await runLovable();
+      const { taskId, model } = await runReplicate();
 
       await supabase
         .from("video_generations")
         .update({ task_id: taskId, api_model: model })
         .eq("id", videoId);
-
 
       return { videoGenerationId: videoId, status: "running" as const };
     } catch (err) {
@@ -113,6 +114,7 @@ export const startVideoGeneration = createServerFn({ method: "POST" })
       throw new Error(friendly);
     }
   });
+
 
 
 const pollSchema = z.object({ videoGenerationId: z.string().uuid() });
