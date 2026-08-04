@@ -1,5 +1,19 @@
 import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import { checkVideoModelHealth } from "@/lib/video-health.functions";
+
+type VideoHealth = {
+  checkedAt: string;
+  canGenerate: boolean;
+  models: Array<{
+    id: string;
+    label: string;
+    provider: "lovable" | "seedance";
+    status: "available" | "unavailable" | "unknown";
+    detail: string;
+  }>;
+};
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
