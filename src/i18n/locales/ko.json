@@ -365,8 +365,9 @@
     "reset_prompt": "자동 프롬프트로 되돌리기",
     "generate": "동영상 생성",
     "generating": "생성 중…",
-    "generating_hint": "보통 1~3분 정도 걸립니다. 이 화면을 열어 두세요.",
+    "generating_hint": "보통 30초~2분 정도 걸립니다. 이 화면을 열어 두세요.",
     "result_empty": "생성된 영상이 여기에 표시됩니다.",
+
     "download": "MP4 다운로드",
     "errors": {
       "empty_prompt": "행동을 입력하거나 모션 프리셋을 선택해 주세요."
