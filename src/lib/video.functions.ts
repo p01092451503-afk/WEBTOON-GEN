@@ -5,8 +5,8 @@ import type { VideoTaskState } from "@/lib/video.server";
 
 const startSchema = z.object({
   workLabel: z.string().default("V1"),
-  /** 영상 생성 프로바이더. t2v 기본값은 프롬프트 충실도가 높은 Veo다. */
-  provider: z.enum(["auto", "seedance", "lovable", "replicate"]).default("lovable"),
+  /** 영상 생성 프로바이더. 현재 사용 가능한 기본 엔진은 Replicate다. */
+  provider: z.enum(["auto", "seedance", "lovable", "replicate"]).default("replicate"),
   mode: z.enum(["t2v", "i2v"]).default("t2v"),
 
   finalPrompt: z.string().min(1).max(4000),
@@ -87,8 +87,10 @@ export const startVideoGeneration = createServerFn({ method: "POST" })
         signedUrls.push(signed.signedUrl);
       }
 
+      // Veo is not currently exposed by Lovable AI Gateway. Keep accepting the
+      // legacy value so an already-open browser cannot trigger a known 400.
       const provider =
-        data.provider === "auto" ? (data.mode === "t2v" ? "lovable" : "replicate") : data.provider;
+        data.provider === "auto" || data.provider === "lovable" ? "replicate" : data.provider;
       const providerInput = {
         prompt,
         negativePrompt,

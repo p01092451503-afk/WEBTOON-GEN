@@ -32,8 +32,8 @@ function pick(raw: string): { title: string; hint: string } {
   // Lovable AI Gateway
   if (r.includes("model is not available") || r.includes("invalid model")) {
     return {
-      title: "No video model is enabled for this AI workspace yet.",
-      hint: "The AI gateway currently exposes text, image and audio models only — no video models. If you are using the Replicate integration, check its status in “Model availability check” below.",
+      title: "The selected video engine is not supported.",
+      hint: "The obsolete Veo gateway option has been replaced with Replicate. Refresh this page and generate again.",
     };
   }
 

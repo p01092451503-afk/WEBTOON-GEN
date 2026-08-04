@@ -268,7 +268,7 @@ export async function probeReplicate(): Promise<{
   } catch (err) {
     return {
       id: "replicate",
-      label: "Replicate (Lovable 직접 연동)",
+      label: "Replicate\u00a0",
       provider: "replicate",
       status: "unknown",
       detail: err instanceof Error ? err.message : String(err),
