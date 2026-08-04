@@ -1078,7 +1078,9 @@ function VideoStudioPage() {
             {gen.recoveryNotice && (
               <div className="flex items-start gap-2 rounded-2xl border border-primary/30 bg-primary-soft px-4 py-3 text-[13px] text-foreground">
                 <RefreshCw
-                  className={"mt-0.5 h-4 w-4 shrink-0 text-primary " + (gen.running ? "animate-spin" : "")}
+                  className={
+                    "mt-0.5 h-4 w-4 shrink-0 text-primary " + (gen.running ? "animate-spin" : "")
+                  }
                   aria-hidden="true"
                 />
                 <div>
