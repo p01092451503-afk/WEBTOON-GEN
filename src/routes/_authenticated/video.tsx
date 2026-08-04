@@ -515,7 +515,6 @@ function VideoStudioPage() {
           lightIds,
           styleId,
           actionText,
-          negativeText,
         },
       });
       toast.success(t("video.toast.started"));
