@@ -250,11 +250,28 @@ function VideoStudioPage() {
     parts.push(one(STYLE_PRESETS, styleId));
 
     const cleaned = parts.map((p) => p.trim()).filter(Boolean);
-    if (cleaned.length === 0) return "";
-    let out = cleaned.join(", ") + ".";
-    if (negativeText.trim()) out += ` Avoid: ${negativeText.trim()}.`;
+    const suffix = applyBrief ? (brief?.promptSuffix ?? "").trim() : "";
+    if (cleaned.length === 0 && !suffix) return "";
+    let out = (suffix ? [...cleaned, suffix] : cleaned).join(", ") + ".";
+    const avoid = [negativeText.trim(), applyBrief ? (brief?.negative ?? "").trim() : ""]
+      .filter(Boolean)
+      .join(", ");
+    if (avoid) out += ` Avoid: ${avoid}.`;
     return out;
-  }, [actionText, negativeText, shotId, angleId, motionIds, speedId, lightIds, ambienceIds, styleId]);
+  }, [
+    actionText,
+    negativeText,
+    shotId,
+    angleId,
+    motionIds,
+    speedId,
+    lightIds,
+    ambienceIds,
+    styleId,
+    brief,
+    applyBrief,
+  ]);
+
 
   const finalPrompt = editedPrompt ?? builtPrompt;
   const mode: "t2v" | "i2v" = firstFrame ? "i2v" : "t2v";
