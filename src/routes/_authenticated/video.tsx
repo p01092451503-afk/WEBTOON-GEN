@@ -54,6 +54,27 @@ import {
 } from "lucide-react";
 import { analyzeReferences, type ReferenceBrief } from "@/lib/reference-analysis.functions";
 import { extractVideoFrames } from "@/lib/videoFrames";
+import { MentionTextarea } from "@/components/MentionTextarea";
+
+/** An uploaded reference image or video that can be mentioned in the prompt with @name. */
+type MediaAsset = {
+  id: string;
+  name: string;
+  kind: "image" | "video";
+  /** thumbnail / frame used as an actual model input */
+  coverPath: string;
+  /** all frames kept for AI study (images have one) */
+  framePaths: string[];
+  role: "first" | "last" | "style";
+  /** optional user note describing how this media should be used */
+  note: string;
+};
+
+const ROLES: Array<{ id: MediaAsset["role"]; label: string; hint: string }> = [
+  { id: "first", label: "First frame", hint: "the video starts from this image" },
+  { id: "last", label: "Last frame", hint: "the video ends on this image" },
+  { id: "style", label: "Style only", hint: "used as look / motion reference" },
+];
 
 
 
@@ -180,10 +201,8 @@ function VideoStudioPage() {
   const { data: characters = [] } = useCharacters();
   const gen = useVideoGeneration(tenantId);
 
-  const [firstFrame, setFirstFrame] = useState<string | null>(null);
-  const [lastFrame, setLastFrame] = useState<string | null>(null);
-  const [useReferenceFrame, setUseReferenceFrame] = useState(false);
-  const [uploading, setUploading] = useState<"first" | "last" | null>(null);
+  const [assets, setAssets] = useState<MediaAsset[]>([]);
+  const [uploading, setUploading] = useState(false);
   const [actionText, setActionText] = useState("");
   const [negativeText, setNegativeText] = useState("");
   const [motionIds, setMotionIds] = useState<string[]>([]);
@@ -202,14 +221,27 @@ function VideoStudioPage() {
   const [editedPrompt, setEditedPrompt] = useState<string | null>(null);
   const provider = "replicate" as const;
 
-  // --- Reference study (learn from uploaded images / video) ---
+  // --- Reference study (learn from the mentioned media) ---
   const analyzeFn = useServerFn(analyzeReferences);
-  const [studyPaths, setStudyPaths] = useState<string[]>([]);
-  const [studyHasVideo, setStudyHasVideo] = useState(false);
-  const [studyUploading, setStudyUploading] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [brief, setBrief] = useState<ReferenceBrief | null>(null);
   const [applyBrief, setApplyBrief] = useState(true);
+
+  /** media actually mentioned with @ inside the prompt */
+  const mentioned = useMemo(() => {
+    const names = new Set(
+      Array.from(actionText.matchAll(/(^|\s)@([A-Za-z0-9_-]+)/g)).map((m) => m[2].toLowerCase()),
+    );
+    return assets.filter((a) => names.has(a.name.toLowerCase()));
+  }, [actionText, assets]);
+
+  const activeAssets = mentioned.length > 0 ? mentioned : assets;
+
+  const firstFrame =
+    assets.find((a) => a.role === "first")?.coverPath ?? mentioned[0]?.coverPath ?? null;
+  const lastFrame = assets.find((a) => a.role === "last")?.coverPath ?? null;
+  const studyPaths = activeAssets.flatMap((a) => a.framePaths).slice(0, 8);
+  const studyHasVideo = activeAssets.some((a) => a.kind === "video");
 
 
 
@@ -233,6 +265,23 @@ function VideoStudioPage() {
 
 
 
+  /** Replace "@name" tokens with wording the video model understands. */
+  const resolveMentions = (text: string) =>
+    text.replace(/(^|\s)@([A-Za-z0-9_-]+)/g, (full, sp: string, name: string) => {
+      const a = assets.find((x) => x.name.toLowerCase() === name.toLowerCase());
+      if (!a) return full;
+      const label =
+        a.note.trim() ||
+        (a.role === "first"
+          ? "the subject shown in the first reference frame"
+          : a.role === "last"
+            ? "the composition of the last reference frame"
+            : a.kind === "video"
+              ? "the look and motion of the reference video"
+              : "the look of the reference image");
+      return `${sp}${label}`;
+    });
+
   const builtPrompt = useMemo(() => {
     const parts: string[] = [];
     const one = (list: Preset[], id: string | null) =>
@@ -240,7 +289,8 @@ function VideoStudioPage() {
     const many = (list: Preset[], ids: string[]) =>
       list.filter((p) => ids.includes(p.id)).map((p) => p.text);
 
-    if (actionText.trim()) parts.push(actionText.trim());
+    const action = resolveMentions(actionText).trim();
+    if (action) parts.push(action);
     parts.push(one(SHOT_PRESETS, shotId));
     parts.push(one(ANGLE_PRESETS, angleId));
     parts.push(...many(MOTION_PRESETS, motionIds));
@@ -258,8 +308,10 @@ function VideoStudioPage() {
       .join(", ");
     if (avoid) out += ` Avoid: ${avoid}.`;
     return out;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     actionText,
+    assets,
     negativeText,
     shotId,
     angleId,
@@ -280,27 +332,8 @@ function VideoStudioPage() {
     setList(list.includes(id) ? list.filter((x) => x !== id) : [...list, id]);
   }
 
-  async function handleUpload(file: File, slot: "first" | "last") {
-    if (!tenantId) return;
-    setUploading(slot);
-    try {
-      const ext = file.name.split(".").pop()?.toLowerCase() || "png";
-      const path = `${tenantId}/video-refs/${Date.now()}-${slot}.${ext}`;
-      const { error } = await supabase.storage
-        .from("character-refs")
-        .upload(path, file, { contentType: file.type, upsert: false });
-      if (error) throw error;
-      if (slot === "first") setFirstFrame(path);
-      else setLastFrame(path);
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : String(e));
-    } finally {
-      setUploading(null);
-    }
-  }
-
-  async function uploadStudyBlob(blob: Blob, name: string) {
-    const path = `${tenantId}/video-refs/study/${Date.now()}-${name}`;
+  async function uploadBlob(blob: Blob, name: string) {
+    const path = `${tenantId}/video-refs/${Date.now()}-${Math.random().toString(36).slice(2, 7)}-${name}`;
     const { error } = await supabase.storage
       .from("character-refs")
       .upload(path, blob, { contentType: blob.type || "image/jpeg", upsert: false });
@@ -308,39 +341,95 @@ function VideoStudioPage() {
     return path;
   }
 
-  /** Add reference stills. Videos are sampled into ordered frames in the browser. */
-  async function handleStudyFiles(files: FileList) {
+  function nextName(taken: MediaAsset[], kind: MediaAsset["kind"]) {
+    const base = kind === "video" ? "video" : "img";
+    let n = 1;
+    while (taken.some((a) => a.name === `${base}${n}`)) n++;
+    return `${base}${n}`;
+  }
+
+  /** Add reference media. A video is stored as one card whose frames are sampled in the browser. */
+  async function handleAddMedia(files: FileList) {
     if (!tenantId) return;
-    setStudyUploading(true);
+    setUploading(true);
     try {
-      const added: string[] = [];
-      let sawVideo = false;
+      const added: MediaAsset[] = [];
       for (const file of Array.from(files)) {
-        if (studyPaths.length + added.length >= 8) break;
+        if (assets.length + added.length >= 6) break;
         if (file.type.startsWith("video/")) {
-          sawVideo = true;
           const frames = await extractVideoFrames(file, 3);
+          const paths: string[] = [];
           let i = 0;
-          for (const frame of frames) {
-            if (studyPaths.length + added.length >= 8) break;
-            added.push(await uploadStudyBlob(frame, `frame-${i++}.jpg`));
-          }
+          for (const frame of frames) paths.push(await uploadBlob(frame, `frame-${i++}.jpg`));
+          if (paths.length === 0) continue;
+          added.push({
+            id: crypto.randomUUID(),
+            name: nextName([...assets, ...added], "video"),
+            kind: "video",
+            coverPath: paths[0],
+            framePaths: paths,
+            role: "style",
+            note: "",
+          });
         } else if (file.type.startsWith("image/")) {
           const ext = file.name.split(".").pop()?.toLowerCase() || "png";
-          added.push(await uploadStudyBlob(file, `ref.${ext}`));
+          const path = await uploadBlob(file, `ref.${ext}`);
+          added.push({
+            id: crypto.randomUUID(),
+            name: nextName([...assets, ...added], "image"),
+            kind: "image",
+            coverPath: path,
+            framePaths: [path],
+            role: assets.some((a) => a.role === "first") ? "style" : "first",
+            note: "",
+          });
         }
       }
       if (added.length === 0) {
         toast.error("Pick an image or video file.");
         return;
       }
-      setStudyPaths((prev) => [...prev, ...added].slice(0, 8));
-      if (sawVideo) setStudyHasVideo(true);
+      setAssets((prev) => [...prev, ...added].slice(0, 6));
+      toast.success(`Added ${added.map((a) => "@" + a.name).join(", ")} — mention them in the prompt.`);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : String(e));
     } finally {
-      setStudyUploading(false);
+      setUploading(false);
     }
+  }
+
+  function updateAsset(id: string, patch: Partial<MediaAsset>) {
+    setAssets((prev) =>
+      prev.map((a) => {
+        if (a.id !== id) return a;
+        const next = { ...a, ...patch };
+        return next;
+      }),
+    );
+    // only one asset can hold each frame slot
+    if (patch.role === "first" || patch.role === "last") {
+      setAssets((prev) =>
+        prev.map((a) => (a.id !== id && a.role === patch.role ? { ...a, role: "style" } : a)),
+      );
+    }
+  }
+
+  function addCharacterAsset(path: string, label: string) {
+    if (assets.some((a) => a.coverPath === path)) return;
+    setAssets((prev) =>
+      [
+        ...prev,
+        {
+          id: crypto.randomUUID(),
+          name: nextName(prev, "image"),
+          kind: "image" as const,
+          coverPath: path,
+          framePaths: [path],
+          role: prev.some((a) => a.role === "first") ? ("style" as const) : ("first" as const),
+          note: label,
+        },
+      ].slice(0, 6),
+    );
   }
 
   async function handleAnalyze() {
@@ -425,231 +514,210 @@ function VideoStudioPage() {
 
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
-        {/* 1. Reference frame */}
-        <Panel step={1} title={t("video.panels.reference")}>
+        {/* 1. Reference media library */}
+        <Panel step={1} title="Reference media">
           <div className="space-y-4">
-            <div className="flex items-center justify-between rounded-2xl border border-border px-4 py-3">
-              <div className="space-y-0.5">
-                <Label className="text-[13px] font-bold">{t("video.use_reference")}</Label>
-                <p className="text-[12px] text-muted-foreground">
-                  {useReferenceFrame ? t("video.reference_on_hint") : t("video.reference_off_hint")}
-                </p>
-              </div>
-              <Switch
-                checked={useReferenceFrame}
-                onCheckedChange={(v) => {
-                  setUseReferenceFrame(v);
-                  if (!v) {
-                    setFirstFrame(null);
-                    setLastFrame(null);
-                  }
-                }}
-              />
-            </div>
-
             <div className="rounded-2xl border border-border bg-muted/30 px-4 py-4">
               <div className="flex items-start gap-2 text-[13px] font-semibold text-foreground">
                 <Info className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                {useReferenceFrame ? t("video.reference_flow_on_title") : t("video.reference_flow_off_title")}
+                Upload anything you want to reference
               </div>
               <p className="mt-2 text-[12px] leading-relaxed text-muted-foreground">
-                {useReferenceFrame ? t("video.reference_flow_on_body") : t("video.reference_flow_off_body")}
+                Every image or video you add becomes a named card such as{" "}
+                <span className="font-bold text-foreground">@img1</span> or{" "}
+                <span className="font-bold text-foreground">@video1</span>. In the prompt (panel 2)
+                type <span className="font-bold text-foreground">@</span> to mention them freely —
+                exactly like Dreamina or Playground. A video is kept as one card; its frames are
+                sampled in the background for the AI study.
               </p>
             </div>
 
-            {!useReferenceFrame && (
-              <div className="rounded-2xl border border-border bg-muted/30 px-4 py-4">
-                <div className="flex items-start gap-2 text-[13px] font-semibold text-foreground">
-                  <Info className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                  {t("video.reference_why_title")}
-                </div>
-                <p className="mt-2 text-[12px] leading-relaxed text-muted-foreground">
-                  {t("video.reference_why_body")}
-                </p>
-              </div>
-            )}
-
-            {useReferenceFrame && (
-              <div className="space-y-4">
-                <p className="text-[13px] leading-relaxed text-muted-foreground">
-                  {t("video.reference_hint")}
-                </p>
-
-                <FrameSlot
-                  label={t("video.upload_frame")}
-                  path={firstFrame}
-                  busy={uploading === "first"}
-                  onPick={(f) => handleUpload(f, "first")}
-                  onClear={() => setFirstFrame(null)}
-                  clearLabel={t("common.dismiss")}
-                />
-
-                {firstFrame && (
-                  <div className="space-y-1.5">
-                    <FrameSlot
-                      label={t("video.upload_last_frame")}
-                      path={lastFrame}
-                      busy={uploading === "last"}
-                      onPick={(f) => handleUpload(f, "last")}
-                      onClear={() => setLastFrame(null)}
-                      clearLabel={t("common.dismiss")}
-                    />
-                    <p className="text-[12px] text-muted-foreground">{t("video.last_frame_hint")}</p>
-                  </div>
-                )}
-
-                <div>
-                  <Label className="text-[13px] font-bold">{t("video.from_characters")}</Label>
-                  <div className="mt-2 grid grid-cols-3 gap-2">
-                    {characters.slice(0, 12).map((c) => (
-                      <button
-                        key={c.id}
-                        onClick={() => c.primary_path && setFirstFrame(c.primary_path)}
-                        className={
-                          "overflow-hidden rounded-xl border transition-colors " +
-                          (firstFrame === c.primary_path
-                            ? "border-primary ring-2 ring-primary/25"
-                            : "border-border hover:border-primary/40")
-                        }
-                        title={c.display_name}
-                      >
-                        <SignedImage
-                          bucket="character-refs"
-                          path={c.primary_path}
-                          alt={c.display_name}
-                          className="h-16 w-full object-cover"
-                        />
-                        <span className="block truncate px-1.5 py-1 text-[11px] font-semibold">
-                          {c.display_name}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                  {characters.length === 0 && (
-                    <p className="mt-2 text-xs text-muted-foreground">{t("video.no_characters")}</p>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Reference study: learn look & motion from uploaded images / videos */}
-            <div className="space-y-3 rounded-2xl border border-border px-4 py-4">
-              <div className="flex items-start gap-2">
-                <Wand2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                <div className="space-y-1">
-                  <Label className="text-[13px] font-bold">Reference study</Label>
-                  <p className="text-[12px] leading-relaxed text-muted-foreground">
-                    Upload reference images or a short reference video. pilotstudio samples the video
-                    into ordered frames, reads the look and the motion, and writes those details into
-                    your prompt so the result matches your intent more closely.
-                  </p>
-                </div>
-              </div>
-
-              <label className="flex h-24 cursor-pointer flex-col items-center justify-center gap-1.5 rounded-2xl border-2 border-dashed border-border text-[12.5px] font-semibold text-muted-foreground hover:border-primary/40 hover:text-foreground">
-                {studyUploading ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                ) : (
-                  <Video className="h-5 w-5" />
-                )}
-                {studyUploading ? "Reading references…" : "Add reference images or video"}
-                <span className="text-[11px] font-normal">Up to 8 frames · jpg, png, mp4</span>
-                <input
-                  type="file"
-                  accept="image/*,video/*"
-                  multiple
-                  className="hidden"
-                  onChange={(e) => {
-                    if (e.target.files?.length) void handleStudyFiles(e.target.files);
-                    e.target.value = "";
-                  }}
-                />
-              </label>
-
-              {studyPaths.length > 0 && (
-                <>
-                  <div className="grid grid-cols-4 gap-2">
-                    {studyPaths.map((p) => (
-                      <div key={p} className="relative overflow-hidden rounded-xl border border-border">
-                        <SignedImage
-                          bucket="character-refs"
-                          path={p}
-                          alt="Reference"
-                          className="h-14 w-full object-cover"
-                        />
-                        <button
-                          onClick={() => setStudyPaths((prev) => prev.filter((x) => x !== p))}
-                          aria-label="Remove reference"
-                          className="absolute right-1 top-1 grid h-5 w-5 place-items-center rounded-full bg-background/85 text-foreground shadow"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="flex gap-2">
-                    <Button
-                      type="button"
-                      size="sm"
-                      onClick={handleAnalyze}
-                      disabled={analyzing}
-                      className="flex-1 rounded-xl text-[12.5px] font-bold"
-                    >
-                      {analyzing ? (
-                        <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-                      ) : (
-                        <Wand2 className="mr-1.5 h-3.5 w-3.5" />
-                      )}
-                      {analyzing ? "Studying references…" : "Study references"}
-                    </Button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      className="rounded-xl"
-                      aria-label="Clear references"
-                      onClick={() => {
-                        setStudyPaths([]);
-                        setStudyHasVideo(false);
-                        setBrief(null);
-                      }}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                </>
+            <label className="flex h-28 cursor-pointer flex-col items-center justify-center gap-1.5 rounded-2xl border-2 border-dashed border-border text-[13px] font-semibold text-muted-foreground hover:border-primary/40 hover:text-foreground">
+              {uploading ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <ImagePlus className="h-5 w-5" />
               )}
+              {uploading ? "Reading media…" : "Add reference images or video"}
+              <span className="text-[11px] font-normal">Up to 6 cards · jpg, png, mp4</span>
+              <input
+                type="file"
+                accept="image/*,video/*"
+                multiple
+                className="hidden"
+                onChange={(e) => {
+                  if (e.target.files?.length) void handleAddMedia(e.target.files);
+                  e.target.value = "";
+                }}
+              />
+            </label>
 
-              {brief && (
-                <div className="space-y-2 rounded-2xl bg-muted/50 px-3 py-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-[12.5px] font-bold">Reference brief</span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[11.5px] text-muted-foreground">Use in prompt</span>
-                      <Switch checked={applyBrief} onCheckedChange={setApplyBrief} />
+            {assets.length > 0 && (
+              <div className="space-y-3">
+                {assets.map((a) => (
+                  <div key={a.id} className="space-y-2 rounded-2xl border border-border p-3">
+                    <div className="flex gap-3">
+                      <div className="relative h-20 w-28 shrink-0 overflow-hidden rounded-xl border border-border">
+                        <SignedImage
+                          bucket="character-refs"
+                          path={a.coverPath}
+                          alt={a.name}
+                          className="h-20 w-28 object-cover"
+                        />
+                        {a.kind === "video" && (
+                          <span className="absolute left-1 top-1 inline-flex items-center gap-1 rounded-full bg-background/85 px-1.5 py-0.5 text-[10px] font-bold">
+                            <Video className="h-3 w-3" />
+                            {a.framePaths.length}f
+                          </span>
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1 space-y-1.5">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="truncate text-[13px] font-bold text-primary">
+                            @{a.name}
+                          </span>
+                          <button
+                            onClick={() => setAssets((prev) => prev.filter((x) => x.id !== a.id))}
+                            aria-label={`Remove ${a.name}`}
+                            className="grid h-6 w-6 place-items-center rounded-full border border-border text-muted-foreground hover:text-foreground"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </div>
+                        <Input
+                          value={a.note}
+                          onChange={(e) => updateAsset(a.id, { note: e.target.value })}
+                          placeholder="What is this? e.g. main character in a red coat"
+                          className="h-8 rounded-xl text-[12.5px]"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-1.5">
+                      {ROLES.map((r) => (
+                        <button
+                          key={r.id}
+                          title={r.hint}
+                          onClick={() => updateAsset(a.id, { role: r.id })}
+                          className={
+                            "rounded-full border px-2.5 py-1 text-[11.5px] font-bold transition-colors " +
+                            (a.role === r.id
+                              ? "border-primary bg-primary-soft text-primary"
+                              : "border-border text-muted-foreground hover:border-primary/40")
+                          }
+                        >
+                          {r.label}
+                        </button>
+                      ))}
                     </div>
                   </div>
-                  {(
-                    [
-                      ["Subject", brief.subject],
-                      ["Style", brief.style],
-                      ["Lighting", brief.lighting],
-                      ["Camera", brief.camera],
-                      ["Motion", brief.motion],
-                      ["Avoid", brief.negative],
-                    ] as const
-                  )
-                    .filter(([, v]) => Boolean(v))
-                    .map(([k, v]) => (
-                      <p key={k} className="text-[11.5px] leading-relaxed text-muted-foreground">
-                        <span className="font-bold text-foreground">{k}:</span> {v}
-                      </p>
-                    ))}
-                </div>
-              )}
-            </div>
+                ))}
+              </div>
+            )}
 
+            {characters.length > 0 && (
+              <div>
+                <Label className="text-[13px] font-bold">{t("video.from_characters")}</Label>
+                <div className="mt-2 grid grid-cols-3 gap-2">
+                  {characters.slice(0, 12).map((c) => (
+                    <button
+                      key={c.id}
+                      onClick={() =>
+                        c.primary_path && addCharacterAsset(c.primary_path, c.display_name)
+                      }
+                      className="overflow-hidden rounded-xl border border-border transition-colors hover:border-primary/40"
+                      title={`Add ${c.display_name} as reference media`}
+                    >
+                      <SignedImage
+                        bucket="character-refs"
+                        path={c.primary_path}
+                        alt={c.display_name}
+                        className="h-16 w-full object-cover"
+                      />
+                      <span className="block truncate px-1.5 py-1 text-[11px] font-semibold">
+                        {c.display_name}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Optional AI study of the referenced media */}
+            {assets.length > 0 && (
+              <div className="space-y-3 rounded-2xl border border-border px-4 py-4">
+                <div className="flex items-start gap-2">
+                  <Wand2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                  <div className="space-y-1">
+                    <Label className="text-[13px] font-bold">Optional: study the references</Label>
+                    <p className="text-[12px] leading-relaxed text-muted-foreground">
+                      Reads the mentioned media and appends look / lighting / motion wording to the
+                      final prompt. Leave it off if you prefer to write everything yourself.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={handleAnalyze}
+                    disabled={analyzing || studyPaths.length === 0}
+                    className="flex-1 rounded-xl text-[12.5px] font-bold"
+                  >
+                    {analyzing ? (
+                      <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Wand2 className="mr-1.5 h-3.5 w-3.5" />
+                    )}
+                    {analyzing
+                      ? "Studying…"
+                      : `Study ${mentioned.length > 0 ? "mentioned" : "all"} media`}
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="rounded-xl"
+                    aria-label="Clear reference media"
+                    onClick={() => {
+                      setAssets([]);
+                      setBrief(null);
+                    }}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+
+                {brief && (
+                  <div className="space-y-2 rounded-2xl bg-muted/50 px-3 py-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[12.5px] font-bold">Reference brief</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11.5px] text-muted-foreground">Use in prompt</span>
+                        <Switch checked={applyBrief} onCheckedChange={setApplyBrief} />
+                      </div>
+                    </div>
+                    {(
+                      [
+                        ["Subject", brief.subject],
+                        ["Style", brief.style],
+                        ["Lighting", brief.lighting],
+                        ["Camera", brief.camera],
+                        ["Motion", brief.motion],
+                        ["Avoid", brief.negative],
+                      ] as const
+                    )
+                      .filter(([, v]) => Boolean(v))
+                      .map(([k, v]) => (
+                        <p key={k} className="text-[11.5px] leading-relaxed text-muted-foreground">
+                          <span className="font-bold text-foreground">{k}:</span> {v}
+                        </p>
+                      ))}
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="rounded-2xl border border-border bg-muted/40 px-3 py-2 text-[12px] font-semibold text-muted-foreground">
               {mode === "i2v" ? t("video.mode_i2v") : t("video.mode_t2v")}
@@ -657,18 +725,48 @@ function VideoStudioPage() {
           </div>
         </Panel>
 
+
         {/* 2. Motion */}
         <Panel step={2} title={t("video.panels.motion")}>
           <div className="space-y-5">
             <div className="space-y-1.5">
               <Label className="text-[13px] font-bold">{t("video.action_label")}</Label>
-              <Textarea
+              <MentionTextarea
                 value={actionText}
-                onChange={(e) => setActionText(e.target.value)}
-                placeholder={t("video.action_placeholder")}
-                className="min-h-[96px] rounded-2xl text-[14px]"
+                onChange={(v) => setActionText(v)}
+                items={assets.map((a) => ({
+                  name: a.name,
+                  coverPath: a.coverPath,
+                  hint:
+                    (a.kind === "video" ? "video · " : "image · ") +
+                    (ROLES.find((r) => r.id === a.role)?.label ?? ""),
+                }))}
+                placeholder={
+                  assets.length
+                    ? "Type @ to reference your uploaded media, then describe the shot freely."
+                    : t("video.action_placeholder")
+                }
+                className="min-h-[120px] rounded-2xl text-[14px]"
               />
+              <p className="text-[12px] leading-relaxed text-muted-foreground">
+                Type <span className="font-bold text-foreground">@</span> to mention uploaded media
+                (e.g. “@img1 slowly turns her head and smiles, lighting like @video1”). Mentions
+                decide which media the model actually uses.
+              </p>
+              {mentioned.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 pt-0.5">
+                  {mentioned.map((a) => (
+                    <span
+                      key={a.id}
+                      className="rounded-full bg-primary-soft px-2.5 py-1 text-[11.5px] font-bold text-primary"
+                    >
+                      @{a.name}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
+
 
             <div className="space-y-1.5">
               <Label className="text-[13px] font-bold">{t("video.negative_label")}</Label>
@@ -922,52 +1020,6 @@ function VideoStudioPage() {
         </Panel>
       </div>
     </main>
-  );
-}
-
-function FrameSlot({
-  label,
-  path,
-  busy,
-  onPick,
-  onClear,
-  clearLabel,
-}: {
-  label: string;
-  path: string | null;
-  busy: boolean;
-  onPick: (file: File) => void;
-  onClear: () => void;
-  clearLabel: string;
-}) {
-  if (path) {
-    return (
-      <div className="relative overflow-hidden rounded-2xl border border-border">
-        <SignedImage bucket="character-refs" path={path} alt={label} className="h-44 w-full object-cover" />
-        <button
-          onClick={onClear}
-          aria-label={clearLabel}
-          className="absolute right-2 top-2 grid h-7 w-7 place-items-center rounded-full bg-background/85 text-foreground shadow"
-        >
-          <X className="h-3.5 w-3.5" />
-        </button>
-      </div>
-    );
-  }
-  return (
-    <label className="flex h-32 cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border text-[13px] font-semibold text-muted-foreground hover:border-primary/40 hover:text-foreground">
-      {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <ImagePlus className="h-5 w-5" />}
-      {label}
-      <input
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={(e) => {
-          const f = e.target.files?.[0];
-          if (f) onPick(f);
-        }}
-      />
-    </label>
   );
 }
 
