@@ -137,9 +137,12 @@ function pick(raw: string): { title: string; hint: string } {
 
 /** Combines both errors when the fallback also failed. */
 export function explainVideoError(raw: string): VideoErrorInfo {
-  const [first] = raw.split("||");
+  const [first, fallback] = raw.split("||");
   const { title, hint } = pick(raw);
-  return { title, hint, raw: (first ?? raw).trim().slice(0, 300) };
+  const diagnostic = fallback
+    ? `Primary: ${(first ?? "").trim()} | Fallback: ${fallback.trim()}`
+    : (first ?? raw).trim();
+  return { title, hint, raw: diagnostic.slice(0, 300) };
 }
 
 /** Single display string */

@@ -91,7 +91,7 @@ export const startVideoGeneration = createServerFn({ method: "POST" })
           firstFrameUrl: signedUrls[0] ?? null,
           lastFrameUrl: signedUrls[1] ?? null,
           seed,
-      };
+      }
       const { createReplicateWithRetry, recoveryAttempt } = await import(
         "@/lib/video-recovery.server"
       );
@@ -197,7 +197,7 @@ export const pollVideoGeneration = createServerFn({ method: "POST" })
     const { isLovableTaskId, getLovableVideoTask } = await import("@/lib/video-lovable.server");
     const { isReplicateTaskId, getReplicateVideoTask } =
       await import("@/lib/video-replicate.server");
-    const { getVideoTask } = await import("@/lib/video.server");
+    const { createVideoTask, getVideoTask } = await import("@/lib/video.server");
     const options =
       row.options && typeof row.options === "object" && !Array.isArray(row.options)
         ? (row.options as Record<string, unknown>)
