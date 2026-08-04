@@ -514,237 +514,217 @@ function VideoStudioPage() {
 
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
-        {/* 1. Reference frame */}
-        <Panel step={1} title={t("video.panels.reference")}>
+        {/* 1. Reference media library */}
+        <Panel step={1} title="Reference media">
           <div className="space-y-4">
-            <div className="flex items-center justify-between rounded-2xl border border-border px-4 py-3">
-              <div className="space-y-0.5">
-                <Label className="text-[13px] font-bold">{t("video.use_reference")}</Label>
-                <p className="text-[12px] text-muted-foreground">
-                  {useReferenceFrame ? t("video.reference_on_hint") : t("video.reference_off_hint")}
-                </p>
-              </div>
-              <Switch
-                checked={useReferenceFrame}
-                onCheckedChange={(v) => {
-                  setUseReferenceFrame(v);
-                  if (!v) {
-                    setFirstFrame(null);
-                    setLastFrame(null);
-                  }
-                }}
-              />
-            </div>
-
             <div className="rounded-2xl border border-border bg-muted/30 px-4 py-4">
               <div className="flex items-start gap-2 text-[13px] font-semibold text-foreground">
                 <Info className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                {useReferenceFrame ? t("video.reference_flow_on_title") : t("video.reference_flow_off_title")}
+                Upload anything you want to reference
               </div>
               <p className="mt-2 text-[12px] leading-relaxed text-muted-foreground">
-                {useReferenceFrame ? t("video.reference_flow_on_body") : t("video.reference_flow_off_body")}
+                Every image or video you add becomes a named card such as{" "}
+                <span className="font-bold text-foreground">@img1</span> or{" "}
+                <span className="font-bold text-foreground">@video1</span>. In the prompt (panel 2)
+                type <span className="font-bold text-foreground">@</span> to mention them freely —
+                exactly like Dreamina or Playground. A video is kept as one card; its frames are
+                sampled in the background for the AI study.
               </p>
             </div>
 
-            {!useReferenceFrame && (
-              <div className="rounded-2xl border border-border bg-muted/30 px-4 py-4">
-                <div className="flex items-start gap-2 text-[13px] font-semibold text-foreground">
-                  <Info className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                  {t("video.reference_why_title")}
-                </div>
-                <p className="mt-2 text-[12px] leading-relaxed text-muted-foreground">
-                  {t("video.reference_why_body")}
-                </p>
-              </div>
-            )}
-
-            {useReferenceFrame && (
-              <div className="space-y-4">
-                <p className="text-[13px] leading-relaxed text-muted-foreground">
-                  {t("video.reference_hint")}
-                </p>
-
-                <FrameSlot
-                  label={t("video.upload_frame")}
-                  path={firstFrame}
-                  busy={uploading === "first"}
-                  onPick={(f) => handleUpload(f, "first")}
-                  onClear={() => setFirstFrame(null)}
-                  clearLabel={t("common.dismiss")}
-                />
-
-                {firstFrame && (
-                  <div className="space-y-1.5">
-                    <FrameSlot
-                      label={t("video.upload_last_frame")}
-                      path={lastFrame}
-                      busy={uploading === "last"}
-                      onPick={(f) => handleUpload(f, "last")}
-                      onClear={() => setLastFrame(null)}
-                      clearLabel={t("common.dismiss")}
-                    />
-                    <p className="text-[12px] text-muted-foreground">{t("video.last_frame_hint")}</p>
-                  </div>
-                )}
-
-                <div>
-                  <Label className="text-[13px] font-bold">{t("video.from_characters")}</Label>
-                  <div className="mt-2 grid grid-cols-3 gap-2">
-                    {characters.slice(0, 12).map((c) => (
-                      <button
-                        key={c.id}
-                        onClick={() => c.primary_path && setFirstFrame(c.primary_path)}
-                        className={
-                          "overflow-hidden rounded-xl border transition-colors " +
-                          (firstFrame === c.primary_path
-                            ? "border-primary ring-2 ring-primary/25"
-                            : "border-border hover:border-primary/40")
-                        }
-                        title={c.display_name}
-                      >
-                        <SignedImage
-                          bucket="character-refs"
-                          path={c.primary_path}
-                          alt={c.display_name}
-                          className="h-16 w-full object-cover"
-                        />
-                        <span className="block truncate px-1.5 py-1 text-[11px] font-semibold">
-                          {c.display_name}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                  {characters.length === 0 && (
-                    <p className="mt-2 text-xs text-muted-foreground">{t("video.no_characters")}</p>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Reference study: learn look & motion from uploaded images / videos */}
-            <div className="space-y-3 rounded-2xl border border-border px-4 py-4">
-              <div className="flex items-start gap-2">
-                <Wand2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                <div className="space-y-1">
-                  <Label className="text-[13px] font-bold">Reference study</Label>
-                  <p className="text-[12px] leading-relaxed text-muted-foreground">
-                    Upload reference images or a short reference video. pilotstudio samples the video
-                    into ordered frames, reads the look and the motion, and writes those details into
-                    your prompt so the result matches your intent more closely.
-                  </p>
-                </div>
-              </div>
-
-              <label className="flex h-24 cursor-pointer flex-col items-center justify-center gap-1.5 rounded-2xl border-2 border-dashed border-border text-[12.5px] font-semibold text-muted-foreground hover:border-primary/40 hover:text-foreground">
-                {studyUploading ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                ) : (
-                  <Video className="h-5 w-5" />
-                )}
-                {studyUploading ? "Reading references…" : "Add reference images or video"}
-                <span className="text-[11px] font-normal">Up to 8 frames · jpg, png, mp4</span>
-                <input
-                  type="file"
-                  accept="image/*,video/*"
-                  multiple
-                  className="hidden"
-                  onChange={(e) => {
-                    if (e.target.files?.length) void handleStudyFiles(e.target.files);
-                    e.target.value = "";
-                  }}
-                />
-              </label>
-
-              {studyPaths.length > 0 && (
-                <>
-                  <div className="grid grid-cols-4 gap-2">
-                    {studyPaths.map((p) => (
-                      <div key={p} className="relative overflow-hidden rounded-xl border border-border">
-                        <SignedImage
-                          bucket="character-refs"
-                          path={p}
-                          alt="Reference"
-                          className="h-14 w-full object-cover"
-                        />
-                        <button
-                          onClick={() => setStudyPaths((prev) => prev.filter((x) => x !== p))}
-                          aria-label="Remove reference"
-                          className="absolute right-1 top-1 grid h-5 w-5 place-items-center rounded-full bg-background/85 text-foreground shadow"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="flex gap-2">
-                    <Button
-                      type="button"
-                      size="sm"
-                      onClick={handleAnalyze}
-                      disabled={analyzing}
-                      className="flex-1 rounded-xl text-[12.5px] font-bold"
-                    >
-                      {analyzing ? (
-                        <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-                      ) : (
-                        <Wand2 className="mr-1.5 h-3.5 w-3.5" />
-                      )}
-                      {analyzing ? "Studying references…" : "Study references"}
-                    </Button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      className="rounded-xl"
-                      aria-label="Clear references"
-                      onClick={() => {
-                        setStudyPaths([]);
-                        setStudyHasVideo(false);
-                        setBrief(null);
-                      }}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                </>
+            <label className="flex h-28 cursor-pointer flex-col items-center justify-center gap-1.5 rounded-2xl border-2 border-dashed border-border text-[13px] font-semibold text-muted-foreground hover:border-primary/40 hover:text-foreground">
+              {uploading ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <ImagePlus className="h-5 w-5" />
               )}
+              {uploading ? "Reading media…" : "Add reference images or video"}
+              <span className="text-[11px] font-normal">Up to 6 cards · jpg, png, mp4</span>
+              <input
+                type="file"
+                accept="image/*,video/*"
+                multiple
+                className="hidden"
+                onChange={(e) => {
+                  if (e.target.files?.length) void handleAddMedia(e.target.files);
+                  e.target.value = "";
+                }}
+              />
+            </label>
 
-              {brief && (
-                <div className="space-y-2 rounded-2xl bg-muted/50 px-3 py-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-[12.5px] font-bold">Reference brief</span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[11.5px] text-muted-foreground">Use in prompt</span>
-                      <Switch checked={applyBrief} onCheckedChange={setApplyBrief} />
+            {assets.length > 0 && (
+              <div className="space-y-3">
+                {assets.map((a) => (
+                  <div key={a.id} className="space-y-2 rounded-2xl border border-border p-3">
+                    <div className="flex gap-3">
+                      <div className="relative h-20 w-28 shrink-0 overflow-hidden rounded-xl border border-border">
+                        <SignedImage
+                          bucket="character-refs"
+                          path={a.coverPath}
+                          alt={a.name}
+                          className="h-20 w-28 object-cover"
+                        />
+                        {a.kind === "video" && (
+                          <span className="absolute left-1 top-1 inline-flex items-center gap-1 rounded-full bg-background/85 px-1.5 py-0.5 text-[10px] font-bold">
+                            <Video className="h-3 w-3" />
+                            {a.framePaths.length}f
+                          </span>
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1 space-y-1.5">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="truncate text-[13px] font-bold text-primary">
+                            @{a.name}
+                          </span>
+                          <button
+                            onClick={() => setAssets((prev) => prev.filter((x) => x.id !== a.id))}
+                            aria-label={`Remove ${a.name}`}
+                            className="grid h-6 w-6 place-items-center rounded-full border border-border text-muted-foreground hover:text-foreground"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </div>
+                        <Input
+                          value={a.note}
+                          onChange={(e) => updateAsset(a.id, { note: e.target.value })}
+                          placeholder="What is this? e.g. main character in a red coat"
+                          className="h-8 rounded-xl text-[12.5px]"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-1.5">
+                      {ROLES.map((r) => (
+                        <button
+                          key={r.id}
+                          title={r.hint}
+                          onClick={() => updateAsset(a.id, { role: r.id })}
+                          className={
+                            "rounded-full border px-2.5 py-1 text-[11.5px] font-bold transition-colors " +
+                            (a.role === r.id
+                              ? "border-primary bg-primary-soft text-primary"
+                              : "border-border text-muted-foreground hover:border-primary/40")
+                          }
+                        >
+                          {r.label}
+                        </button>
+                      ))}
                     </div>
                   </div>
-                  {(
-                    [
-                      ["Subject", brief.subject],
-                      ["Style", brief.style],
-                      ["Lighting", brief.lighting],
-                      ["Camera", brief.camera],
-                      ["Motion", brief.motion],
-                      ["Avoid", brief.negative],
-                    ] as const
-                  )
-                    .filter(([, v]) => Boolean(v))
-                    .map(([k, v]) => (
-                      <p key={k} className="text-[11.5px] leading-relaxed text-muted-foreground">
-                        <span className="font-bold text-foreground">{k}:</span> {v}
-                      </p>
-                    ))}
-                </div>
-              )}
-            </div>
+                ))}
+              </div>
+            )}
 
+            {characters.length > 0 && (
+              <div>
+                <Label className="text-[13px] font-bold">{t("video.from_characters")}</Label>
+                <div className="mt-2 grid grid-cols-3 gap-2">
+                  {characters.slice(0, 12).map((c) => (
+                    <button
+                      key={c.id}
+                      onClick={() =>
+                        c.primary_path && addCharacterAsset(c.primary_path, c.display_name)
+                      }
+                      className="overflow-hidden rounded-xl border border-border transition-colors hover:border-primary/40"
+                      title={`Add ${c.display_name} as reference media`}
+                    >
+                      <SignedImage
+                        bucket="character-refs"
+                        path={c.primary_path}
+                        alt={c.display_name}
+                        className="h-16 w-full object-cover"
+                      />
+                      <span className="block truncate px-1.5 py-1 text-[11px] font-semibold">
+                        {c.display_name}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Optional AI study of the referenced media */}
+            {assets.length > 0 && (
+              <div className="space-y-3 rounded-2xl border border-border px-4 py-4">
+                <div className="flex items-start gap-2">
+                  <Wand2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                  <div className="space-y-1">
+                    <Label className="text-[13px] font-bold">Optional: study the references</Label>
+                    <p className="text-[12px] leading-relaxed text-muted-foreground">
+                      Reads the mentioned media and appends look / lighting / motion wording to the
+                      final prompt. Leave it off if you prefer to write everything yourself.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={handleAnalyze}
+                    disabled={analyzing || studyPaths.length === 0}
+                    className="flex-1 rounded-xl text-[12.5px] font-bold"
+                  >
+                    {analyzing ? (
+                      <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Wand2 className="mr-1.5 h-3.5 w-3.5" />
+                    )}
+                    {analyzing
+                      ? "Studying…"
+                      : `Study ${mentioned.length > 0 ? "mentioned" : "all"} media`}
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="rounded-xl"
+                    aria-label="Clear reference media"
+                    onClick={() => {
+                      setAssets([]);
+                      setBrief(null);
+                    }}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+
+                {brief && (
+                  <div className="space-y-2 rounded-2xl bg-muted/50 px-3 py-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[12.5px] font-bold">Reference brief</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11.5px] text-muted-foreground">Use in prompt</span>
+                        <Switch checked={applyBrief} onCheckedChange={setApplyBrief} />
+                      </div>
+                    </div>
+                    {(
+                      [
+                        ["Subject", brief.subject],
+                        ["Style", brief.style],
+                        ["Lighting", brief.lighting],
+                        ["Camera", brief.camera],
+                        ["Motion", brief.motion],
+                        ["Avoid", brief.negative],
+                      ] as const
+                    )
+                      .filter(([, v]) => Boolean(v))
+                      .map(([k, v]) => (
+                        <p key={k} className="text-[11.5px] leading-relaxed text-muted-foreground">
+                          <span className="font-bold text-foreground">{k}:</span> {v}
+                        </p>
+                      ))}
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="rounded-2xl border border-border bg-muted/40 px-3 py-2 text-[12px] font-semibold text-muted-foreground">
               {mode === "i2v" ? t("video.mode_i2v") : t("video.mode_t2v")}
             </div>
           </div>
         </Panel>
+
 
         {/* 2. Motion */}
         <Panel step={2} title={t("video.panels.motion")}>
