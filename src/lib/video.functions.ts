@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import type { VideoTaskState } from "@/lib/video.server";
+
 
 const startSchema = z.object({
   workLabel: z.string().default("V1"),
