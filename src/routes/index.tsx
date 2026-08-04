@@ -59,12 +59,6 @@ function Index() {
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
           <Button asChild size="lg" className="h-12 rounded-full px-7 text-base font-semibold shadow-toss">
             <Link to="/auth">
-              <ImageIcon className="mr-2 h-4 w-4" strokeWidth={2} />
-              {t("landing.start_image")}
-            </Link>
-          </Button>
-          <Button asChild size="lg" variant="secondary" className="h-12 rounded-full px-7 text-base font-semibold">
-            <Link to="/auth">
               <Film className="mr-2 h-4 w-4" strokeWidth={2} />
               {t("landing.start_video")}
             </Link>
@@ -78,16 +72,17 @@ function Index() {
         <div className="mt-16 grid w-full max-w-3xl grid-cols-1 gap-4 sm:grid-cols-3">
           <FeatureCard
             index="01"
-            icon={<ImageIcon className="h-4 w-4" strokeWidth={1.75} />}
-            title={t("landing.feature_image")}
-            body={t("landing.feature_image_body")}
-          />
-          <FeatureCard
-            index="02"
             icon={<Film className="h-4 w-4" strokeWidth={1.75} />}
             title={t("landing.feature_video")}
             body={t("landing.feature_video_body")}
           />
+          <FeatureCard
+            index="02"
+            icon={<Sparkles className="h-4 w-4" strokeWidth={1.75} />}
+            title="Cinematic presets"
+            body="Camera moves, lighting and mood presets built into the prompt."
+          />
+
           <FeatureCard
             index="03"
             icon={<History className="h-4 w-4" strokeWidth={1.75} />}
