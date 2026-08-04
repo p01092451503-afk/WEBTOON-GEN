@@ -190,7 +190,7 @@ export async function probeReplicate(): Promise<{
   }
 
   try {
-    const res = await fetch(`${REPLICATE_API_URL}/models/${encodeURIComponent(DEFAULT_REPLICATE_TEXT_MODEL)}`, {
+    const res = await fetch(`${REPLICATE_API_URL}/models/${DEFAULT_REPLICATE_TEXT_MODEL}`, {
       headers: { Authorization: `Token ${key}` },
     });
     const text = await res.text().catch(() => "");
