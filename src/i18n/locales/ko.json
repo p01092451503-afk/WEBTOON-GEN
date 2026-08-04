@@ -84,8 +84,9 @@
     },
     "video": {
       "title": "동영상 스튜디오",
-      "sub": "Seedance 모션 생성"
+      "sub": "Replicate 영상 생성"
     }
+
   },
   "auth": {
     "checking_session": "세션 확인 중…",

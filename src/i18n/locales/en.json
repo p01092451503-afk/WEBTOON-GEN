@@ -84,8 +84,9 @@
     },
     "video": {
       "title": "Video studio",
-      "sub": "Seedance motion generation"
+      "sub": "Replicate video generation"
     }
+
   },
   "auth": {
     "checking_session": "Checking session…",
