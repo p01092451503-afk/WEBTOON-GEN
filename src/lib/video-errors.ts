@@ -17,19 +17,19 @@ function pick(raw: string): { title: string; hint: string } {
   if (r.includes("model is not available") || r.includes("invalid model")) {
     return {
       title: "Lovable AI 워크스페이스에 영상 모델이 아직 열려 있지 않습니다.",
-      hint: "현재 이 워크스페이스의 AI 게이트웨이는 텍스트·이미지·음성 모델만 제공하고 영상 모델(veo 등)이 포함되어 있지 않습니다. 영상 모델이 워크스페이스에 열린 뒤 다시 시도하거나, BytePlus Seedance 한도를 해제해 사용해 주세요.",
+      hint: "현재 이 워크스페이스의 AI 게이트웨이는 텍스트·이미지·음성 모델만 제공하고 영상 모델(veo 등)이 포함되어 있지 않습니다. Replicate 연동을 사용 중이라면 아래 '모델 가용 상태 점검'에서 Replicate 상태를 확인해 주세요.",
     };
   }
 
-  if (r.includes("lovable_no_credits") || r.includes("402")) {
+  if (r.includes("lovable_no_credits") || r.includes("lovable_http_402")) {
     return {
       title: "Lovable AI 크레딧이 부족합니다.",
       hint: "워크스페이스 설정에서 크레딧을 충전한 뒤 다시 시도해 주세요.",
     };
   }
-  if (r.includes("lovable_rate_limited") || r.includes("429")) {
+  if (r.includes("lovable_rate_limited") || r.includes("lovable_http_429")) {
     return {
-      title: "요청이 너무 많습니다.",
+      title: "Lovable AI 요청이 너무 많습니다.",
       hint: "잠시 후(약 1분) 다시 생성 버튼을 눌러 주세요.",
     };
   }
@@ -39,6 +39,39 @@ function pick(raw: string): { title: string; hint: string } {
       hint: "관리자에게 Lovable AI 연결(API 키) 활성화를 요청해 주세요.",
     };
   }
+
+  // Replicate
+  if (r.includes("replicate_no_credits") || r.includes("replicate_http_402") || r.includes("insufficient credit")) {
+    return {
+      title: "Replicate 계정에 크레딧이 부족합니다.",
+      hint: "replicate.com/account/billing 에서 결제 정보를 확인·충전한 뒤 다시 시도해 주세요. 첫 결제 시 신용카드 등록이 필요합니다.",
+    };
+  }
+  if (r.includes("replicate_api_key") || r.includes("replicate_http_401") || r.includes("replicate_http_403")) {
+    return {
+      title: "Replicate API 키가 올바르지 않습니다.",
+      hint: "replicate.com/account/api-tokens 에서 새 토큰을 생성하고 프로젝트 설정에 다시 등록해 주세요.",
+    };
+  }
+  if (r.includes("replicate_http_429")) {
+    return {
+      title: "Replicate 요청량 제한에 걸렸습니다.",
+      hint: "잠시 후 다시 시도해 주세요. 또는 replicate.com/account/billing 에서 상위 플랜을 확인해 주세요.",
+    };
+  }
+  if (r.includes("replicate_no_task_id")) {
+    return {
+      title: "Replicate 작업 ID 를 받지 못했습니다.",
+      hint: "입력값이 너무 길거나 모델이 해당 입력을 지원하지 않을 수 있습니다. 프롬프트를 짧게 줄이거나, 이미지→영상 모델이 맞는지 확인해 주세요.",
+    };
+  }
+  if (r.includes("replicate_http_")) {
+    return {
+      title: "Replicate API 호출 중 오류가 발생했습니다.",
+      hint: "잠시 후 다시 시도해 주세요. 계속 실패하면 Replicate 상태 페이지(replicate.statuspage.io)를 확인해 주세요.",
+    };
+  }
+
 
   // Seedance / BytePlus ARK
   if (r.includes("inference limit") || r.includes("safe experience mode")) {
