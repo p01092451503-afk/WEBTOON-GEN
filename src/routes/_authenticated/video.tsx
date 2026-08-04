@@ -180,6 +180,25 @@ function VideoStudioPage() {
   const [editedPrompt, setEditedPrompt] = useState<string | null>(null);
   const provider = "lovable" as const;
 
+  // 모델 가용 상태 점검
+  const checkHealth = useServerFn(checkVideoModelHealth);
+  const [health, setHealth] = useState<VideoHealth | null>(null);
+  const [healthLoading, setHealthLoading] = useState(false);
+
+  async function runHealthCheck() {
+    setHealthLoading(true);
+    try {
+      const res = (await checkHealth({ data: undefined })) as VideoHealth;
+      setHealth(res);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : String(e));
+    } finally {
+      setHealthLoading(false);
+    }
+  }
+
+
+
 
   const builtPrompt = useMemo(() => {
     const parts: string[] = [];
