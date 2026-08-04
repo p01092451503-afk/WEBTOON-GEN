@@ -36,6 +36,7 @@ import {
   ImagePlus,
   X,
   Loader2,
+  RefreshCw,
   Sparkles,
   Download,
   Clock,
@@ -989,6 +990,21 @@ function VideoStudioPage() {
             {gen.running && (
               <div className="rounded-2xl border border-border bg-muted/40 px-4 py-3 text-[13px] text-muted-foreground">
                 {t("video.generating_hint")}
+              </div>
+            )}
+
+            {gen.recoveryNotice && (
+              <div className="flex items-start gap-2 rounded-2xl border border-primary/30 bg-primary-soft px-4 py-3 text-[13px] text-foreground">
+                <RefreshCw
+                  className={"mt-0.5 h-4 w-4 shrink-0 text-primary " + (gen.running ? "animate-spin" : "")}
+                  aria-hidden="true"
+                />
+                <div>
+                  <p className="font-bold">Automatic recovery</p>
+                  <p className="mt-0.5 leading-relaxed text-muted-foreground">
+                    {gen.recoveryNotice}
+                  </p>
+                </div>
               </div>
             )}
 
