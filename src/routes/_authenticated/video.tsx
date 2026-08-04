@@ -235,11 +235,11 @@ function VideoStudioPage() {
     return assets.filter((a) => names.has(a.name.toLowerCase()));
   }, [actionText, assets]);
 
-  const activeAssets = mentioned.length > 0 ? mentioned : assets;
+  const activeAssets = mentioned;
 
   const firstFrame =
-    assets.find((a) => a.role === "first")?.coverPath ?? mentioned[0]?.coverPath ?? null;
-  const lastFrame = assets.find((a) => a.role === "last")?.coverPath ?? null;
+    mentioned.find((a) => a.role === "first")?.coverPath ?? null;
+  const lastFrame = mentioned.find((a) => a.role === "last")?.coverPath ?? null;
   const studyPaths = activeAssets.flatMap((a) => a.framePaths).slice(0, 8);
   const studyHasVideo = activeAssets.some((a) => a.kind === "video");
 
@@ -270,15 +270,17 @@ function VideoStudioPage() {
     text.replace(/(^|\s)@([A-Za-z0-9_-]+)/g, (full, sp: string, name: string) => {
       const a = assets.find((x) => x.name.toLowerCase() === name.toLowerCase());
       if (!a) return full;
-      const label =
+      const description =
         a.note.trim() ||
-        (a.role === "first"
-          ? "the subject shown in the first reference frame"
+        (a.kind === "video"
+          ? "the referenced motion and visual style"
+          : "the referenced subject and visual style");
+      const label =
+        a.role === "first"
+          ? `${description} shown in the supplied first frame`
           : a.role === "last"
-            ? "the composition of the last reference frame"
-            : a.kind === "video"
-              ? "the look and motion of the reference video"
-              : "the look of the reference image");
+            ? `${description} shown in the supplied last frame`
+            : `${description}, used only as a style and motion guide`;
       return `${sp}${label}`;
     });
 
@@ -483,6 +485,13 @@ function VideoStudioPage() {
           referenceStudyPaths: studyPaths,
           referenceHasVideo: studyHasVideo,
           referenceBrief: applyBrief ? brief : null,
+          referenceRoles: mentioned.map((asset) => ({
+            name: asset.name,
+            kind: asset.kind,
+            role: asset.role,
+            note: asset.note.trim() || null,
+            directlySuppliedToModel: asset.role === "first" || asset.role === "last",
+          })),
 
           motionIds,
           ambienceIds,
@@ -751,7 +760,8 @@ function VideoStudioPage() {
               <p className="text-[12px] leading-relaxed text-muted-foreground">
                 Type <span className="font-bold text-foreground">@</span> to mention uploaded media
                 (e.g. “@img1 slowly turns her head and smiles, lighting like @video1”). Mentions
-                decide which media the model actually uses.
+                decide which media is used. First/Last frame cards are sent directly; Style-only
+                cards influence the prompt through their note or optional AI study.
               </p>
               {mentioned.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 pt-0.5">
