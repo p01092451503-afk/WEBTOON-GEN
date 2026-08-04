@@ -9,11 +9,13 @@ export const REPLICATE_TASK_PREFIX = "replicate:";
 
 /** 텍스트→영상 기본 모델. 환경 변수로 덮어쓸 수 있다. */
 export const DEFAULT_REPLICATE_TEXT_MODEL = "lightricks/ltx-video";
-export const DEFAULT_REPLICATE_TEXT_VERSION = "8c47da666861d081eeb4d1261853087de23923a268a69b63febdf5dc1dee08e4";
+export const DEFAULT_REPLICATE_TEXT_VERSION =
+  "8c47da666861d081eeb4d1261853087de23923a268a69b63febdf5dc1dee08e4";
 
 /** 이미지→영상 기본 모델. 환경 변수로 덮어쓸 수 있다. */
 export const DEFAULT_REPLICATE_IMAGE_MODEL = "wan-video/wan-2.2-i2v-fast";
-export const DEFAULT_REPLICATE_IMAGE_VERSION = "4eaf2b01d3bf70d8a2e00b219efeb7cb415855ad18b7dacdc4cae664a73a6eea";
+export const DEFAULT_REPLICATE_IMAGE_VERSION =
+  "4eaf2b01d3bf70d8a2e00b219efeb7cb415855ad18b7dacdc4cae664a73a6eea";
 
 function apiKey() {
   const key = process.env.REPLICATE_API_KEY;
@@ -39,7 +41,19 @@ async function readError(res: Response) {
 }
 
 const LTX_ASPECT_RATIOS = [
-  "1:1", "1:2", "2:1", "2:3", "3:2", "3:4", "4:3", "4:5", "5:4", "9:16", "16:9", "9:21", "21:9",
+  "1:1",
+  "1:2",
+  "2:1",
+  "2:3",
+  "3:2",
+  "3:4",
+  "4:3",
+  "4:5",
+  "5:4",
+  "9:16",
+  "16:9",
+  "9:21",
+  "21:9",
 ];
 const LTX_LENGTHS = [97, 129, 161, 193, 225, 257];
 
@@ -99,7 +113,9 @@ export async function createReplicateVideoTask(params: {
 }): Promise<{ taskId: string; model: string; modelVersion: string }> {
   const isImageToVideo = Boolean(params.firstFrameUrl);
   const model = isImageToVideo ? DEFAULT_REPLICATE_IMAGE_MODEL : DEFAULT_REPLICATE_TEXT_MODEL;
-  const modelVersion = isImageToVideo ? DEFAULT_REPLICATE_IMAGE_VERSION : DEFAULT_REPLICATE_TEXT_VERSION;
+  const modelVersion = isImageToVideo
+    ? DEFAULT_REPLICATE_IMAGE_VERSION
+    : DEFAULT_REPLICATE_TEXT_VERSION;
 
   const input: Record<string, unknown> = {
     prompt: params.prompt,
@@ -128,7 +144,9 @@ export async function createReplicateVideoTask(params: {
   });
 
   if (res.status === 402) {
-    throw new Error("REPLICATE_NO_CREDITS: Replicate 계정에 크레딧이 부족합니다. replicate.com/account/billing 에서 결제 정보를 등록해 주세요.");
+    throw new Error(
+      "REPLICATE_NO_CREDITS: Replicate 계정에 크레딧이 부족합니다. replicate.com/account/billing 에서 결제 정보를 등록해 주세요.",
+    );
   }
   if (!res.ok) {
     const message = await readError(res);
@@ -210,7 +228,8 @@ export async function probeReplicate(): Promise<{
         label: "Replicate (Lovable 직접 연동)",
         provider: "replicate",
         status: "unavailable",
-        detail: "Replicate 계정에 크레딧이 부족합니다. replicate.com/account/billing 에서 결제 정보를 확인해 주세요.",
+        detail:
+          "Replicate 계정에 크레딧이 부족합니다. replicate.com/account/billing 에서 결제 정보를 확인해 주세요.",
       };
     }
     if (!res.ok) {

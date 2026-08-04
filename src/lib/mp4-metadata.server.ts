@@ -1,10 +1,21 @@
-export type VideoMetadata = { width: number | null; height: number | null; durationSeconds: number | null; resolution: string | null };
-const typeAt = (bytes: Uint8Array, offset: number) => String.fromCharCode(bytes[offset] ?? 0, bytes[offset + 1] ?? 0, bytes[offset + 2] ?? 0, bytes[offset + 3] ?? 0);
+export type VideoMetadata = {
+  width: number | null;
+  height: number | null;
+  durationSeconds: number | null;
+  resolution: string | null;
+};
+const typeAt = (bytes: Uint8Array, offset: number) =>
+  String.fromCharCode(
+    bytes[offset] ?? 0,
+    bytes[offset + 1] ?? 0,
+    bytes[offset + 2] ?? 0,
+    bytes[offset + 3] ?? 0,
+  );
 const u32 = (view: DataView, offset: number) => view.getUint32(offset, false);
 function boxes(bytes: Uint8Array, start = 0, end = bytes.length) {
   const result: Array<{ type: string; body: number; end: number }> = [];
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-  for (let offset = start; offset + 8 <= end;) {
+  for (let offset = start; offset + 8 <= end; ) {
     const size = u32(view, offset);
     if (size < 8 || offset + size > end) break;
     result.push({ type: typeAt(bytes, offset + 4), body: offset + 8, end: offset + size });
@@ -27,7 +38,10 @@ export function readMp4Metadata(bytes: Uint8Array): VideoMetadata {
       const timescaleOffset = mvhd.body + (version === 1 ? 20 : 12);
       const durationOffset = mvhd.body + (version === 1 ? 24 : 16);
       const timescale = u32(view, timescaleOffset);
-      const duration = version === 1 ? Number(view.getBigUint64(durationOffset, false)) : u32(view, durationOffset);
+      const duration =
+        version === 1
+          ? Number(view.getBigUint64(durationOffset, false))
+          : u32(view, durationOffset);
       if (timescale > 0) durationSeconds = Math.round((duration / timescale) * 100) / 100;
     }
     for (const trak of children.filter((box) => box.type === "trak")) {
@@ -35,7 +49,11 @@ export function readMp4Metadata(bytes: Uint8Array): VideoMetadata {
       if (!tkhd) continue;
       const w = u32(view, tkhd.end - 8) / 65536;
       const h = u32(view, tkhd.end - 4) / 65536;
-      if (w > 0 && h > 0) { width = Math.round(w); height = Math.round(h); break; }
+      if (w > 0 && h > 0) {
+        width = Math.round(w);
+        height = Math.round(h);
+        break;
+      }
     }
   }
   const edge = Math.max(width ?? 0, height ?? 0);

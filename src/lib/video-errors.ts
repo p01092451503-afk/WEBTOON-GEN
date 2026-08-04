@@ -13,9 +13,21 @@ export type VideoErrorInfo = {
 function pick(raw: string): { title: string; hint: string } {
   const r = raw.toLowerCase();
 
-  if (r.includes("content_blocked")) return { title: "This request cannot be generated.", hint: "Remove explicit, exploitative, non-consensual, hateful, or graphically violent content and try again." };
-  if (r.includes("content_check")) return { title: "The safety check is temporarily unavailable.", hint: "Your request was not sent to the video provider. Try again shortly." };
-  if (r.includes("unresolved_media_mention")) return { title: "A media mention could not be resolved.", hint: "Choose the reference again from the @ menu before generating." };
+  if (r.includes("content_blocked"))
+    return {
+      title: "This request cannot be generated.",
+      hint: "Remove explicit, exploitative, non-consensual, hateful, or graphically violent content and try again.",
+    };
+  if (r.includes("content_check"))
+    return {
+      title: "The safety check is temporarily unavailable.",
+      hint: "Your request was not sent to the video provider. Try again shortly.",
+    };
+  if (r.includes("unresolved_media_mention"))
+    return {
+      title: "A media mention could not be resolved.",
+      hint: "Choose the reference again from the @ menu before generating.",
+    };
 
   // Lovable AI Gateway
   if (r.includes("model is not available") || r.includes("invalid model")) {
@@ -45,13 +57,21 @@ function pick(raw: string): { title: string; hint: string } {
   }
 
   // Replicate
-  if (r.includes("replicate_no_credits") || r.includes("replicate_http_402") || r.includes("insufficient credit")) {
+  if (
+    r.includes("replicate_no_credits") ||
+    r.includes("replicate_http_402") ||
+    r.includes("insufficient credit")
+  ) {
     return {
       title: "Your Replicate account is out of credit.",
       hint: "Add a payment method and top up at replicate.com/account/billing, then try again. A credit card is required for the first charge.",
     };
   }
-  if (r.includes("replicate_api_key") || r.includes("replicate_http_401") || r.includes("replicate_http_403")) {
+  if (
+    r.includes("replicate_api_key") ||
+    r.includes("replicate_http_401") ||
+    r.includes("replicate_http_403")
+  ) {
     return {
       title: "The Replicate API key is invalid.",
       hint: "Create a new token at replicate.com/account/api-tokens and save it in the project settings.",
@@ -75,7 +95,6 @@ function pick(raw: string): { title: string; hint: string } {
       hint: "Try again shortly. If it keeps failing, check replicate.statuspage.io.",
     };
   }
-
 
   // Seedance / BytePlus ARK
   if (r.includes("inference limit") || r.includes("safe experience mode")) {
@@ -114,7 +133,6 @@ function pick(raw: string): { title: string; hint: string } {
     title: "Video generation failed.",
     hint: "Try again shortly. If it keeps failing, run “Model availability check” below to inspect video model status.",
   };
-
 }
 
 /** Combines both errors when the fallback also failed. */

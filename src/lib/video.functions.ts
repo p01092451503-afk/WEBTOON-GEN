@@ -3,7 +3,6 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { VideoTaskState } from "@/lib/video.server";
 
-
 const startSchema = z.object({
   workLabel: z.string().default("V1"),
   /** 영상 생성 프로바이더. replicate = Replicate 직접 연동 (기본) */
@@ -43,7 +42,8 @@ export const startVideoGeneration = createServerFn({ method: "POST" })
 
     const { moderateVideoPrompt } = await import("@/lib/video-moderation.server");
     const moderation = await moderateVideoPrompt(prompt);
-    if (moderation.status === "blocked") throw new Error(`CONTENT_BLOCKED: ${moderation.reason || moderation.categories.join(", ")}`);
+    if (moderation.status === "blocked")
+      throw new Error(`CONTENT_BLOCKED: ${moderation.reason || moderation.categories.join(", ")}`);
 
     const seed = data.seed ?? null;
 
@@ -124,8 +124,6 @@ export const startVideoGeneration = createServerFn({ method: "POST" })
     }
   });
 
-
-
 const pollSchema = z.object({ videoGenerationId: z.string().uuid() });
 
 export const pollVideoGeneration = createServerFn({ method: "POST" })
@@ -146,7 +144,8 @@ export const pollVideoGeneration = createServerFn({ method: "POST" })
     if (!row.task_id) return { status: "running" as const, error: null };
 
     const { isLovableTaskId, getLovableVideoTask } = await import("@/lib/video-lovable.server");
-    const { isReplicateTaskId, getReplicateVideoTask } = await import("@/lib/video-replicate.server");
+    const { isReplicateTaskId, getReplicateVideoTask } =
+      await import("@/lib/video-replicate.server");
     const { getVideoTask } = await import("@/lib/video.server");
     let state: VideoTaskState;
     if (isReplicateTaskId(row.task_id)) {
@@ -156,8 +155,6 @@ export const pollVideoGeneration = createServerFn({ method: "POST" })
     } else {
       state = await getVideoTask(row.task_id);
     }
-
-
 
     if (state.status === "queued" || state.status === "running") {
       return { status: "running" as const, error: null };
@@ -205,7 +202,12 @@ export const pollVideoGeneration = createServerFn({ method: "POST" })
 
       await supabaseAdmin
         .from("video_generations")
-        .update({ status: "done", actual_resolution: metadata.resolution, actual_duration_seconds: metadata.durationSeconds, completed_at: new Date().toISOString() })
+        .update({
+          status: "done",
+          actual_resolution: metadata.resolution,
+          actual_duration_seconds: metadata.durationSeconds,
+          completed_at: new Date().toISOString(),
+        })
         .eq("id", row.id);
 
       void userId;

@@ -76,8 +76,6 @@ const ROLES: Array<{ id: MediaAsset["role"]; label: string; hint: string }> = [
   { id: "style", label: "Style only", hint: "used as look / motion reference" },
 ];
 
-
-
 export const Route = createFileRoute("/_authenticated/video")({
   component: VideoStudioPage,
   head: () => ({
@@ -85,7 +83,8 @@ export const Route = createFileRoute("/_authenticated/video")({
       { title: "Video Studio · pilotstudio" },
       {
         name: "description",
-        content: "Generate character-driven short videos with Replicate from a reference frame and a motion prompt.",
+        content:
+          "Generate character-driven short videos with Replicate from a reference frame and a motion prompt.",
       },
       { property: "og:title", content: "Video Studio · pilotstudio" },
       {
@@ -98,7 +97,6 @@ export const Route = createFileRoute("/_authenticated/video")({
   }),
 });
 
-
 const RATIOS = ["16:9", "9:16", "1:1", "4:3", "3:4", "21:9"] as const;
 const RESOLUTIONS = ["480p", "720p", "1080p"] as const;
 const DURATIONS = [3, 5, 10, 12] as const;
@@ -107,19 +105,39 @@ type Preset = { id: string; label: string; text: string };
 
 const MOTION_PRESETS: Preset[] = [
   { id: "MOV_ORBIT", label: "Orbit", text: "the camera slowly orbits around the subject" },
-  { id: "MOV_DOLLY_IN", label: "Dolly in", text: "the camera slowly dollies in toward the subject" },
-  { id: "MOV_DOLLY_OUT", label: "Dolly out", text: "the camera slowly pulls back away from the subject" },
+  {
+    id: "MOV_DOLLY_IN",
+    label: "Dolly in",
+    text: "the camera slowly dollies in toward the subject",
+  },
+  {
+    id: "MOV_DOLLY_OUT",
+    label: "Dolly out",
+    text: "the camera slowly pulls back away from the subject",
+  },
   { id: "MOV_PAN_L", label: "Pan left", text: "the camera pans smoothly to the left" },
   { id: "MOV_PAN_R", label: "Pan right", text: "the camera pans smoothly to the right" },
   { id: "MOV_TILT_UP", label: "Tilt up", text: "the camera tilts upward revealing the scene" },
   { id: "MOV_TILT_DOWN", label: "Tilt down", text: "the camera tilts downward across the scene" },
-  { id: "MOV_TRACK", label: "Tracking", text: "the camera tracks alongside the subject as it moves" },
+  {
+    id: "MOV_TRACK",
+    label: "Tracking",
+    text: "the camera tracks alongside the subject as it moves",
+  },
   { id: "MOV_CRANE", label: "Crane up", text: "the camera cranes upward for a rising overview" },
-  { id: "MOV_HANDHELD", label: "Handheld", text: "subtle handheld camera shake follows the action" },
+  {
+    id: "MOV_HANDHELD",
+    label: "Handheld",
+    text: "subtle handheld camera shake follows the action",
+  },
   { id: "MOV_STATIC", label: "Static", text: "the camera stays completely static" },
   { id: "MOV_ZOOM_IN", label: "Zoom in", text: "a slow zoom in emphasizes the subject" },
   { id: "MOV_ZOOM_OUT", label: "Zoom out", text: "a slow zoom out reveals the surroundings" },
-  { id: "MOV_PUSH", label: "Push through", text: "the camera pushes forward through the foreground elements" },
+  {
+    id: "MOV_PUSH",
+    label: "Push through",
+    text: "the camera pushes forward through the foreground elements",
+  },
   { id: "MOV_WHIP", label: "Whip pan", text: "a fast whip pan transitions across the scene" },
   { id: "MOV_ARC", label: "Arc", text: "the camera arcs around the subject in a wide curve" },
 ];
@@ -194,7 +212,6 @@ const AMBIENCE_PRESETS: Preset[] = [
   { id: "AMB_SMOKE", label: "Smoke", text: "thin smoke curls through the air" },
 ];
 
-
 function VideoStudioPage() {
   const { t } = useTranslation();
   const { tenantId } = useTenant();
@@ -237,13 +254,10 @@ function VideoStudioPage() {
 
   const activeAssets = mentioned;
 
-  const firstFrame =
-    mentioned.find((a) => a.role === "first")?.coverPath ?? null;
+  const firstFrame = mentioned.find((a) => a.role === "first")?.coverPath ?? null;
   const lastFrame = mentioned.find((a) => a.role === "last")?.coverPath ?? null;
   const studyPaths = activeAssets.flatMap((a) => a.framePaths).slice(0, 8);
   const studyHasVideo = activeAssets.some((a) => a.kind === "video");
-
-
 
   // 모델 가용 상태 점검
   const checkHealth = useServerFn(checkVideoModelHealth);
@@ -261,9 +275,6 @@ function VideoStudioPage() {
       setHealthLoading(false);
     }
   }
-
-
-
 
   /** Replace "@name" tokens with wording the video model understands. */
   const resolveMentions = (text: string) =>
@@ -325,7 +336,6 @@ function VideoStudioPage() {
     brief,
     applyBrief,
   ]);
-
 
   const finalPrompt = editedPrompt ?? builtPrompt;
   const mode: "t2v" | "i2v" = firstFrame ? "i2v" : "t2v";
@@ -392,7 +402,9 @@ function VideoStudioPage() {
         return;
       }
       setAssets((prev) => [...prev, ...added].slice(0, 6));
-      toast.success(`Added ${added.map((a) => "@" + a.name).join(", ")} — mention them in the prompt.`);
+      toast.success(
+        `Added ${added.map((a) => "@" + a.name).join(", ")} — mention them in the prompt.`,
+      );
     } catch (e) {
       toast.error(e instanceof Error ? e.message : String(e));
     } finally {
@@ -456,16 +468,14 @@ function VideoStudioPage() {
     }
   }
 
-
-
   async function handleGenerate() {
     if (!finalPrompt.trim()) {
       toast.error(t("video.errors.empty_prompt"));
       return;
     }
     try {
-      const imagePaths = [firstFrame, firstFrame ? lastFrame : null].filter(
-        (p): p is string => Boolean(p),
+      const imagePaths = [firstFrame, firstFrame ? lastFrame : null].filter((p): p is string =>
+        Boolean(p),
       );
       await gen.run({
         workLabel: "V1",
@@ -510,7 +520,6 @@ function VideoStudioPage() {
     }
   }
 
-
   return (
     <main className="px-4 py-5 sm:px-6">
       <StudioSwitcher active="video" />
@@ -519,8 +528,6 @@ function VideoStudioPage() {
           <Film className="h-3.5 w-3.5" /> Replicate
         </span>
       </div>
-
-
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
         {/* 1. Reference media library */}
@@ -734,7 +741,6 @@ function VideoStudioPage() {
           </div>
         </Panel>
 
-
         {/* 2. Motion */}
         <Panel step={2} title={t("video.panels.motion")}>
           <div className="space-y-5">
@@ -776,7 +782,6 @@ function VideoStudioPage() {
                 </div>
               )}
             </div>
-
 
             <div className="space-y-1.5">
               <Label className="text-[13px] font-bold">{t("video.negative_label")}</Label>
@@ -837,7 +842,6 @@ function VideoStudioPage() {
               selected={ambienceIds}
               onToggle={(id) => toggle(ambienceIds, setAmbienceIds, id)}
             />
-
           </div>
         </Panel>
 
@@ -920,8 +924,6 @@ function VideoStudioPage() {
                 </div>
               )}
             </div>
-
-
 
             <div className="flex items-center justify-between rounded-2xl border border-border px-4 py-3">
               <Label className="text-[13px] font-bold">{t("video.camera_fixed")}</Label>
@@ -1016,7 +1018,6 @@ function VideoStudioPage() {
               </div>
             )}
 
-
             {gen.row?.results?.map((r) => (
               <VideoResultCard key={r.id} path={r.storage_path} />
             ))}
@@ -1034,7 +1035,6 @@ function VideoStudioPage() {
 }
 
 function VideoResultCard({ path }: { path: string }) {
-
   const { t } = useTranslation();
   const url = useSignedUrl("generation-outputs", path, 300);
   if (!url) {
@@ -1043,7 +1043,12 @@ function VideoResultCard({ path }: { path: string }) {
   return (
     <div className="space-y-2">
       <video src={url} controls playsInline className="w-full rounded-2xl border border-border" />
-      <Button asChild variant="outline" size="sm" className="w-full rounded-xl text-xs font-semibold">
+      <Button
+        asChild
+        variant="outline"
+        size="sm"
+        className="w-full rounded-xl text-xs font-semibold"
+      >
         <a href={url} download>
           <Download className="mr-1 h-3.5 w-3.5" />
           {t("video.download")}
