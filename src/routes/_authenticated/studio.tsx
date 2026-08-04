@@ -66,7 +66,7 @@ function HubCard({
   cta,
   bullets,
 }: {
-  to: "/generate" | "/video";
+  to: "/video";
   icon: React.ReactNode;
   eyebrow: string;
   title: string;
