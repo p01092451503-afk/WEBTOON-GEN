@@ -351,10 +351,10 @@
     "resolution": "해상도",
     "duration": "길이",
     "provider": "생성 엔진",
-    "provider_auto": "자동 (Seedance 우선)",
+    "provider_auto": "자동 (Google 영상 우선)",
     "provider_seedance": "Seedance (BytePlus)",
-    "provider_lovable": "Lovable AI",
-    "provider_hint": "자동은 Seedance로 먼저 시도하고, 실패하면 Lovable AI 게이트웨이로 자동 전환합니다. Seedance 설정은 그대로 유지됩니다.",
+    "provider_lovable": "Google 영상 (Lovable AI)",
+    "provider_hint": "자동은 Google 영상 모델(Lovable AI)로 먼저 시도하고, 실패하면 Seedance로 자동 전환합니다. 기존 Seedance 설정은 그대로 유지됩니다.",
 
     "camera_fixed": "카메라 고정",
     "seed_lock": "시드 고정",
