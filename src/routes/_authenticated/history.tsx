@@ -74,8 +74,28 @@ function useVideoHistory(tenantId: string | null) {
       cancelled = true;
     };
   }, [tenantId]);
-  return rows;
+  return { rows, setRows };
 }
+
+/** Delete video generations plus their stored files. */
+async function deleteVideoGenerations(rows: VideoRow[]) {
+  const ids = rows.map((r) => r.id);
+  if (ids.length === 0) return;
+
+  const paths = rows.flatMap((r) =>
+    r.results.flatMap((res) =>
+      [res.storage_path, res.poster_path].filter((p): p is string => Boolean(p)),
+    ),
+  );
+  if (paths.length > 0) {
+    await supabase.storage.from("generation-outputs").remove(paths);
+  }
+
+  await supabase.from("video_results").delete().in("video_generation_id", ids);
+  const { error } = await supabase.from("video_generations").delete().in("id", ids);
+  if (error) throw new Error(error.message);
+}
+
 
 type Row = {
   id: string;
