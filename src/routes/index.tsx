@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Image as ImageIcon, Film, History } from "lucide-react";
+import { Film, History, Sparkles } from "lucide-react";
 
 
 export const Route = createFileRoute("/")({
@@ -11,18 +11,19 @@ export const Route = createFileRoute("/")({
   component: Index,
   head: () => ({
     meta: [
-      { title: "pilotstudio — Character-driven image generation workspace" },
+      { title: "pilotstudio — AI short-clip video generation studio" },
       {
         name: "description",
-        content: "Assemble Seedream images with a reusable character library and a structured prompt engine.",
+        content: "Turn a written scene into a cinematic short clip, with every result saved to your history.",
       },
       { property: "og:title", content: "pilotstudio" },
-      { property: "og:description", content: "Character-based Seedream image generation SaaS" },
+      { property: "og:description", content: "AI short-clip video generation studio" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
 });
+
 
 function Index() {
   const { t } = useTranslation();
