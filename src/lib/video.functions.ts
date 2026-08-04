@@ -137,10 +137,17 @@ export const pollVideoGeneration = createServerFn({ method: "POST" })
     if (!row.task_id) return { status: "running" as const, error: null };
 
     const { isLovableTaskId, getLovableVideoTask } = await import("@/lib/video-lovable.server");
+    const { isReplicateTaskId, getReplicateVideoTask } = await import("@/lib/video-replicate.server");
     const { getVideoTask } = await import("@/lib/video.server");
-    const state = isLovableTaskId(row.task_id)
-      ? await getLovableVideoTask(row.task_id)
-      : await getVideoTask(row.task_id);
+    let state: VideoTaskState;
+    if (isReplicateTaskId(row.task_id)) {
+      state = await getReplicateVideoTask(row.task_id);
+    } else if (isLovableTaskId(row.task_id)) {
+      state = await getLovableVideoTask(row.task_id);
+    } else {
+      state = await getVideoTask(row.task_id);
+    }
+
 
 
     if (state.status === "queued" || state.status === "running") {
