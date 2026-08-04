@@ -14,7 +14,7 @@ export const Route = createFileRoute("/_authenticated/history")({
   component: HistoryPage,
   validateSearch: (s: Record<string, unknown>) => ({
     id: typeof s.id === "string" ? s.id : undefined,
-    tab: s.tab === "video" ? ("video" as const) : ("image" as const),
+    tab: s.tab === "image" ? ("image" as const) : ("video" as const),
   }),
   head: () => ({ meta: [{ title: "History · pilotstudio" }] }),
 });
