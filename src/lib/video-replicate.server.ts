@@ -140,6 +140,16 @@ export async function createReplicateVideoTask(params: {
     if (params.durationSeconds) input.length = ltxLength(params.durationSeconds);
   }
 
+  console.info("[video-provider-request]", {
+    provider: "replicate",
+    mode: isImageToVideo ? "i2v" : "t2v",
+    model,
+    modelVersion,
+    prompt: input.prompt,
+    negative_prompt: input.negative_prompt,
+    input,
+  });
+
   const res = await fetch(`${REPLICATE_API_URL}/predictions`, {
     method: "POST",
     headers: headers(),

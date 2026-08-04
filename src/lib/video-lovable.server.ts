@@ -3,6 +3,7 @@
 // 이 파일은 대체 프로바이더로만 사용된다. 클라이언트에서 import 금지.
 
 import type { VideoTaskState, VideoTaskStatus } from "@/lib/video.server";
+import { DEFAULT_VIDEO_NEGATIVE_PROMPT } from "@/lib/video-constants";
 
 const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/videos";
 
@@ -74,7 +75,16 @@ export async function createLovableVideoTask(params: {
   if (params.aspectRatio && !params.firstFrameUrl) body.aspect_ratio = params.aspectRatio;
   if (params.durationSeconds) body.duration_seconds = params.durationSeconds;
   if (params.firstFrameUrl) body.image_url = params.firstFrameUrl;
-  if (params.negativePrompt?.trim()) body.negative_prompt = params.negativePrompt.trim();
+  body.negative_prompt = params.negativePrompt?.trim() || DEFAULT_VIDEO_NEGATIVE_PROMPT;
+
+  console.info("[video-provider-request]", {
+    provider: "lovable",
+    mode: params.firstFrameUrl ? "i2v" : "t2v",
+    model,
+    prompt: body.prompt,
+    negative_prompt: body.negative_prompt,
+    body,
+  });
 
   const res = await fetch(GATEWAY_URL, {
     method: "POST",

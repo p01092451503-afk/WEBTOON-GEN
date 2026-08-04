@@ -17,6 +17,8 @@ type VideoHealth = {
   }>;
 };
 
+type VideoProvider = "lovable" | "replicate";
+
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -240,7 +242,7 @@ function VideoStudioPage() {
   const [seed, setSeed] = useState<string>("");
   const [editedPrompt, setEditedPrompt] = useState<string | null>(null);
   const [composingPrompt, setComposingPrompt] = useState(false);
-  const provider = "replicate" as const;
+  const [provider, setProvider] = useState<VideoProvider>("lovable");
   const composePromptFn = useServerFn(composeVideoPrompt);
 
   // --- Reference study (learn from the mentioned media) ---
@@ -934,6 +936,19 @@ function VideoStudioPage() {
               options={DURATIONS.map((d) => ({ id: String(d), label: `${d}s` }))}
               value={String(duration)}
               onChange={(v) => setDuration(Number(v))}
+            />
+            <ChipRow
+              title="Provider"
+              icon={<Video className="h-4 w-4" />}
+              options={[
+                {
+                  id: "lovable",
+                  label: mode === "t2v" ? "Veo 3.1 Fast · Prompt fidelity" : "Veo 3.1 Fast",
+                },
+                { id: "replicate", label: mode === "t2v" ? "LTX · Fast preview" : "WAN · Fast preview" },
+              ]}
+              value={provider}
+              onChange={(value) => setProvider(value as VideoProvider)}
             />
             <div className="space-y-2 rounded-2xl border border-border px-4 py-3">
               <div className="flex items-center justify-between gap-3">
