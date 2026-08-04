@@ -9,8 +9,8 @@ export const checkVideoModelHealth = createServerFn({ method: "POST" })
     );
 
     const [fast, standard, seedance, replicate] = await Promise.all([
-      probeLovableVideoModel("google/veo-3.1-fast", "Google Veo 3.1 Fast (Lovable AI)"),
-      probeLovableVideoModel("google/veo-3.1", "Google Veo 3.1 (Lovable AI)"),
+      probeLovableVideoModel("google/veo-3.1-fast", "Google Veo 3.1 Fast\u00a0"),
+      probeLovableVideoModel("google/veo-3.1", "Google Veo 3.1\u00a0"),
       probeSeedance(),
       probeReplicate(),
     ]);
