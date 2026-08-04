@@ -74,23 +74,7 @@ export const startVideoGeneration = createServerFn({ method: "POST" })
         signedUrls.push(signed.signedUrl);
       }
 
-      const runSeedance = async () => {
-        const { buildSeedanceText, createVideoTask } = await import("@/lib/video.server");
-        const text = buildSeedanceText({
-          prompt,
-          aspectRatio: data.aspectRatio,
-          resolution: data.resolution,
-          durationSeconds: data.durationSeconds,
-          cameraFixed: data.cameraFixed,
-          seed,
-          hasFirstFrame: signedUrls.length > 0,
-        });
-        return createVideoTask({
-          text,
-          firstFrameUrl: signedUrls[0] ?? null,
-          lastFrameUrl: signedUrls[1] ?? null,
-        });
-      };
+      // Seedance(ARK) 경로는 비활성화됨. 코드는 src/lib/video.server.ts 에 보존.
 
       const runLovable = async () => {
         const { buildLovableVideoPrompt, createLovableVideoTask } = await import(
