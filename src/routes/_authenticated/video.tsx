@@ -332,27 +332,8 @@ function VideoStudioPage() {
     setList(list.includes(id) ? list.filter((x) => x !== id) : [...list, id]);
   }
 
-  async function handleUpload(file: File, slot: "first" | "last") {
-    if (!tenantId) return;
-    setUploading(slot);
-    try {
-      const ext = file.name.split(".").pop()?.toLowerCase() || "png";
-      const path = `${tenantId}/video-refs/${Date.now()}-${slot}.${ext}`;
-      const { error } = await supabase.storage
-        .from("character-refs")
-        .upload(path, file, { contentType: file.type, upsert: false });
-      if (error) throw error;
-      if (slot === "first") setFirstFrame(path);
-      else setLastFrame(path);
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : String(e));
-    } finally {
-      setUploading(null);
-    }
-  }
-
-  async function uploadStudyBlob(blob: Blob, name: string) {
-    const path = `${tenantId}/video-refs/study/${Date.now()}-${name}`;
+  async function uploadBlob(blob: Blob, name: string) {
+    const path = `${tenantId}/video-refs/${Date.now()}-${Math.random().toString(36).slice(2, 7)}-${name}`;
     const { error } = await supabase.storage
       .from("character-refs")
       .upload(path, blob, { contentType: blob.type || "image/jpeg", upsert: false });
@@ -360,39 +341,95 @@ function VideoStudioPage() {
     return path;
   }
 
-  /** Add reference stills. Videos are sampled into ordered frames in the browser. */
-  async function handleStudyFiles(files: FileList) {
+  function nextName(taken: MediaAsset[], kind: MediaAsset["kind"]) {
+    const base = kind === "video" ? "video" : "img";
+    let n = 1;
+    while (taken.some((a) => a.name === `${base}${n}`)) n++;
+    return `${base}${n}`;
+  }
+
+  /** Add reference media. A video is stored as one card whose frames are sampled in the browser. */
+  async function handleAddMedia(files: FileList) {
     if (!tenantId) return;
-    setStudyUploading(true);
+    setUploading(true);
     try {
-      const added: string[] = [];
-      let sawVideo = false;
+      const added: MediaAsset[] = [];
       for (const file of Array.from(files)) {
-        if (studyPaths.length + added.length >= 8) break;
+        if (assets.length + added.length >= 6) break;
         if (file.type.startsWith("video/")) {
-          sawVideo = true;
           const frames = await extractVideoFrames(file, 3);
+          const paths: string[] = [];
           let i = 0;
-          for (const frame of frames) {
-            if (studyPaths.length + added.length >= 8) break;
-            added.push(await uploadStudyBlob(frame, `frame-${i++}.jpg`));
-          }
+          for (const frame of frames) paths.push(await uploadBlob(frame, `frame-${i++}.jpg`));
+          if (paths.length === 0) continue;
+          added.push({
+            id: crypto.randomUUID(),
+            name: nextName([...assets, ...added], "video"),
+            kind: "video",
+            coverPath: paths[0],
+            framePaths: paths,
+            role: "style",
+            note: "",
+          });
         } else if (file.type.startsWith("image/")) {
           const ext = file.name.split(".").pop()?.toLowerCase() || "png";
-          added.push(await uploadStudyBlob(file, `ref.${ext}`));
+          const path = await uploadBlob(file, `ref.${ext}`);
+          added.push({
+            id: crypto.randomUUID(),
+            name: nextName([...assets, ...added], "image"),
+            kind: "image",
+            coverPath: path,
+            framePaths: [path],
+            role: assets.some((a) => a.role === "first") ? "style" : "first",
+            note: "",
+          });
         }
       }
       if (added.length === 0) {
         toast.error("Pick an image or video file.");
         return;
       }
-      setStudyPaths((prev) => [...prev, ...added].slice(0, 8));
-      if (sawVideo) setStudyHasVideo(true);
+      setAssets((prev) => [...prev, ...added].slice(0, 6));
+      toast.success(`Added ${added.map((a) => "@" + a.name).join(", ")} — mention them in the prompt.`);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : String(e));
     } finally {
-      setStudyUploading(false);
+      setUploading(false);
     }
+  }
+
+  function updateAsset(id: string, patch: Partial<MediaAsset>) {
+    setAssets((prev) =>
+      prev.map((a) => {
+        if (a.id !== id) return a;
+        const next = { ...a, ...patch };
+        return next;
+      }),
+    );
+    // only one asset can hold each frame slot
+    if (patch.role === "first" || patch.role === "last") {
+      setAssets((prev) =>
+        prev.map((a) => (a.id !== id && a.role === patch.role ? { ...a, role: "style" } : a)),
+      );
+    }
+  }
+
+  function addCharacterAsset(path: string, label: string) {
+    if (assets.some((a) => a.coverPath === path)) return;
+    setAssets((prev) =>
+      [
+        ...prev,
+        {
+          id: crypto.randomUUID(),
+          name: nextName(prev, "image"),
+          kind: "image" as const,
+          coverPath: path,
+          framePaths: [path],
+          role: prev.some((a) => a.role === "first") ? ("style" as const) : ("first" as const),
+          note: label,
+        },
+      ].slice(0, 6),
+    );
   }
 
   async function handleAnalyze() {
