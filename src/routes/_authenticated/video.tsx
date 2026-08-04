@@ -504,8 +504,8 @@ function VideoStudioPage() {
                 icon={<MonitorPlay className="h-4 w-4" />}
                 options={[
                   { id: "auto", label: t("video.provider_auto") },
-                  { id: "seedance", label: t("video.provider_seedance") },
                   { id: "lovable", label: t("video.provider_lovable") },
+                  { id: "seedance", label: t("video.provider_seedance") },
                 ]}
                 value={provider}
                 onChange={(v) => setProvider(v as "auto" | "seedance" | "lovable")}
