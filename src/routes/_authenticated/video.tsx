@@ -391,6 +391,10 @@ function VideoStudioPage() {
         seed: seedLocked && seed.trim() ? Number(seed) : null,
         imagePaths,
         options: {
+          referenceStudyPaths: studyPaths,
+          referenceHasVideo: studyHasVideo,
+          referenceBrief: applyBrief ? brief : null,
+
           motionIds,
           ambienceIds,
           shotId,
