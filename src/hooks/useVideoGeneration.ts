@@ -94,11 +94,13 @@ export function useVideoGeneration(tenantId: string | null) {
           return;
         }
         setRunning(false);
+        writeStoredId(null);
         if (res.status === "error") setError(res.error ?? "VIDEO_FAILED");
       } catch (e) {
         if (cancelled) return;
         setError(e instanceof Error ? e.message : String(e));
         setRunning(false);
+        writeStoredId(null);
       }
     };
 
@@ -118,14 +120,17 @@ export function useVideoGeneration(tenantId: string | null) {
     setCurrentId(null);
     try {
       const res = await startFn({ data: input });
+      writeStoredId(res.videoGenerationId);
       setCurrentId(res.videoGenerationId);
       return res;
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
       setRunning(false);
+      writeStoredId(null);
       throw e;
     }
   }
+
 
   return { run, running, row, currentId, error };
 }
