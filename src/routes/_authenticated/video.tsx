@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { checkVideoModelHealth } from "@/lib/video-health.functions";
+import { composeVideoPrompt } from "@/lib/video-prompt.functions";
 
 type VideoHealth = {
   checkedAt: string;
@@ -237,7 +238,9 @@ function VideoStudioPage() {
   const [seedLocked, setSeedLocked] = useState(false);
   const [seed, setSeed] = useState<string>("");
   const [editedPrompt, setEditedPrompt] = useState<string | null>(null);
+  const [composingPrompt, setComposingPrompt] = useState(false);
   const provider = "replicate" as const;
+  const composePromptFn = useServerFn(composeVideoPrompt);
 
   // --- Reference study (learn from the mentioned media) ---
   const analyzeFn = useServerFn(analyzeReferences);
@@ -340,7 +343,7 @@ function VideoStudioPage() {
     [negativeText, brief, applyBrief],
   );
 
-  const finalPrompt = editedPrompt ?? builtPrompt;
+  const finalPrompt = editedPrompt ?? "";
   const mode: "t2v" | "i2v" = firstFrame ? "i2v" : "t2v";
 
   function toggle(list: string[], setList: (v: string[]) => void, id: string) {
@@ -468,6 +471,62 @@ function VideoStudioPage() {
       toast.error(e instanceof Error ? e.message : String(e));
     } finally {
       setAnalyzing(false);
+    }
+  }
+
+  async function handleComposePrompt() {
+    const one = (list: Preset[], id: string | null) =>
+      id ? (list.find((preset) => preset.id === id)?.text ?? "") : "";
+    const many = (list: Preset[], ids: string[]) =>
+      list.filter((preset) => ids.includes(preset.id)).map((preset) => preset.text);
+    const action = resolveMentions(actionText).trim();
+    const subject = [
+      mentioned
+        .map((asset) => asset.note.trim())
+        .filter(Boolean)
+        .join("; "),
+      applyBrief ? (brief?.subject ?? "") : "",
+    ]
+      .filter(Boolean)
+      .join("; ");
+    const camera = [
+      one(SHOT_PRESETS, shotId),
+      one(ANGLE_PRESETS, angleId),
+      ...many(MOTION_PRESETS, motionIds),
+      one(SPEED_PRESETS, speedId),
+      cameraFixed ? "the camera remains locked off and completely static" : "",
+      applyBrief ? (brief?.camera ?? "") : "",
+      applyBrief ? (brief?.motion ?? "") : "",
+    ]
+      .filter(Boolean)
+      .join("; ");
+    const lighting = [
+      ...many(LIGHT_PRESETS, lightIds),
+      ...many(AMBIENCE_PRESETS, ambienceIds),
+      applyBrief ? (brief?.lighting ?? "") : "",
+    ]
+      .filter(Boolean)
+      .join("; ");
+    const style = [one(STYLE_PRESETS, styleId), applyBrief ? (brief?.style ?? "") : ""]
+      .filter(Boolean)
+      .join("; ");
+
+    if (![subject, action, camera, lighting, style].some((value) => value.trim())) {
+      toast.error("Add an action or select at least one shot control first.");
+      return;
+    }
+
+    setComposingPrompt(true);
+    try {
+      const result = await composePromptFn({
+        data: { subject, action, camera, lighting, style },
+      });
+      setEditedPrompt(result.finalPrompt);
+      toast.success("Cinematic prompt composed. Review or edit it before generating.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : String(error));
+    } finally {
+      setComposingPrompt(false);
     }
   }
 
@@ -949,13 +1008,34 @@ function VideoStudioPage() {
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-[13px] font-bold">{t("video.final_prompt")}</Label>
+              <div className="flex items-center justify-between gap-3">
+                <Label className="text-[13px] font-bold">{t("video.final_prompt")}</Label>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={handleComposePrompt}
+                  disabled={composingPrompt}
+                  className="rounded-xl text-[12px] font-bold"
+                >
+                  {composingPrompt ? (
+                    <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Wand2 className="mr-1.5 h-3.5 w-3.5" />
+                  )}
+                  {composingPrompt ? "Composing…" : "Compose prompt"}
+                </Button>
+              </div>
               <Textarea
                 value={finalPrompt}
                 onChange={(e) => setEditedPrompt(e.target.value)}
-                placeholder={t("video.final_prompt_placeholder")}
+                placeholder="Compose a cinematic paragraph from your controls, then review or edit it here."
                 className="min-h-[110px] rounded-2xl font-mono text-[12.5px]"
               />
+              <p className="text-[11.5px] leading-relaxed text-muted-foreground">
+                Lovable AI rewrites your subject, action, camera, lighting, and style controls into
+                one LTX-ready English paragraph. You stay in control of the final wording.
+              </p>
               {editedPrompt != null && (
                 <button
                   onClick={() => setEditedPrompt(null)}
