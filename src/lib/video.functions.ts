@@ -430,14 +430,16 @@ export const pollVideoGeneration = createServerFn({ method: "POST" })
       return { status: "done" as const, error: null };
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
+      const { formatVideoError } = await import("@/lib/video-errors");
+      const friendly = formatVideoError(message);
       await supabaseAdmin
         .from("video_generations")
         .update({
           status: "error",
-          error_message: message.slice(0, 1000),
+          error_message: friendly.slice(0, 1000),
           completed_at: new Date().toISOString(),
         })
         .eq("id", row.id);
-      return { status: "error" as const, error: message };
+      return { status: "error" as const, error: friendly };
     }
   });
