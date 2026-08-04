@@ -351,10 +351,10 @@
     "resolution": "Resolution",
     "duration": "Duration",
     "provider": "Generation engine",
-    "provider_auto": "Auto (Seedance first)",
+    "provider_auto": "Auto (Google video first)",
     "provider_seedance": "Seedance (BytePlus)",
-    "provider_lovable": "Lovable AI",
-    "provider_hint": "Auto tries Seedance first and automatically falls back to the Lovable AI Gateway if it fails. The Seedance setup stays untouched.",
+    "provider_lovable": "Google video (Lovable AI)",
+    "provider_hint": "Auto tries the Google video model (Lovable AI) first and falls back to Seedance if it fails. The existing Seedance setup stays untouched.",
 
     "camera_fixed": "Fixed camera",
     "seed_lock": "Lock seed",

@@ -104,7 +104,7 @@ export const startVideoGeneration = createServerFn({ method: "POST" })
         });
       };
 
-      // 프로바이더 선택: seedance(기존) / lovable(AI Gateway) / auto(Seedance 실패 시 폴백)
+      // 프로바이더 선택: lovable(Google 영상 모델) 우선, 실패 시 Seedance 폴백
       let taskId: string;
       let model: string;
       if (data.provider === "lovable") {
@@ -113,16 +113,17 @@ export const startVideoGeneration = createServerFn({ method: "POST" })
         ({ taskId, model } = await runSeedance());
       } else {
         try {
-          ({ taskId, model } = await runSeedance());
-        } catch (seedanceErr) {
-          const seedanceMessage =
-            seedanceErr instanceof Error ? seedanceErr.message : String(seedanceErr);
+          ({ taskId, model } = await runLovable());
+        } catch (lovableErr) {
+          const lovableMessage =
+            lovableErr instanceof Error ? lovableErr.message : String(lovableErr);
           try {
-            ({ taskId, model } = await runLovable());
-          } catch (lovableErr) {
-            const lovableMessage =
-              lovableErr instanceof Error ? lovableErr.message : String(lovableErr);
-            throw new Error(`${seedanceMessage} || FALLBACK_LOVABLE: ${lovableMessage}`);
+            ({ taskId, model } = await runSeedance());
+          } catch (seedanceErr) {
+            const seedanceMessage =
+              seedanceErr instanceof Error ? seedanceErr.message : String(seedanceErr);
+            throw new Error(`${lovableMessage} || FALLBACK_SEEDANCE: ${seedanceMessage}`);
+
           }
         }
       }
