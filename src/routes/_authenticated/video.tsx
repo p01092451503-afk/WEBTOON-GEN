@@ -1,5 +1,19 @@
 import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import { checkVideoModelHealth } from "@/lib/video-health.functions";
+
+type VideoHealth = {
+  checkedAt: string;
+  canGenerate: boolean;
+  models: Array<{
+    id: string;
+    label: string;
+    provider: "lovable" | "seedance";
+    status: "available" | "unavailable" | "unknown";
+    detail: string;
+  }>;
+};
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -179,6 +193,25 @@ function VideoStudioPage() {
   const [seed, setSeed] = useState<string>("");
   const [editedPrompt, setEditedPrompt] = useState<string | null>(null);
   const provider = "lovable" as const;
+
+  // 모델 가용 상태 점검
+  const checkHealth = useServerFn(checkVideoModelHealth);
+  const [health, setHealth] = useState<VideoHealth | null>(null);
+  const [healthLoading, setHealthLoading] = useState(false);
+
+  async function runHealthCheck() {
+    setHealthLoading(true);
+    try {
+      const res = (await checkHealth({ data: undefined })) as VideoHealth;
+      setHealth(res);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : String(e));
+    } finally {
+      setHealthLoading(false);
+    }
+  }
+
+
 
 
   const builtPrompt = useMemo(() => {
@@ -498,10 +531,58 @@ function VideoStudioPage() {
               value={String(duration)}
               onChange={(v) => setDuration(Number(v))}
             />
-            <div className="space-y-2">
-              <p className="px-1 text-[12px] leading-relaxed text-muted-foreground">
+            <div className="space-y-2 rounded-2xl border border-border px-4 py-3">
+              <div className="flex items-center justify-between gap-3">
+                <Label className="text-[13px] font-bold">{t("video.health_title")}</Label>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={runHealthCheck}
+                  disabled={healthLoading}
+                  className="rounded-xl text-[12px] font-bold"
+                >
+                  {healthLoading ? (
+                    <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Gauge className="mr-1.5 h-3.5 w-3.5" />
+                  )}
+                  {t("video.health_check")}
+                </Button>
+              </div>
+              <p className="text-[12px] leading-relaxed text-muted-foreground">
                 {t("video.provider_hint")}
               </p>
+              {health && (
+                <div className="space-y-2 pt-1">
+                  {health.models.map((m) => (
+                    <div key={m.id} className="rounded-xl bg-muted/50 px-3 py-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-[12.5px] font-bold">{m.label}</span>
+                        <span
+                          className={
+                            "rounded-full px-2 py-0.5 text-[11px] font-bold " +
+                            (m.status === "available"
+                              ? "bg-primary/15 text-primary"
+                              : m.status === "unavailable"
+                                ? "bg-destructive/15 text-destructive"
+                                : "bg-foreground/10 text-muted-foreground")
+                          }
+                        >
+                          {t(`video.health_status_${m.status}`)}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">
+                        {m.detail}
+                      </p>
+                    </div>
+                  ))}
+                  <p className="px-1 text-[11.5px] text-muted-foreground">
+                    {new Date(health.checkedAt).toLocaleString()} ·{" "}
+                    {health.canGenerate ? t("video.health_ready") : t("video.health_blocked")}
+                  </p>
+                </div>
+              )}
             </div>
 
 
