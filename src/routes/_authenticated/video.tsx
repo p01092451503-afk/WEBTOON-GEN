@@ -316,17 +316,11 @@ function VideoStudioPage() {
     const cleaned = parts.map((p) => p.trim()).filter(Boolean);
     const suffix = applyBrief ? (brief?.promptSuffix ?? "").trim() : "";
     if (cleaned.length === 0 && !suffix) return "";
-    let out = (suffix ? [...cleaned, suffix] : cleaned).join(", ") + ".";
-    const avoid = [negativeText.trim(), applyBrief ? (brief?.negative ?? "").trim() : ""]
-      .filter(Boolean)
-      .join(", ");
-    if (avoid) out += ` Avoid: ${avoid}.`;
-    return out;
+    return (suffix ? [...cleaned, suffix] : cleaned).join(", ") + ".";
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     actionText,
     assets,
-    negativeText,
     shotId,
     angleId,
     motionIds,
@@ -337,6 +331,14 @@ function VideoStudioPage() {
     brief,
     applyBrief,
   ]);
+
+  const negativePrompt = useMemo(
+    () =>
+      [negativeText.trim(), applyBrief ? (brief?.negative ?? "").trim() : ""]
+        .filter(Boolean)
+        .join(", "),
+    [negativeText, brief, applyBrief],
+  );
 
   const finalPrompt = editedPrompt ?? builtPrompt;
   const mode: "t2v" | "i2v" = firstFrame ? "i2v" : "t2v";
@@ -484,6 +486,7 @@ function VideoStudioPage() {
         mode,
 
         finalPrompt,
+        negativePrompt: negativePrompt || undefined,
         rawPrompt: builtPrompt || undefined,
         promptEdited: editedPrompt != null && editedPrompt !== builtPrompt,
         aspectRatio,
@@ -512,7 +515,6 @@ function VideoStudioPage() {
           lightIds,
           styleId,
           actionText,
-          negativeText,
         },
       });
       toast.success(t("video.toast.started"));

@@ -545,6 +545,7 @@ export type Database = {
           mode: string
           moderation_details: Json
           moderation_status: string
+          negative_prompt: string | null
           options: Json
           prompt_edited: boolean
           raw_prompt: string | null
@@ -573,6 +574,7 @@ export type Database = {
           mode?: string
           moderation_details?: Json
           moderation_status?: string
+          negative_prompt?: string | null
           options?: Json
           prompt_edited?: boolean
           raw_prompt?: string | null
@@ -601,6 +603,7 @@ export type Database = {
           mode?: string
           moderation_details?: Json
           moderation_status?: string
+          negative_prompt?: string | null
           options?: Json
           prompt_edited?: boolean
           raw_prompt?: string | null
