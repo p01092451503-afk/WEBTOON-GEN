@@ -13,8 +13,8 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { useTranslation } from "react-i18next";
-import "@/i18n";
+import { useTranslation, I18nextProvider } from "react-i18next";
+import i18n from "@/i18n";
 
 function NotFoundComponent() {
   const { t } = useTranslation();
