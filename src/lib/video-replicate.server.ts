@@ -38,27 +38,34 @@ async function readError(res: Response) {
   }
 }
 
-/** 종횡비와 해상도 목표에 맞춰 width/height 를 계산한다. 모델 호환을 위해 8의 배수로 내림한다. */
-function computeSize(aspectRatio: string, resolution: string) {
-  const [rw, rh] = aspectRatio.split(":").map((n) => Number(n.trim()));
-  const ratio = rw && rh ? rw / rh : 16 / 9;
+const LTX_ASPECT_RATIOS = [
+  "1:1", "1:2", "2:1", "2:3", "3:2", "3:4", "4:3", "4:5", "5:4", "9:16", "16:9", "9:21", "21:9",
+];
+const LTX_LENGTHS = [97, 129, 161, 193, 225, 257];
 
-  const targetPixels =
-    resolution === "1080p"
-      ? 1920 * 1080
-      : resolution === "720p"
-        ? 1280 * 720
-        : 854 * 480;
-
-  const height = Math.floor(Math.sqrt(targetPixels / ratio) / 8) * 8;
-  const width = Math.floor((height * ratio) / 8) * 8;
-
-  return { width: Math.max(8, width), height: Math.max(8, height) };
+/** LTX Video 가 허용하는 화면비만 통과시킨다. */
+function ltxAspectRatio(aspectRatio: string) {
+  return LTX_ASPECT_RATIOS.includes(aspectRatio) ? aspectRatio : "16:9";
 }
 
-/** duration(초)를 24fps 기준 프레임 수로 변환한다. */
-function computeFrames(durationSeconds: number) {
-  return Math.min(257, Math.max(24, Math.round(durationSeconds * 24)));
+/** 해상도 목표를 LTX 의 target_size enum 값으로 변환한다. */
+function ltxTargetSize(resolution: string) {
+  if (resolution === "1080p") return 1024;
+  if (resolution === "720p") return 768;
+  return 512;
+}
+
+/** duration(초)를 LTX 가 허용하는 프레임 수 enum 중 가까운 값으로 변환한다(24fps 기준). */
+function ltxLength(durationSeconds: number) {
+  const target = durationSeconds * 24;
+  return LTX_LENGTHS.reduce((best, v) =>
+    Math.abs(v - target) < Math.abs(best - target) ? v : best,
+  );
+}
+
+/** WAN i2v 는 81~121 프레임(16fps)만 허용한다. */
+function wanFrames(durationSeconds: number) {
+  return Math.min(121, Math.max(81, Math.round(durationSeconds * 16)));
 }
 
 export function isReplicateTaskId(taskId: string) {
