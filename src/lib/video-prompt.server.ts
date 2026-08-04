@@ -14,14 +14,22 @@ const SYSTEM_PROMPT =
   "Write 4 to 8 sentences in the present tense. Describe subject, action, camera movement, " +
   "lighting, mood, and visual style in natural prose. Use observable physical cues instead of " +
   "emotion labels. Follow this order: Subject, Action, Camera, Lighting, Style. Preserve all " +
-  "concrete details supplied by the user without inventing new characters or events. Output " +
-  "English only, with no lists, headings, quotes, negative instructions, or commentary.";
+  "concrete details supplied by the user without inventing new characters or events. If the " +
+  "Action control contains Korean, translate its meaning directly into natural cinematic English " +
+  "while preserving names, @mentions, actions, timing, direction, and spatial relationships. " +
+  "Do not use image-prompt conventions or introduce Figure 1/Figure 2 labels. Output English only, " +
+  "with no Korean text, lists, headings, quotes, negative instructions, or commentary.";
+
+const containsKorean = (value: string) => /[\u1100-\u11ff\u3130-\u318f\uac00-\ud7af]/u.test(value);
 
 export async function composeVideoPromptText(controls: VideoPromptControls) {
   const apiKey = process.env["LOVABLE_API_KEY"];
   if (!apiKey) throw new Error("PROMPT_COMPOSER_UNAVAILABLE");
 
   const gateway = createLovableAiGatewayProvider(apiKey);
+  const actionTranslationInstruction = containsKorean(controls.action)
+    ? "The Action field contains Korean. Translate it into English as part of this single rewrite; do not call or imitate the image translation prompt."
+    : "Keep the Action field in natural English.";
   const controlText = [
     `Subject: ${controls.subject || "Not specified"}`,
     `Action: ${controls.action || "Not specified"}`,
@@ -33,7 +41,7 @@ export async function composeVideoPromptText(controls: VideoPromptControls) {
   const result = await generateText({
     model: gateway("google/gemini-3.6-flash"),
     system: SYSTEM_PROMPT,
-    prompt: `Rewrite these shot controls as the requested cinematic paragraph:\n\n${controlText}`,
+    prompt: `${actionTranslationInstruction}\nRewrite these shot controls as the requested cinematic paragraph:\n\n${controlText}`,
   });
 
   const paragraph = result.text
