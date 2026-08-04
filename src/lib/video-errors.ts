@@ -16,10 +16,11 @@ function pick(raw: string): { title: string; hint: string } {
   // Lovable AI Gateway
   if (r.includes("model is not available") || r.includes("invalid model")) {
     return {
-      title: "Google 영상 모델을 아직 사용할 수 없습니다.",
-      hint: "현재 워크스페이스의 Lovable AI에서 영상 모델이 열려 있지 않습니다. 아래 '생성 엔진'을 Seedance로 바꿔 시도해 보세요.",
+      title: "Lovable AI 워크스페이스에 영상 모델이 아직 열려 있지 않습니다.",
+      hint: "현재 이 워크스페이스의 AI 게이트웨이는 텍스트·이미지·음성 모델만 제공하고 영상 모델(veo 등)이 포함되어 있지 않습니다. 영상 모델이 워크스페이스에 열린 뒤 다시 시도하거나, BytePlus Seedance 한도를 해제해 사용해 주세요.",
     };
   }
+
   if (r.includes("lovable_no_credits") || r.includes("402")) {
     return {
       title: "Lovable AI 크레딧이 부족합니다.",
@@ -74,8 +75,9 @@ function pick(raw: string): { title: string; hint: string } {
 
   return {
     title: "영상 생성에 실패했습니다.",
-    hint: "잠시 후 다시 시도하거나 '생성 엔진'을 바꿔 보세요.",
+    hint: "잠시 후 다시 시도해 주세요. 계속 실패하면 아래 '모델 가용 상태 점검'으로 영상 모델 상태를 확인해 주세요.",
   };
+
 }
 
 /** 폴백까지 모두 실패한 경우 두 오류를 함께 정리한다. */
