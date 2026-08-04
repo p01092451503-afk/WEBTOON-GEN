@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { checkVideoModelHealth } from "@/lib/video-health.functions";
 import { composeVideoPrompt } from "@/lib/video-prompt.functions";
+import { DEFAULT_VIDEO_NEGATIVE_PROMPT } from "@/lib/video-constants";
 
 type VideoHealth = {
   checkedAt: string;
@@ -344,6 +345,7 @@ function VideoStudioPage() {
   );
 
   const finalPrompt = editedPrompt ?? "";
+  const submittedNegativePrompt = negativePrompt || DEFAULT_VIDEO_NEGATIVE_PROMPT;
   const mode: "t2v" | "i2v" = firstFrame ? "i2v" : "t2v";
 
   function toggle(list: string[], setList: (v: string[]) => void, id: string) {
@@ -1051,6 +1053,43 @@ function VideoStudioPage() {
         {/* 4. Result */}
         <Panel step={4} title={t("video.panels.result")}>
           <div className="space-y-4">
+            <section className="space-y-3 border-b border-border pb-4" aria-label="Server prompt preview">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-[13px] font-bold text-foreground">Server prompt preview</p>
+                  <p className="text-[11.5px] text-muted-foreground">
+                    Exact values submitted when you generate
+                  </p>
+                </div>
+                <span className="shrink-0 text-[11px] font-semibold text-muted-foreground">
+                  {finalPrompt.trim().length}/4000
+                </span>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-[11.5px] font-bold text-muted-foreground">
+                  Positive prompt
+                </Label>
+                <div className="min-h-20 whitespace-pre-wrap break-words rounded-lg border border-border bg-muted/40 px-3 py-2.5 font-mono text-[12px] leading-relaxed text-foreground">
+                  {finalPrompt.trim() || "No positive prompt composed yet."}
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-[11.5px] font-bold text-muted-foreground">
+                  negative_prompt
+                </Label>
+                <div className="min-h-16 whitespace-pre-wrap break-words rounded-lg border border-border bg-muted/40 px-3 py-2.5 font-mono text-[12px] leading-relaxed text-foreground">
+                  {submittedNegativePrompt}
+                </div>
+                {!negativePrompt && (
+                  <p className="text-[11px] text-muted-foreground">
+                    Default quality guard is used because no custom negative prompt was entered.
+                  </p>
+                )}
+              </div>
+            </section>
+
             <Button
               onClick={handleGenerate}
               disabled={gen.running || !finalPrompt.trim()}

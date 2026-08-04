@@ -2,6 +2,7 @@
 // This file must NOT be imported from client code.
 
 import type { VideoTaskState, VideoTaskStatus } from "@/lib/video.server";
+import { DEFAULT_VIDEO_NEGATIVE_PROMPT } from "@/lib/video-constants";
 
 const REPLICATE_API_URL = "https://api.replicate.com/v1";
 
@@ -16,9 +17,6 @@ export const DEFAULT_REPLICATE_TEXT_VERSION =
 export const DEFAULT_REPLICATE_IMAGE_MODEL = "wan-video/wan-2.2-i2v-fast";
 export const DEFAULT_REPLICATE_IMAGE_VERSION =
   "4eaf2b01d3bf70d8a2e00b219efeb7cb415855ad18b7dacdc4cae664a73a6eea";
-
-const DEFAULT_NEGATIVE_PROMPT =
-  "low quality, worst quality, deformed, distorted, blurry, watermark, text, static, jittery motion";
 
 function apiKey() {
   const key = process.env.REPLICATE_API_KEY;
@@ -123,7 +121,7 @@ export async function createReplicateVideoTask(params: {
 
   const input: Record<string, unknown> = {
     prompt: params.prompt,
-    negative_prompt: params.negativePrompt?.trim() || DEFAULT_NEGATIVE_PROMPT,
+    negative_prompt: params.negativePrompt?.trim() || DEFAULT_VIDEO_NEGATIVE_PROMPT,
   };
 
   if (params.seed != null) {
