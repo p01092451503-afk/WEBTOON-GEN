@@ -8,7 +8,55 @@ import { SignedVideo } from "@/components/SignedVideo";
 import { Button } from "@/components/ui/button";
 import { IconTooltip } from "@/components/icon-tooltip";
 import { toast } from "sonner";
-import { Clock, X, Film } from "lucide-react";
+import { Clock, X, Film, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+
+function ConfirmDelete({
+  title,
+  description,
+  onConfirm,
+  disabled,
+  children,
+}: {
+  title: string;
+  description: string;
+  onConfirm: () => void;
+  disabled?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild disabled={disabled}>
+        {children}
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{title}</AlertDialogTitle>
+          <AlertDialogDescription>{description}</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={onConfirm}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            Delete
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
 
 export const Route = createFileRoute("/_authenticated/history")({
   component: HistoryPage,
