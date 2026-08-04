@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { checkVideoModelHealth } from "@/lib/video-health.functions";
 import { composeVideoPrompt } from "@/lib/video-prompt.functions";
 import { DEFAULT_VIDEO_NEGATIVE_PROMPT } from "@/lib/video-constants";
+import { VIDEO_TEST_TEMPLATES, type VideoTestTemplate } from "@/lib/video-test-templates";
 import { explainVideoError } from "@/lib/video-errors";
 
 type VideoHealth = {
@@ -400,6 +401,28 @@ function VideoStudioPage() {
   const finalPrompt = editedPrompt ?? "";
   const submittedNegativePrompt = negativePrompt || DEFAULT_VIDEO_NEGATIVE_PROMPT;
   const mode: "t2v" | "i2v" = firstFrame ? "i2v" : "t2v";
+
+  function loadTestTemplate(template: VideoTestTemplate) {
+    const firstReference = assets.find((asset) => asset.role === "first");
+    const referenceMention = firstReference ? `@${firstReference.name} ` : "";
+
+    setActionText(
+      template.mode === "i2v" ? `${referenceMention}${template.action}` : template.action,
+    );
+    setNegativeText(template.negative);
+    setEditedPrompt(template.positive);
+    setAspectRatio(template.aspectRatio);
+    setResolution(template.resolution);
+    setDuration(template.duration);
+    setCameraFixed(template.cameraFixed);
+    setApplyBrief(false);
+
+    if (template.mode === "i2v" && !firstReference) {
+      toast.info("I2V template loaded. Add a reference image as First frame, then load this template again to attach it.");
+      return;
+    }
+    toast.success(`${template.title} template loaded.`);
+  }
 
   function toggle(list: string[], setList: (v: string[]) => void, id: string) {
     setList(list.includes(id) ? list.filter((x) => x !== id) : [...list, id]);
@@ -864,6 +887,46 @@ function VideoStudioPage() {
         {/* 2. Motion */}
         <Panel step={2} title={t("video.panels.motion")} tourId="prompt">
           <div className="space-y-5">
+            <section className="space-y-2" aria-labelledby="quality-test-templates">
+              <div>
+                <Label id="quality-test-templates" className="text-[13px] font-bold">
+                  Quality test templates
+                </Label>
+                <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">
+                  Load a complete Action, Positive, and Negative prompt set with one click.
+                </p>
+              </div>
+              <div className="grid gap-2">
+                {VIDEO_TEST_TEMPLATES.map((template) => (
+                  <div key={template.id} className="rounded-lg border border-border bg-muted/30 p-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-[12.5px] font-bold text-foreground">{template.title}</p>
+                        <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">
+                          {template.description}
+                        </p>
+                      </div>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="shrink-0 rounded-lg"
+                        onClick={() => loadTestTemplate(template)}
+                      >
+                        <Wand2 className="h-3.5 w-3.5" />
+                        Load
+                      </Button>
+                    </div>
+                    {template.mode === "i2v" && !firstFrame && (
+                      <p className="mt-2 text-[11px] font-medium text-primary">
+                        Add a First frame reference for I2V mode.
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </section>
+
             <div className="space-y-1.5">
               <Label className="text-[13px] font-bold">{t("video.action_label")}</Label>
               <MentionTextarea
