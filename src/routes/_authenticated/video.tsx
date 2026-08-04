@@ -241,7 +241,9 @@ function VideoStudioPage() {
       );
       await gen.run({
         workLabel: "V1",
+        provider,
         mode,
+
         finalPrompt,
         rawPrompt: builtPrompt || undefined,
         promptEdited: editedPrompt != null && editedPrompt !== builtPrompt,
