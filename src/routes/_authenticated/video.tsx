@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { checkVideoModelHealth } from "@/lib/video-health.functions";
 import { composeVideoPrompt } from "@/lib/video-prompt.functions";
 import { DEFAULT_VIDEO_NEGATIVE_PROMPT } from "@/lib/video-constants";
+import { explainVideoError } from "@/lib/video-errors";
 
 type VideoHealth = {
   checkedAt: string;
@@ -1205,25 +1206,15 @@ function VideoStudioPage() {
             )}
 
             {gen.error && (
-              <div className="space-y-1 rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-[13px] text-destructive">
+              <div className="space-y-3 rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-4 text-[13px] text-destructive" role="alert">
                 {(() => {
-                  const lines = gen.error.split("\n").filter((l) => l.trim());
-                  const [head, ...rest] = lines;
+                  const info = explainVideoError(gen.error);
                   return (
                     <>
-                      <p className="font-bold">{head}</p>
-                      {rest.map((l, i) => (
-                        <p
-                          key={i}
-                          className={
-                            l.startsWith("(raw:")
-                              ? "break-all text-[11px] opacity-60"
-                              : "leading-relaxed opacity-90"
-                          }
-                        >
-                          {l}
-                        </p>
-                      ))}
+                      <div><p className="font-bold">{info.title}</p><p className="mt-1 leading-relaxed text-foreground/80">{info.hint}</p></div>
+                      <p className="w-fit rounded-md border border-destructive/20 bg-background/60 px-2 py-1 text-[11px] font-semibold uppercase text-foreground/70">{info.category.replace("_", " ")}</p>
+                      {info.checks.length > 0 && <div><p className="font-semibold text-foreground">Check these parameters</p><ul className="mt-1.5 list-disc space-y-1 pl-4 leading-relaxed text-foreground/75">{info.checks.map((item) => <li key={item}>{item}</li>)}</ul></div>}
+                      <details className="text-[11px] text-foreground/55"><summary className="cursor-pointer font-medium">Technical details</summary><p className="mt-1 break-all">{info.raw}</p></details>
                     </>
                   );
                 })()}
