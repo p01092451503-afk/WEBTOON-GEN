@@ -350,7 +350,7 @@
     "provider_seedance": "Seedance (BytePlus)",
     "provider_lovable": "Google video (Lovable AI)",
     "provider_replicate": "Replicate (Lovable direct)",
-    "provider_hint": "Choose Veo for prompt fidelity or Replicate for a fast preview. Text-to-video defaults to Veo 3.1 Fast.",
+    "provider_hint": "Text-to-video uses LTX Video, and image-to-video uses WAN 2.2 through Replicate.",
     "camera_fixed": "Fixed camera",
     "seed_lock": "Lock seed",
     "final_prompt": "Final prompt",

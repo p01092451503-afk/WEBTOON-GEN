@@ -17,7 +17,7 @@ type VideoHealth = {
   }>;
 };
 
-type VideoProvider = "lovable" | "replicate";
+type VideoProvider = "replicate";
 
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -244,7 +244,7 @@ function VideoStudioPage() {
   const [seed, setSeed] = useState<string>("");
   const [editedPrompt, setEditedPrompt] = useState<string | null>(null);
   const [composingPrompt, setComposingPrompt] = useState(false);
-  const [provider, setProvider] = useState<VideoProvider>("lovable");
+  const [provider, setProvider] = useState<VideoProvider>("replicate");
   const [tourOpen, setTourOpen] = useState(false);
   const composePromptFn = useServerFn(composeVideoPrompt);
 
@@ -952,10 +952,9 @@ function VideoStudioPage() {
               icon={<Video className="h-4 w-4" />}
               options={[
                 {
-                  id: "lovable",
-                  label: mode === "t2v" ? "Veo 3.1 Fast · Prompt fidelity" : "Veo 3.1 Fast",
+                  id: "replicate",
+                  label: mode === "t2v" ? "LTX Video · Text to video" : "WAN 2.2 · Image to video",
                 },
-                { id: "replicate", label: mode === "t2v" ? "LTX · Fast preview" : "WAN · Fast preview" },
               ]}
               value={provider}
               onChange={(value) => setProvider(value as VideoProvider)}
