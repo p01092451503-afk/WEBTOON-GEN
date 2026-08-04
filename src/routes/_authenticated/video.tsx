@@ -585,10 +585,31 @@ function VideoStudioPage() {
             )}
 
             {gen.error && (
-              <div className="rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-[13px] text-destructive">
-                {gen.error}
+              <div className="space-y-1 rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-[13px] text-destructive">
+                {(() => {
+                  const lines = gen.error.split("\n").filter((l) => l.trim());
+                  const [head, ...rest] = lines;
+                  return (
+                    <>
+                      <p className="font-bold">{head}</p>
+                      {rest.map((l, i) => (
+                        <p
+                          key={i}
+                          className={
+                            l.startsWith("(원본")
+                              ? "break-all text-[11px] opacity-60"
+                              : "leading-relaxed opacity-90"
+                          }
+                        >
+                          {l}
+                        </p>
+                      ))}
+                    </>
+                  );
+                })()}
               </div>
             )}
+
 
             {gen.row?.results?.map((r) => (
               <VideoResultCard key={r.id} path={r.storage_path} />
