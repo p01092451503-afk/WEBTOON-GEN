@@ -76,6 +76,10 @@ type VideoRow = {
   resolution: string | null;
   duration_seconds: number | null;
   api_model: string | null;
+  api_model_version: string | null;
+  actual_resolution: string | null;
+  actual_duration_seconds: number | null;
+  moderation_status: string;
   seed: number | null;
   final_prompt: string | null;
   raw_prompt: string | null;
@@ -101,7 +105,7 @@ function useVideoHistory(tenantId: string | null) {
       const { data, error } = await supabase
         .from("video_generations")
         .select(
-          "id, status, mode, work_label, aspect_ratio, resolution, duration_seconds, api_model, seed, final_prompt, raw_prompt, prompt_edited, error_message, created_at, completed_at, video_results(id, seq, storage_path, poster_path, duration_seconds)",
+          "id, status, mode, work_label, aspect_ratio, resolution, duration_seconds, actual_resolution, actual_duration_seconds, api_model, api_model_version, moderation_status, seed, final_prompt, raw_prompt, prompt_edited, error_message, created_at, completed_at, video_results(id, seq, storage_path, poster_path, duration_seconds)",
         )
         .order("created_at", { ascending: false })
         .limit(100);
@@ -143,7 +147,6 @@ async function deleteVideoGenerations(rows: VideoRow[]) {
   const { error } = await supabase.from("video_generations").delete().in("id", ids);
   if (error) throw new Error(error.message);
 }
-
 
 type Row = {
   id: string;
@@ -248,7 +251,9 @@ function HistoryPage() {
                 title="Delete failed items?"
                 description={`${failedCount} failed generation${failedCount > 1 ? "s" : ""} will be permanently removed.`}
                 disabled={busy}
-                onConfirm={() => removeVideos((videoRows ?? []).filter((r) => r.status === "error"))}
+                onConfirm={() =>
+                  removeVideos((videoRows ?? []).filter((r) => r.status === "error"))
+                }
               >
                 <Button size="sm" variant="outline" className="rounded-full">
                   <Trash2 className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
@@ -273,10 +278,13 @@ function HistoryPage() {
 
       {/* Image history is hidden while the platform demos video generation only. */}
 
-
       {selected && (
         <div className="mt-6">
-          <DetailCard row={selected} onClose={() => navigate({ search: { tab } })} locale={locale} />
+          <DetailCard
+            row={selected}
+            onClose={() => navigate({ search: { tab } })}
+            locale={locale}
+          />
         </div>
       )}
 
@@ -373,7 +381,6 @@ function HistoryPage() {
           })}
         </div>
       ) : (
-
         <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
           {(list as Row[]).map((r) => {
             const first = r.results[0];
@@ -460,7 +467,6 @@ function VideoDetailCard({
         </div>
       </header>
 
-
       <div className="space-y-5">
         {row.results.map((res) => (
           <SignedVideo
@@ -475,11 +481,31 @@ function VideoDetailCard({
         <div className="grid grid-cols-2 gap-3 text-xs md:grid-cols-4">
           <Meta label={t("history.meta.mode")} value={row.mode} />
           <Meta label={t("history.meta.ratio")} value={row.aspect_ratio ?? "-"} />
-          <Meta label="Resolution" value={row.resolution ?? "-"} />
-          <Meta label="Duration" value={row.duration_seconds ? `${row.duration_seconds}s` : "-"} />
-          <Meta label={t("history.meta.model")} value={row.api_model ?? "-"} />
+          <Meta label="Resolution" value={row.actual_resolution ?? row.resolution ?? "-"} />
+          <Meta
+            label="Duration"
+            value={
+              row.actual_duration_seconds
+                ? `${row.actual_duration_seconds}s`
+                : row.duration_seconds
+                  ? `${row.duration_seconds}s`
+                  : "-"
+            }
+          />
+          <Meta
+            label={t("history.meta.model")}
+            value={
+              row.api_model_version
+                ? `${row.api_model ?? "-"} · ${row.api_model_version.slice(0, 8)}`
+                : (row.api_model ?? "-")
+            }
+          />
+          <Meta label="Safety" value={row.moderation_status} />
           <Meta label={t("history.meta.seed")} value={row.seed?.toString() ?? "-"} />
-          <Meta label={t("history.meta.created")} value={new Date(row.created_at).toLocaleString(locale)} />
+          <Meta
+            label={t("history.meta.created")}
+            value={new Date(row.created_at).toLocaleString(locale)}
+          />
           <Meta
             label={t("history.meta.completed")}
             value={row.completed_at ? new Date(row.completed_at).toLocaleString(locale) : "-"}
@@ -574,7 +600,10 @@ function DetailCard({ row, onClose, locale }: { row: Row; onClose: () => void; l
         {row.results.length > 0 && (
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             {row.results.map((res) => (
-              <div key={res.id} className="overflow-hidden rounded-xl border border-border bg-muted">
+              <div
+                key={res.id}
+                className="overflow-hidden rounded-xl border border-border bg-muted"
+              >
                 {(res.thumb_path || res.storage_path) && (
                   <SignedImage
                     bucket="generation-outputs"
@@ -594,7 +623,10 @@ function DetailCard({ row, onClose, locale }: { row: Row; onClose: () => void; l
           <Meta label={t("history.meta.model")} value={row.api_model ?? "-"} />
           <Meta label={t("history.meta.seed")} value={row.seed?.toString() ?? "-"} />
           <Meta label={t("history.meta.batch")} value={String(row.batch_count)} />
-          <Meta label={t("history.meta.created")} value={new Date(row.created_at).toLocaleString(locale)} />
+          <Meta
+            label={t("history.meta.created")}
+            value={new Date(row.created_at).toLocaleString(locale)}
+          />
           <Meta
             label={t("history.meta.completed")}
             value={row.completed_at ? new Date(row.completed_at).toLocaleString(locale) : "-"}

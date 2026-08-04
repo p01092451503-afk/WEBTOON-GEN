@@ -529,7 +529,10 @@ export type Database = {
       }
       video_generations: {
         Row: {
+          actual_duration_seconds: number | null
+          actual_resolution: string | null
           api_model: string | null
+          api_model_version: string | null
           aspect_ratio: string | null
           camera_fixed: boolean
           completed_at: string | null
@@ -540,6 +543,8 @@ export type Database = {
           id: string
           image_paths: Json
           mode: string
+          moderation_details: Json
+          moderation_status: string
           options: Json
           prompt_edited: boolean
           raw_prompt: string | null
@@ -552,7 +557,10 @@ export type Database = {
           work_label: string
         }
         Insert: {
+          actual_duration_seconds?: number | null
+          actual_resolution?: string | null
           api_model?: string | null
+          api_model_version?: string | null
           aspect_ratio?: string | null
           camera_fixed?: boolean
           completed_at?: string | null
@@ -563,6 +571,8 @@ export type Database = {
           id?: string
           image_paths?: Json
           mode?: string
+          moderation_details?: Json
+          moderation_status?: string
           options?: Json
           prompt_edited?: boolean
           raw_prompt?: string | null
@@ -575,7 +585,10 @@ export type Database = {
           work_label?: string
         }
         Update: {
+          actual_duration_seconds?: number | null
+          actual_resolution?: string | null
           api_model?: string | null
+          api_model_version?: string | null
           aspect_ratio?: string | null
           camera_fixed?: boolean
           completed_at?: string | null
@@ -586,6 +599,8 @@ export type Database = {
           id?: string
           image_paths?: Json
           mode?: string
+          moderation_details?: Json
+          moderation_status?: string
           options?: Json
           prompt_edited?: boolean
           raw_prompt?: string | null
@@ -605,6 +620,8 @@ export type Database = {
           duration_seconds: number | null
           height: number | null
           id: string
+          metadata: Json
+          moderation_status: string
           poster_path: string | null
           seq: number
           source_url: string | null
@@ -617,6 +634,8 @@ export type Database = {
           duration_seconds?: number | null
           height?: number | null
           id?: string
+          metadata?: Json
+          moderation_status?: string
           poster_path?: string | null
           seq?: number
           source_url?: string | null
@@ -629,6 +648,8 @@ export type Database = {
           duration_seconds?: number | null
           height?: number | null
           id?: string
+          metadata?: Json
+          moderation_status?: string
           poster_path?: string | null
           seq?: number
           source_url?: string | null

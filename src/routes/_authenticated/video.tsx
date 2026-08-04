@@ -76,8 +76,6 @@ const ROLES: Array<{ id: MediaAsset["role"]; label: string; hint: string }> = [
   { id: "style", label: "Style only", hint: "used as look / motion reference" },
 ];
 
-
-
 export const Route = createFileRoute("/_authenticated/video")({
   component: VideoStudioPage,
   head: () => ({
@@ -85,7 +83,8 @@ export const Route = createFileRoute("/_authenticated/video")({
       { title: "Video Studio · pilotstudio" },
       {
         name: "description",
-        content: "Generate character-driven short videos with Replicate from a reference frame and a motion prompt.",
+        content:
+          "Generate character-driven short videos with Replicate from a reference frame and a motion prompt.",
       },
       { property: "og:title", content: "Video Studio · pilotstudio" },
       {
@@ -98,7 +97,6 @@ export const Route = createFileRoute("/_authenticated/video")({
   }),
 });
 
-
 const RATIOS = ["16:9", "9:16", "1:1", "4:3", "3:4", "21:9"] as const;
 const RESOLUTIONS = ["480p", "720p", "1080p"] as const;
 const DURATIONS = [3, 5, 10, 12] as const;
@@ -107,19 +105,39 @@ type Preset = { id: string; label: string; text: string };
 
 const MOTION_PRESETS: Preset[] = [
   { id: "MOV_ORBIT", label: "Orbit", text: "the camera slowly orbits around the subject" },
-  { id: "MOV_DOLLY_IN", label: "Dolly in", text: "the camera slowly dollies in toward the subject" },
-  { id: "MOV_DOLLY_OUT", label: "Dolly out", text: "the camera slowly pulls back away from the subject" },
+  {
+    id: "MOV_DOLLY_IN",
+    label: "Dolly in",
+    text: "the camera slowly dollies in toward the subject",
+  },
+  {
+    id: "MOV_DOLLY_OUT",
+    label: "Dolly out",
+    text: "the camera slowly pulls back away from the subject",
+  },
   { id: "MOV_PAN_L", label: "Pan left", text: "the camera pans smoothly to the left" },
   { id: "MOV_PAN_R", label: "Pan right", text: "the camera pans smoothly to the right" },
   { id: "MOV_TILT_UP", label: "Tilt up", text: "the camera tilts upward revealing the scene" },
   { id: "MOV_TILT_DOWN", label: "Tilt down", text: "the camera tilts downward across the scene" },
-  { id: "MOV_TRACK", label: "Tracking", text: "the camera tracks alongside the subject as it moves" },
+  {
+    id: "MOV_TRACK",
+    label: "Tracking",
+    text: "the camera tracks alongside the subject as it moves",
+  },
   { id: "MOV_CRANE", label: "Crane up", text: "the camera cranes upward for a rising overview" },
-  { id: "MOV_HANDHELD", label: "Handheld", text: "subtle handheld camera shake follows the action" },
+  {
+    id: "MOV_HANDHELD",
+    label: "Handheld",
+    text: "subtle handheld camera shake follows the action",
+  },
   { id: "MOV_STATIC", label: "Static", text: "the camera stays completely static" },
   { id: "MOV_ZOOM_IN", label: "Zoom in", text: "a slow zoom in emphasizes the subject" },
   { id: "MOV_ZOOM_OUT", label: "Zoom out", text: "a slow zoom out reveals the surroundings" },
-  { id: "MOV_PUSH", label: "Push through", text: "the camera pushes forward through the foreground elements" },
+  {
+    id: "MOV_PUSH",
+    label: "Push through",
+    text: "the camera pushes forward through the foreground elements",
+  },
   { id: "MOV_WHIP", label: "Whip pan", text: "a fast whip pan transitions across the scene" },
   { id: "MOV_ARC", label: "Arc", text: "the camera arcs around the subject in a wide curve" },
 ];
@@ -194,7 +212,6 @@ const AMBIENCE_PRESETS: Preset[] = [
   { id: "AMB_SMOKE", label: "Smoke", text: "thin smoke curls through the air" },
 ];
 
-
 function VideoStudioPage() {
   const { t } = useTranslation();
   const { tenantId } = useTenant();
@@ -235,15 +252,12 @@ function VideoStudioPage() {
     return assets.filter((a) => names.has(a.name.toLowerCase()));
   }, [actionText, assets]);
 
-  const activeAssets = mentioned.length > 0 ? mentioned : assets;
+  const activeAssets = mentioned;
 
-  const firstFrame =
-    assets.find((a) => a.role === "first")?.coverPath ?? mentioned[0]?.coverPath ?? null;
-  const lastFrame = assets.find((a) => a.role === "last")?.coverPath ?? null;
+  const firstFrame = mentioned.find((a) => a.role === "first")?.coverPath ?? null;
+  const lastFrame = mentioned.find((a) => a.role === "last")?.coverPath ?? null;
   const studyPaths = activeAssets.flatMap((a) => a.framePaths).slice(0, 8);
   const studyHasVideo = activeAssets.some((a) => a.kind === "video");
-
-
 
   // 모델 가용 상태 점검
   const checkHealth = useServerFn(checkVideoModelHealth);
@@ -262,23 +276,22 @@ function VideoStudioPage() {
     }
   }
 
-
-
-
   /** Replace "@name" tokens with wording the video model understands. */
   const resolveMentions = (text: string) =>
     text.replace(/(^|\s)@([A-Za-z0-9_-]+)/g, (full, sp: string, name: string) => {
       const a = assets.find((x) => x.name.toLowerCase() === name.toLowerCase());
       if (!a) return full;
-      const label =
+      const description =
         a.note.trim() ||
-        (a.role === "first"
-          ? "the subject shown in the first reference frame"
+        (a.kind === "video"
+          ? "the referenced motion and visual style"
+          : "the referenced subject and visual style");
+      const label =
+        a.role === "first"
+          ? `${description} shown in the supplied first frame`
           : a.role === "last"
-            ? "the composition of the last reference frame"
-            : a.kind === "video"
-              ? "the look and motion of the reference video"
-              : "the look of the reference image");
+            ? `${description} shown in the supplied last frame`
+            : `${description}, used only as a style and motion guide`;
       return `${sp}${label}`;
     });
 
@@ -323,7 +336,6 @@ function VideoStudioPage() {
     brief,
     applyBrief,
   ]);
-
 
   const finalPrompt = editedPrompt ?? builtPrompt;
   const mode: "t2v" | "i2v" = firstFrame ? "i2v" : "t2v";
@@ -390,7 +402,9 @@ function VideoStudioPage() {
         return;
       }
       setAssets((prev) => [...prev, ...added].slice(0, 6));
-      toast.success(`Added ${added.map((a) => "@" + a.name).join(", ")} — mention them in the prompt.`);
+      toast.success(
+        `Added ${added.map((a) => "@" + a.name).join(", ")} — mention them in the prompt.`,
+      );
     } catch (e) {
       toast.error(e instanceof Error ? e.message : String(e));
     } finally {
@@ -454,16 +468,14 @@ function VideoStudioPage() {
     }
   }
 
-
-
   async function handleGenerate() {
     if (!finalPrompt.trim()) {
       toast.error(t("video.errors.empty_prompt"));
       return;
     }
     try {
-      const imagePaths = [firstFrame, firstFrame ? lastFrame : null].filter(
-        (p): p is string => Boolean(p),
+      const imagePaths = [firstFrame, firstFrame ? lastFrame : null].filter((p): p is string =>
+        Boolean(p),
       );
       await gen.run({
         workLabel: "V1",
@@ -483,6 +495,13 @@ function VideoStudioPage() {
           referenceStudyPaths: studyPaths,
           referenceHasVideo: studyHasVideo,
           referenceBrief: applyBrief ? brief : null,
+          referenceRoles: mentioned.map((asset) => ({
+            name: asset.name,
+            kind: asset.kind,
+            role: asset.role,
+            note: asset.note.trim() || null,
+            directlySuppliedToModel: asset.role === "first" || asset.role === "last",
+          })),
 
           motionIds,
           ambienceIds,
@@ -501,7 +520,6 @@ function VideoStudioPage() {
     }
   }
 
-
   return (
     <main className="px-4 py-5 sm:px-6">
       <StudioSwitcher active="video" />
@@ -510,8 +528,6 @@ function VideoStudioPage() {
           <Film className="h-3.5 w-3.5" /> Replicate
         </span>
       </div>
-
-
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
         {/* 1. Reference media library */}
@@ -725,7 +741,6 @@ function VideoStudioPage() {
           </div>
         </Panel>
 
-
         {/* 2. Motion */}
         <Panel step={2} title={t("video.panels.motion")}>
           <div className="space-y-5">
@@ -751,7 +766,8 @@ function VideoStudioPage() {
               <p className="text-[12px] leading-relaxed text-muted-foreground">
                 Type <span className="font-bold text-foreground">@</span> to mention uploaded media
                 (e.g. “@img1 slowly turns her head and smiles, lighting like @video1”). Mentions
-                decide which media the model actually uses.
+                decide which media is used. First/Last frame cards are sent directly; Style-only
+                cards influence the prompt through their note or optional AI study.
               </p>
               {mentioned.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 pt-0.5">
@@ -766,7 +782,6 @@ function VideoStudioPage() {
                 </div>
               )}
             </div>
-
 
             <div className="space-y-1.5">
               <Label className="text-[13px] font-bold">{t("video.negative_label")}</Label>
@@ -827,7 +842,6 @@ function VideoStudioPage() {
               selected={ambienceIds}
               onToggle={(id) => toggle(ambienceIds, setAmbienceIds, id)}
             />
-
           </div>
         </Panel>
 
@@ -910,8 +924,6 @@ function VideoStudioPage() {
                 </div>
               )}
             </div>
-
-
 
             <div className="flex items-center justify-between rounded-2xl border border-border px-4 py-3">
               <Label className="text-[13px] font-bold">{t("video.camera_fixed")}</Label>
@@ -1006,7 +1018,6 @@ function VideoStudioPage() {
               </div>
             )}
 
-
             {gen.row?.results?.map((r) => (
               <VideoResultCard key={r.id} path={r.storage_path} />
             ))}
@@ -1024,7 +1035,6 @@ function VideoStudioPage() {
 }
 
 function VideoResultCard({ path }: { path: string }) {
-
   const { t } = useTranslation();
   const url = useSignedUrl("generation-outputs", path, 300);
   if (!url) {
@@ -1033,7 +1043,12 @@ function VideoResultCard({ path }: { path: string }) {
   return (
     <div className="space-y-2">
       <video src={url} controls playsInline className="w-full rounded-2xl border border-border" />
-      <Button asChild variant="outline" size="sm" className="w-full rounded-xl text-xs font-semibold">
+      <Button
+        asChild
+        variant="outline"
+        size="sm"
+        className="w-full rounded-xl text-xs font-semibold"
+      >
         <a href={url} download>
           <Download className="mr-1 h-3.5 w-3.5" />
           {t("video.download")}

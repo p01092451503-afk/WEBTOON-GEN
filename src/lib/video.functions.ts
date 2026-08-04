@@ -3,7 +3,6 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { VideoTaskState } from "@/lib/video.server";
 
-
 const startSchema = z.object({
   workLabel: z.string().default("V1"),
   /** 영상 생성 프로바이더. replicate = Replicate 직접 연동 (기본) */
@@ -39,6 +38,12 @@ export const startVideoGeneration = createServerFn({ method: "POST" })
 
     const prompt = data.finalPrompt.trim();
     if (!prompt) throw new Error("EMPTY_PROMPT");
+    if (/(^|\s)@[A-Za-z0-9_-]+/.test(prompt)) throw new Error("UNRESOLVED_MEDIA_MENTION");
+
+    const { moderateVideoPrompt } = await import("@/lib/video-moderation.server");
+    const moderation = await moderateVideoPrompt(prompt);
+    if (moderation.status === "blocked")
+      throw new Error(`CONTENT_BLOCKED: ${moderation.reason || moderation.categories.join(", ")}`);
 
     const seed = data.seed ?? null;
 
@@ -60,6 +65,8 @@ export const startVideoGeneration = createServerFn({ method: "POST" })
         seed,
         image_paths: data.imagePaths,
         options: data.options,
+        moderation_status: moderation.status,
+        moderation_details: moderation,
       })
       .select("id")
       .single();
@@ -93,11 +100,11 @@ export const startVideoGeneration = createServerFn({ method: "POST" })
         });
       };
 
-      const { taskId, model } = await runReplicate();
+      const { taskId, model, modelVersion } = await runReplicate();
 
       await supabase
         .from("video_generations")
-        .update({ task_id: taskId, api_model: model })
+        .update({ task_id: taskId, api_model: model, api_model_version: modelVersion })
         .eq("id", videoId);
 
       return { videoGenerationId: videoId, status: "running" as const };
@@ -117,8 +124,6 @@ export const startVideoGeneration = createServerFn({ method: "POST" })
     }
   });
 
-
-
 const pollSchema = z.object({ videoGenerationId: z.string().uuid() });
 
 export const pollVideoGeneration = createServerFn({ method: "POST" })
@@ -129,7 +134,7 @@ export const pollVideoGeneration = createServerFn({ method: "POST" })
 
     const { data: row } = await supabase
       .from("video_generations")
-      .select("id, tenant_id, status, task_id, duration_seconds, error_message")
+      .select("id, tenant_id, status, task_id, duration_seconds, error_message, moderation_status")
       .eq("id", data.videoGenerationId)
       .maybeSingle();
     if (!row) throw new Error("VIDEO_NOT_FOUND");
@@ -139,7 +144,8 @@ export const pollVideoGeneration = createServerFn({ method: "POST" })
     if (!row.task_id) return { status: "running" as const, error: null };
 
     const { isLovableTaskId, getLovableVideoTask } = await import("@/lib/video-lovable.server");
-    const { isReplicateTaskId, getReplicateVideoTask } = await import("@/lib/video-replicate.server");
+    const { isReplicateTaskId, getReplicateVideoTask } =
+      await import("@/lib/video-replicate.server");
     const { getVideoTask } = await import("@/lib/video.server");
     let state: VideoTaskState;
     if (isReplicateTaskId(row.task_id)) {
@@ -149,8 +155,6 @@ export const pollVideoGeneration = createServerFn({ method: "POST" })
     } else {
       state = await getVideoTask(row.task_id);
     }
-
-
 
     if (state.status === "queued" || state.status === "running") {
       return { status: "running" as const, error: null };
@@ -175,6 +179,8 @@ export const pollVideoGeneration = createServerFn({ method: "POST" })
       const res = await fetch(state.videoUrl);
       if (!res.ok) throw new Error(`FETCH_VIDEO_FAILED: ${res.status}`);
       const bytes = new Uint8Array(await res.arrayBuffer());
+      const { readMp4Metadata } = await import("@/lib/mp4-metadata.server");
+      const metadata = readMp4Metadata(bytes);
       const storagePath = `${row.tenant_id}/video/${row.id}/0.mp4`;
 
       const { error: upErr } = await supabaseAdmin.storage
@@ -186,13 +192,22 @@ export const pollVideoGeneration = createServerFn({ method: "POST" })
         video_generation_id: row.id,
         seq: 0,
         storage_path: storagePath,
-        source_url: state.videoUrl,
-        duration_seconds: row.duration_seconds,
+        source_url: null,
+        duration_seconds: metadata.durationSeconds,
+        width: metadata.width,
+        height: metadata.height,
+        moderation_status: row.moderation_status === "approved" ? "approved" : "failed",
+        metadata: { measured: true, requestedDurationSeconds: row.duration_seconds },
       });
 
       await supabaseAdmin
         .from("video_generations")
-        .update({ status: "done", completed_at: new Date().toISOString() })
+        .update({
+          status: "done",
+          actual_resolution: metadata.resolution,
+          actual_duration_seconds: metadata.durationSeconds,
+          completed_at: new Date().toISOString(),
+        })
         .eq("id", row.id);
 
       void userId;
