@@ -13,7 +13,7 @@ export const DEFAULT_REPLICATE_TEXT_MODEL =
 
 /** 이미지→영상 기본 모델. 환경 변수로 덮어쓸 수 있다. */
 export const DEFAULT_REPLICATE_IMAGE_MODEL =
-  process.env.REPLICATE_IMAGE_TO_VIDEO_MODEL?.trim() || "wan-video/wan-2.1-i2v-14b-480p";
+  process.env.REPLICATE_IMAGE_TO_VIDEO_MODEL?.trim() || "wan-video/wan-2.2-i2v-fast";
 
 function apiKey() {
   const key = process.env.REPLICATE_API_KEY;
