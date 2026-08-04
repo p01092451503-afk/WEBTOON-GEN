@@ -93,9 +93,14 @@ export async function probeSeedance(): Promise<ModelHealth> {
     const res = await fetch(`${base}/contents/generations/tasks/health-probe-000`, {
       headers: { Authorization: `Bearer ${key}` },
     });
-    const text = await res.text().catch(() => "");
     if (res.status === 401 || res.status === 403) {
-      return { id: endpoint, label, provider: "seedance", status: "unavailable", detail: "API 키 인증에 실패했습니다(401/403)." };
+      return {
+        id: endpoint,
+        label,
+        provider: "seedance",
+        status: "unavailable",
+        detail: "Authentication failed. Ask an administrator to verify the Seedance connection and permissions.",
+      };
     }
     return {
       id: endpoint,
@@ -103,16 +108,15 @@ export async function probeSeedance(): Promise<ModelHealth> {
       provider: "seedance",
       status: "unknown",
       detail:
-        "API 인증은 정상입니다. 다만 모델 활성화(Safe Experience Mode 해제) 여부는 실제 생성 시에만 확인됩니다. " +
-        `프로브 응답: HTTP ${res.status} ${text.slice(0, 120)}`,
+        "Authentication is working. Model activation and Safe Experience mode can only be confirmed when a real generation starts.",
     };
-  } catch (err) {
+  } catch {
     return {
       id: endpoint,
       label,
       provider: "seedance",
       status: "unknown",
-      detail: err instanceof Error ? err.message : String(err),
+      detail: "The Seedance service could not be reached. Check the connection again in a few moments.",
     };
   }
 }
