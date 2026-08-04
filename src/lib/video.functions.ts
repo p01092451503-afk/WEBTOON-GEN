@@ -4,7 +4,10 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const startSchema = z.object({
   workLabel: z.string().default("V1"),
+  /** 영상 생성 프로바이더. auto = Seedance 우선, 실패 시 Lovable AI Gateway 폴백 */
+  provider: z.enum(["auto", "seedance", "lovable"]).default("auto"),
   mode: z.enum(["t2v", "i2v"]).default("t2v"),
+
   finalPrompt: z.string().min(1).max(4000),
   rawPrompt: z.string().max(4000).optional(),
   promptEdited: z.boolean().default(false),
