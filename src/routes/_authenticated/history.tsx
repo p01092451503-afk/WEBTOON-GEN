@@ -8,7 +8,55 @@ import { SignedVideo } from "@/components/SignedVideo";
 import { Button } from "@/components/ui/button";
 import { IconTooltip } from "@/components/icon-tooltip";
 import { toast } from "sonner";
-import { Clock, X, Film } from "lucide-react";
+import { Clock, X, Film, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+
+function ConfirmDelete({
+  title,
+  description,
+  onConfirm,
+  disabled,
+  children,
+}: {
+  title: string;
+  description: string;
+  onConfirm: () => void;
+  disabled?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild disabled={disabled}>
+        {children}
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{title}</AlertDialogTitle>
+          <AlertDialogDescription>{description}</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={onConfirm}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            Delete
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
 
 export const Route = createFileRoute("/_authenticated/history")({
   component: HistoryPage,
@@ -74,8 +122,28 @@ function useVideoHistory(tenantId: string | null) {
       cancelled = true;
     };
   }, [tenantId]);
-  return rows;
+  return { rows, setRows };
 }
+
+/** Delete video generations plus their stored files. */
+async function deleteVideoGenerations(rows: VideoRow[]) {
+  const ids = rows.map((r) => r.id);
+  if (ids.length === 0) return;
+
+  const paths = rows.flatMap((r) =>
+    r.results.flatMap((res) =>
+      [res.storage_path, res.poster_path].filter((p): p is string => Boolean(p)),
+    ),
+  );
+  if (paths.length > 0) {
+    await supabase.storage.from("generation-outputs").remove(paths);
+  }
+
+  await supabase.from("video_results").delete().in("video_generation_id", ids);
+  const { error } = await supabase.from("video_generations").delete().in("id", ids);
+  if (error) throw new Error(error.message);
+}
+
 
 type Row = {
   id: string;
@@ -136,21 +204,71 @@ function HistoryPage() {
   const { t, i18n } = useTranslation();
   const { tenantId } = useTenant();
   const rows = useHistory(tenantId);
-  const videoRows = useVideoHistory(tenantId);
+  const { rows: videoRows, setRows: setVideoRows } = useVideoHistory(tenantId);
+  const [busy, setBusy] = useState(false);
   const { id, tab } = Route.useSearch();
   const navigate = Route.useNavigate();
   const selected = tab === "image" ? (rows?.find((r) => r.id === id) ?? null) : null;
   const selectedVideo = tab === "video" ? (videoRows?.find((r) => r.id === id) ?? null) : null;
   const locale = i18n.language.startsWith("ko") ? "ko-KR" : "en-US";
 
-  const list = tab === "video" ? videoRows : rows;
+  const list: Row[] | VideoRow[] | null = tab === "video" ? videoRows : rows;
+  const failedCount = (videoRows ?? []).filter((r) => r.status === "error").length;
+
+  async function removeVideos(targets: VideoRow[]) {
+    if (targets.length === 0) return;
+    setBusy(true);
+    try {
+      await deleteVideoGenerations(targets);
+      const removed = new Set(targets.map((r) => r.id));
+      setVideoRows((prev) => (prev ?? []).filter((r) => !removed.has(r.id)));
+      if (id && removed.has(id)) navigate({ search: { tab } });
+      toast.success(`Deleted ${targets.length} item${targets.length > 1 ? "s" : ""}.`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Delete failed");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   return (
     <main className="max-w-6xl px-5 py-8 sm:py-10">
-      <header className="min-w-0">
-        <div className="text-xs font-semibold text-primary">{t("history.eyebrow")}</div>
-        <h1 className="mt-1 truncate text-3xl font-extrabold tracking-tight">{t("history.title")}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{t("history.sub")}</p>
+      <header className="min-w-0 sm:flex sm:items-end sm:justify-between sm:gap-4">
+        <div className="min-w-0">
+          <div className="text-xs font-semibold text-primary">{t("history.eyebrow")}</div>
+          <h1 className="mt-1 truncate text-3xl font-extrabold tracking-tight">
+            {t("history.title")}
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">{t("history.sub")}</p>
+        </div>
+        {tab === "video" && (videoRows?.length ?? 0) > 0 && (
+          <div className="mt-4 flex shrink-0 gap-2 sm:mt-0">
+            {failedCount > 0 && (
+              <ConfirmDelete
+                title="Delete failed items?"
+                description={`${failedCount} failed generation${failedCount > 1 ? "s" : ""} will be permanently removed.`}
+                disabled={busy}
+                onConfirm={() => removeVideos((videoRows ?? []).filter((r) => r.status === "error"))}
+              >
+                <Button size="sm" variant="outline" className="rounded-full">
+                  <Trash2 className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
+                  Clear failed ({failedCount})
+                </Button>
+              </ConfirmDelete>
+            )}
+            <ConfirmDelete
+              title="Delete all history?"
+              description="Every video in your history and its stored file will be permanently removed."
+              disabled={busy}
+              onConfirm={() => removeVideos(videoRows ?? [])}
+            >
+              <Button size="sm" variant="outline" className="rounded-full text-destructive">
+                <Trash2 className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
+                Delete all
+              </Button>
+            </ConfirmDelete>
+          </div>
+        )}
       </header>
 
       {/* Image history is hidden while the platform demos video generation only. */}
@@ -167,6 +285,7 @@ function HistoryPage() {
           <VideoDetailCard
             row={selectedVideo}
             onClose={() => navigate({ search: { tab } })}
+            onDelete={() => removeVideos([selectedVideo])}
             locale={locale}
           />
         </div>
@@ -196,43 +315,65 @@ function HistoryPage() {
           {(list as VideoRow[]).map((r) => {
             const first = r.results[0];
             return (
-              <button
+              <div
                 key={r.id}
-                onClick={() => navigate({ search: { id: r.id, tab: "video" } })}
-                className="group overflow-hidden rounded-2xl border border-border bg-card text-left shadow-toss-sm transition hover:shadow-toss"
+                className="group relative overflow-hidden rounded-2xl border border-border bg-card shadow-toss-sm transition hover:shadow-toss"
               >
-                <div className="relative aspect-video overflow-hidden bg-muted">
-                  {first?.storage_path ? (
-                    <SignedVideo
-                      bucket="generation-outputs"
-                      path={first.storage_path}
-                      posterPath={first.poster_path}
-                      controls={false}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
-                      {r.status === "error" ? t("history.failed") : r.status}
+                <button
+                  onClick={() => navigate({ search: { id: r.id, tab: "video" } })}
+                  className="block w-full text-left"
+                >
+                  <div className="relative aspect-video overflow-hidden bg-muted">
+                    {first?.storage_path ? (
+                      <SignedVideo
+                        bucket="generation-outputs"
+                        path={first.storage_path}
+                        posterPath={first.poster_path}
+                        controls={false}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
+                        {r.status === "error" ? t("history.failed") : r.status}
+                      </div>
+                    )}
+                    <div className="absolute left-2 top-2">
+                      <StatusPill status={r.status} />
                     </div>
-                  )}
-                  <div className="absolute left-2 top-2">
-                    <StatusPill status={r.status} />
                   </div>
+                  <div className="space-y-1 p-3 pr-12">
+                    <div className="truncate text-sm font-bold">{r.work_label}</div>
+                    <div className="truncate text-[11px] text-muted-foreground">
+                      {r.final_prompt ?? ""}
+                    </div>
+                    <div className="text-[11px] text-muted-foreground">
+                      {new Date(r.created_at).toLocaleString(locale)}
+                    </div>
+                  </div>
+                </button>
+                <div className="absolute bottom-3 right-3">
+                  <ConfirmDelete
+                    title="Delete this video?"
+                    description="This generation and its stored video file will be permanently removed."
+                    disabled={busy}
+                    onConfirm={() => removeVideos([r])}
+                  >
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      aria-label="Delete generation"
+                      className="h-8 w-8 rounded-full p-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" aria-hidden="true" />
+                    </Button>
+                  </ConfirmDelete>
                 </div>
-                <div className="space-y-1 p-3">
-                  <div className="truncate text-sm font-bold">{r.work_label}</div>
-                  <div className="truncate text-[11px] text-muted-foreground">
-                    {r.final_prompt ?? ""}
-                  </div>
-                  <div className="text-[11px] text-muted-foreground">
-                    {new Date(r.created_at).toLocaleString(locale)}
-                  </div>
-                </div>
-              </button>
+              </div>
             );
           })}
         </div>
       ) : (
+
         <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
           {(list as Row[]).map((r) => {
             const first = r.results[0];
@@ -277,10 +418,12 @@ function HistoryPage() {
 function VideoDetailCard({
   row,
   onClose,
+  onDelete,
   locale,
 }: {
   row: VideoRow;
   onClose: () => void;
+  onDelete: () => void;
   locale: string;
 }) {
   const { t } = useTranslation();
@@ -295,6 +438,20 @@ function VideoDetailCard({
           <Button size="sm" variant="outline" asChild className="rounded-full">
             <Link to="/video">{t("nav.video", "Video studio")}</Link>
           </Button>
+          <ConfirmDelete
+            title="Delete this video?"
+            description="This generation and its stored video file will be permanently removed."
+            onConfirm={onDelete}
+          >
+            <Button
+              size="sm"
+              variant="ghost"
+              aria-label="Delete generation"
+              className="rounded-full text-destructive hover:bg-destructive/10"
+            >
+              <Trash2 className="h-4 w-4" aria-hidden="true" />
+            </Button>
+          </ConfirmDelete>
           <IconTooltip label={t("common.close_details")}>
             <Button size="sm" variant="ghost" className="rounded-full" onClick={onClose}>
               <X className="h-4 w-4" aria-hidden="true" />
@@ -302,6 +459,7 @@ function VideoDetailCard({
           </IconTooltip>
         </div>
       </header>
+
 
       <div className="space-y-5">
         {row.results.map((res) => (
