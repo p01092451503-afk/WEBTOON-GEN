@@ -117,13 +117,7 @@ export const startVideoGeneration = createServerFn({ method: "POST" })
         negative_prompt: negativePrompt,
       });
 
-      if (provider === "lovable") {
-        const { createLovableVideoTask } = await import("@/lib/video-lovable.server");
-        const started = await createLovableVideoTask(providerInput);
-        taskId = started.taskId;
-        model = started.model;
-        modelVersion = null;
-      } else if (provider === "seedance") {
+      if (provider === "seedance") {
          const { buildSeedanceText, createVideoTask } = await import("@/lib/video.server");
          const started = await createVideoTask({
            text: buildSeedanceText({
