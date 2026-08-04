@@ -128,10 +128,20 @@ function RootComponent() {
 
   useEffect(() => {
     let mounted = true;
+    let lastUserId: string | null | undefined;
     import("@/integrations/supabase/client").then(({ supabase }) => {
       if (!mounted) return;
-      const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+      supabase.auth.getSession().then(({ data }) => {
+        lastUserId = data.session?.user.id ?? null;
+      });
+      const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
         if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
+        const nextUserId = session?.user.id ?? null;
+        // Supabase re-emits SIGNED_IN on tab focus / token refresh. Invalidating on
+        // those events remounts the whole app and wipes in-progress UI state
+        // (e.g. a running video generation). Only react to real identity changes.
+        if (event === "SIGNED_IN" && lastUserId === nextUserId) return;
+        lastUserId = nextUserId;
         router.invalidate();
         if (event !== "SIGNED_OUT") queryClient.invalidateQueries();
       });
@@ -141,6 +151,7 @@ function RootComponent() {
       mounted = false;
     };
   }, [router, queryClient]);
+
 
   return (
     <QueryClientProvider client={queryClient}>
