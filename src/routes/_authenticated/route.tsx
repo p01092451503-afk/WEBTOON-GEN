@@ -35,12 +35,19 @@ const PAGE_META_KEYS: Record<string, string> = {
   "/history": "header.history",
 };
 
+// Session + tenant bootstrap only needs to happen once per browser session.
+// Caching it prevents a full-screen loading flash (and state loss) whenever the
+// layout remounts — e.g. after a router invalidation triggered by Supabase auth events.
+let bootstrapCache: { email: string } | null = null;
+
 function AuthenticatedLayout() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [status, setStatus] = useState<"checking" | "onboarding" | "ready" | "error">("checking");
+  const [status, setStatus] = useState<"checking" | "onboarding" | "ready" | "error">(
+    bootstrapCache ? "ready" : "checking",
+  );
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [email, setEmail] = useState<string>("");
+  const [email, setEmail] = useState<string>(bootstrapCache?.email ?? "");
   const bootstrap = useServerFn(bootstrapTenant);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
@@ -54,6 +61,7 @@ function AuthenticatedLayout() {
   }, [pathname, t]);
 
   useEffect(() => {
+    if (bootstrapCache) return;
     let cancelled = false;
     (async () => {
       const { data, error } = await supabase.auth.getUser();
@@ -61,10 +69,14 @@ function AuthenticatedLayout() {
         navigate({ to: "/auth", replace: true });
         return;
       }
-      setEmail(data.user.email ?? "");
-      setStatus("onboarding");
+      const userEmail = data.user.email ?? "";
+      if (!cancelled) {
+        setEmail(userEmail);
+        setStatus("onboarding");
+      }
       try {
         await bootstrap();
+        bootstrapCache = { email: userEmail };
         if (!cancelled) setStatus("ready");
       } catch (e) {
         if (!cancelled) {
@@ -77,6 +89,7 @@ function AuthenticatedLayout() {
       cancelled = true;
     };
   }, [navigate, bootstrap]);
+
 
   async function handleSignOut() {
     await supabase.auth.signOut();
