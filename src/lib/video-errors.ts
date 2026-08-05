@@ -57,6 +57,22 @@ function pick(raw: string): ErrorGuide {
       ],
     );
   }
+  if (
+    r.includes("output video may contain sensitive information") ||
+    r.includes("output may contain sensitive information") ||
+    r.includes("sensitive information")
+  ) {
+    return guide(
+      "safety",
+      "Seedance blocked the generated result to protect sensitive information.",
+      "The request reached Seedance, but its output safety review rejected the resulting video. Retrying the identical request may be blocked again.",
+      [
+        "Reference media: remove visible names, phone numbers, addresses, ID documents, account details, screens, or other private information.",
+        "Prompt: remove instructions that reveal, reproduce, or focus on personal or confidential information.",
+        "If the references are safe, simplify them and retry with a neutral prompt that describes only the intended scene and motion.",
+      ],
+    );
+  }
   if (r.includes("content_blocked")) return guide("safety", "This request cannot be generated.", "Revise the content and try again.", ["Positive prompt: remove explicit, exploitative, hateful, or graphically violent descriptions.", "Reference media: replace any image or video that may trigger the safety policy."]);
   if (r.includes("content_check")) return guide("provider", "The safety check is temporarily unavailable.", "Your request was not sent to the provider. Try again shortly.");
   if (r.includes("model is not available") || r.includes("invalid model")) return guide("model", "The selected video engine is unavailable.", "Run Model availability check, then select an available provider.", ["Provider and model ID: confirm the displayed model is marked Available.", "Mode: confirm the model supports text-to-video or image-to-video as selected."]);
