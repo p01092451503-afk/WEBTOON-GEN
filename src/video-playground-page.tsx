@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type DragEvent, type ReactNode } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { AlertCircle, CheckCircle2, CircleHelp, Download, Film, ImagePlus, Loader2, Monitor, RefreshCw, Trash2, Video, Volume2, VolumeX, X } from "lucide-react";
+import { AlertCircle, CheckCircle2, CircleHelp, Download, Film, ImagePlus, Loader2, Monitor, RefreshCw, Sparkles, Trash2, Video, Volume2, VolumeX, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/hooks/useTenant";
 import { useVideoGeneration } from "@/hooks/useVideoGeneration";
