@@ -72,9 +72,9 @@ export function VideoPlaygroundPage() {
   const checkHealth = useServerFn(checkVideoModelHealth);
   const [assets, setAssets] = useState<MediaAsset[]>([]);
   const [prompt, setPrompt] = useState("");
-  const [resolution, setResolution] = useState<SeedanceResolution>("720p");
-  const [durationSeconds, setDurationSeconds] = useState(10);
-  const [aspectRatio, setAspectRatio] = useState("16:9");
+  const [resolution, setResolution] = useState<SeedanceResolution>("480p");
+  const [durationSeconds, setDurationSeconds] = useState(5);
+  const [aspectRatio, setAspectRatio] = useState("9:16");
   const [outputQuantity, setOutputQuantity] = useState(1);
   const [generateAudio, setGenerateAudio] = useState(true);
   const [uploading, setUploading] = useState(false);
