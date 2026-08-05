@@ -10,7 +10,7 @@ export type ModelHealth = {
   validation?: {
     credential: "valid" | "invalid" | "missing" | "unknown";
     model: "available" | "unavailable" | "unknown";
-    endpoint: "available" | "unavailable" | "not_configured" | "unknown";
+    endpoint: "available" | "configured" | "unavailable" | "not_configured" | "unknown";
     configuredEndpoint: string | null;
   };
 };
@@ -140,11 +140,14 @@ export async function probeSeedance(): Promise<ModelHealth> {
     }
 
     const modelAvailable = modelIds.includes(seedance2Model);
-    const endpointAvailable = configuredEndpoint
+    // ARK endpoint IDs (ep-...) are invocation targets, not model catalog
+    // entries. Their absence from GET /models does not mean they are invalid.
+    const endpointListedAsModel = configuredEndpoint
       ? modelIds.includes(configuredEndpoint)
       : false;
+    const endpointConfigured = Boolean(configuredEndpoint);
     const catalogReadable = modelsResponse.ok;
-    const callableTargetAvailable = modelAvailable || endpointAvailable;
+    const callableTargetAvailable = modelAvailable || endpointListedAsModel;
 
     return {
       id: seedance2Model,
@@ -152,19 +155,17 @@ export async function probeSeedance(): Promise<ModelHealth> {
       provider: "seedance",
       status: callableTargetAvailable ? "available" : "unknown",
       detail: callableTargetAvailable
-        ? `ARK authentication succeeded and ${endpointAvailable ? "the configured video endpoint" : "Seedance 2.0"} is available.`
+        ? `ARK authentication succeeded and ${endpointListedAsModel ? "the configured video endpoint" : "Seedance 2.0"} is available.`
         : catalogReadable
           ? "ARK authentication succeeded, but Seedance 2.0 or the configured endpoint was not returned by the model catalog. Check model activation and project ownership."
           : "ARK authentication succeeded. The model catalog is unavailable, so the model will be confirmed when generation starts.",
       validation: {
         credential: "valid",
         model: catalogReadable ? (modelAvailable ? "available" : "unavailable") : "unknown",
-        endpoint: configuredEndpoint
-          ? catalogReadable
-            ? endpointAvailable
-              ? "available"
-              : "unavailable"
-            : "unknown"
+        endpoint: endpointConfigured
+          ? endpointListedAsModel
+            ? "available"
+            : "configured"
           : "not_configured",
         configuredEndpoint: configuredEndpoint ?? null,
       },
