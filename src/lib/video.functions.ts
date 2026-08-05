@@ -149,7 +149,7 @@ export const startVideoGeneration = createServerFn({ method: "POST" })
         })
         .eq("id", videoId);
 
-      return { videoGenerationId: videoId, status: "running" as const, recoveryNotice: null };
+      return { videoGenerationId: videoId, status: "running" as const, error: null as string | null, recoveryNotice: null };
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       const { formatVideoFailureReport } = await import("@/lib/video-errors");
