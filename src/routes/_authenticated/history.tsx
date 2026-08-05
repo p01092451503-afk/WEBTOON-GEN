@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { IconTooltip } from "@/components/icon-tooltip";
 import { toast } from "sonner";
 import { Clock, X, Film, Trash2 } from "lucide-react";
+import { getKoreanVideoErrorSummary } from "@/lib/video-errors";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -513,8 +514,19 @@ function VideoDetailCard({
         </div>
 
         {row.error_message && (
-          <div className="whitespace-pre-wrap rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-xs text-destructive">
-            {row.error_message}
+          <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-xs text-destructive">
+            <p className="font-semibold">실패 원인</p>
+            <p className="mt-1 whitespace-pre-wrap text-foreground/90">
+              {row.error_message.includes("실패 원인:")
+                ? row.error_message.split("실패 원인:")[1]?.split("\n")[0]
+                : getKoreanVideoErrorSummary(row.error_message)}
+            </p>
+            <details className="mt-3">
+              <summary className="cursor-pointer font-medium">기술 정보 보기</summary>
+              <pre className="mt-2 max-h-48 overflow-auto whitespace-pre-wrap text-[11px] text-muted-foreground">
+                {row.error_message}
+              </pre>
+            </details>
           </div>
         )}
 
