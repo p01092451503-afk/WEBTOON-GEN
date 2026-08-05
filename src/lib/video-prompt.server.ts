@@ -19,8 +19,11 @@ const BASE_SYSTEM_PROMPT =
   "Action control contains Korean, translate its meaning directly into natural cinematic English " +
   "while preserving names, actions, timing, direction, and spatial relationships. Uploaded reference " +
   "media is supplied separately to the video model, so do not add media tokens or mention syntax. " +
+  "If the user refers to uploaded references with labels like img1, img2, video1, etc., keep their " +
+  "intent in the paragraph and describe how each reference should influence the scene. " +
   "Do not use image-prompt conventions or introduce Figure 1/Figure 2 labels. Output English only, " +
   "with no Korean text, lists, headings, quotes, negative instructions, or commentary.";
+
 
 const SAFETY_APPENDIX =
   " This is a safety-aware rewrite. Avoid names, addresses, phone numbers, IDs, screens, account " +
