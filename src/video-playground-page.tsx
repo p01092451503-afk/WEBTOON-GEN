@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { CircleHelp, Download, Film, ImagePlus, Loader2, RefreshCw, Trash2, Video, X } from "lucide-react";
+import { AlertCircle, CheckCircle2, CircleHelp, Download, Film, ImagePlus, Loader2, RefreshCw, Trash2, Video, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/hooks/useTenant";
 import { useVideoGeneration } from "@/hooks/useVideoGeneration";
@@ -20,7 +20,9 @@ import { recoverStaleServerFunction } from "@/lib/server-function-recovery";
 import { extractVideoFrames } from "@/lib/videoFrames";
 
 type MediaAsset = { id: string; name: string; kind: "image" | "video"; coverPath: string; framePaths: string[] };
-type Health = { models: Array<{ provider: string; status: "available" | "unavailable" | "unknown" }> };
+type ValidationState = "valid" | "invalid" | "missing" | "available" | "unavailable" | "not_configured" | "unknown";
+type HealthModel = { provider: string; label: string; status: "available" | "unavailable" | "unknown"; detail: string; validation?: { credential: ValidationState; model: ValidationState; endpoint: ValidationState; configuredEndpoint: string | null } };
+type Health = { checkedAt: string; models: HealthModel[] };
 
 export function VideoPlaygroundPage() {
   const { tenantId } = useTenant();
@@ -34,11 +36,12 @@ export function VideoPlaygroundPage() {
   const [preparing, setPreparing] = useState(false);
   const [tourOpen, setTourOpen] = useState(false);
   const [health, setHealth] = useState<Health | null>(null);
+  const [checkingHealth, setCheckingHealth] = useState(false);
 
   useEffect(() => { if (shouldStartVideoTour()) setTourOpen(true); }, []);
   useEffect(() => {
     let active = true;
-    const run = async () => { try { const result = await checkHealth({ data: undefined }); if (active) setHealth(result as Health); } catch (error) { if (recoverStaleServerFunction(error)) return; if (active) setHealth(null); } };
+    const run = async () => { setCheckingHealth(true); try { const result = await checkHealth({ data: undefined }); if (active) setHealth(result as Health); } catch (error) { if (recoverStaleServerFunction(error)) return; if (active) setHealth(null); } finally { if (active) setCheckingHealth(false); } };
     void run();
     const timer = window.setInterval(() => void run(), 30_000);
     return () => { active = false; window.clearInterval(timer); };
@@ -48,6 +51,7 @@ export function VideoPlaygroundPage() {
   const firstReference = studyPaths[0] ?? null;
   const hasVideo = assets.some((asset) => asset.kind === "video");
   const readyCount = health?.models.filter((model) => model.status === "available").length ?? 0;
+  const seedanceHealth = health?.models.find((model) => model.provider === "seedance") ?? null;
   const busy = uploading || preparing || gen.running;
 
   async function uploadBlob(blob: Blob, name: string) {
@@ -115,9 +119,10 @@ export function VideoPlaygroundPage() {
         <div>
           <h1 className="mt-2 text-3xl font-extrabold">What do you want to create?</h1>
           <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">Add reference images or videos, then describe your scene. Their subjects, visual style, lighting, and motion are studied and supplied directly to the video model.</p></div>
-        <div className="flex items-center gap-2"><span className="rounded-full border border-border bg-card px-3 py-2 text-xs font-semibold text-muted-foreground">{health ? `${readyCount} engine${readyCount === 1 ? "" : "s"} ready` : "Checking engines"}</span>
+        <div className="flex items-center gap-2"><Button variant="outline" size="sm" onClick={() => void checkHealth({ data: undefined }).then((result) => { setHealth(result as Health); toast.success("ARK connection checked."); }).catch((error) => { if (!recoverStaleServerFunction(error)) toast.error("Connection check failed."); })} disabled={checkingHealth}><RefreshCw className={checkingHealth ? "h-4 w-4 animate-spin" : "h-4 w-4"} /> Validate ARK</Button><span className="rounded-full border border-border bg-card px-3 py-2 text-xs font-semibold text-muted-foreground">{health ? `${readyCount} engine${readyCount === 1 ? "" : "s"} ready` : "Checking engines"}</span>
           <Button variant="outline" size="icon" onClick={() => setTourOpen(true)} aria-label="Open quick tour"><CircleHelp className="h-4 w-4" /></Button></div>
       </header>
+      {seedanceHealth && <section className="mb-6 rounded-lg border border-border bg-card p-4"><div className="flex items-start gap-3">{seedanceHealth.status === "available" ? <CheckCircle2 className="mt-0.5 h-5 w-5 text-primary" /> : <AlertCircle className="mt-0.5 h-5 w-5 text-muted-foreground" />}<div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><h2 className="text-sm font-bold">ARK / Seedance 2.0 validation</h2><span className="rounded-full border border-border px-2 py-0.5 text-xs font-semibold">{seedanceHealth.status}</span></div><p className="mt-1 text-xs leading-relaxed text-muted-foreground">{seedanceHealth.detail}</p>{seedanceHealth.validation && <div className="mt-3 grid gap-2 sm:grid-cols-3"><ValidationItem label="API key" value={seedanceHealth.validation.credential} /><ValidationItem label="Seedance model" value={seedanceHealth.validation.model} /><ValidationItem label="Configured endpoint" value={seedanceHealth.validation.endpoint} /></div>}</div></div></section>}
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
         <section data-video-tour="playground" className="overflow-hidden rounded-lg border border-border bg-card">
           <div className="border-b border-border px-6 py-4"><h2 className="font-bold">Create a video</h2><p className="mt-1 text-xs text-muted-foreground">Uploaded references are analyzed and used during generation. Your prompt is required.</p></div>
@@ -143,3 +148,4 @@ export function VideoPlaygroundPage() {
 function EmptyResult({ loading = false }: { loading?: boolean }) { return <div className="flex min-h-56 flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-border bg-muted/20 px-6 text-center">{loading ? <Loader2 className="h-8 w-8 animate-spin text-primary" /> : <Film className="h-8 w-8 text-muted-foreground" />}<p className="text-sm text-muted-foreground">{loading ? "Creating your video. You can safely leave this page." : "Add references if you have them, describe the scene, and generate."}</p></div>; }
 function ErrorCard({ message }: { message: string }) { const info = explainVideoError(message); return <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-xs"><p className="font-bold text-destructive">{info.title}</p><p className="mt-1 text-foreground/80">{info.hint}</p>{info.checks.length > 0 && <ul className="mt-2 list-disc space-y-1 pl-4">{info.checks.map((item) => <li key={item}>{item}</li>)}</ul>}</div>; }
 function ResultVideo({ path }: { path: string }) { const url = useSignedUrl("generation-outputs", path, 300); const [downloading, setDownloading] = useState(false); async function download() { setDownloading(true); try { const name = path.split("/").pop() || "pilotstudio-video.mp4"; const { data, error } = await supabase.storage.from("generation-outputs").createSignedUrl(path, 60, { download: name }); if (error || !data?.signedUrl) throw error || new Error("Download failed"); const link = document.createElement("a"); link.href = data.signedUrl; link.download = name; document.body.appendChild(link); link.click(); link.remove(); } catch (error) { toast.error(error instanceof Error ? error.message : "Download failed"); } finally { setDownloading(false); } } if (!url) return <div className="aspect-video animate-pulse rounded-lg bg-muted" />; return <div className="space-y-3"><video src={url} controls playsInline className="aspect-video w-full rounded-lg border border-border bg-foreground object-contain" /><Button variant="outline" className="w-full" onClick={download} disabled={downloading}>{downloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />} Download</Button></div>; }
+function ValidationItem({ label, value }: { label: string; value: ValidationState }) { const positive = value === "valid" || value === "available"; return <div className="flex items-center justify-between rounded-md border border-border bg-muted/20 px-3 py-2 text-xs"><span className="text-muted-foreground">{label}</span><span className="font-bold">{positive ? "Ready" : value === "not_configured" ? "Not set" : value === "invalid" || value === "unavailable" || value === "missing" ? "Check required" : "Unknown"}</span></div>; }

@@ -7,6 +7,12 @@ export type ModelHealth = {
   provider: "lovable" | "seedance" | "replicate";
   status: "available" | "unavailable" | "unknown";
   detail: string;
+  validation?: {
+    credential: "valid" | "invalid" | "missing" | "unknown";
+    model: "available" | "unavailable" | "unknown";
+    endpoint: "available" | "unavailable" | "not_configured" | "unknown";
+    configuredEndpoint: string | null;
+  };
 };
 
 const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/videos";
@@ -86,29 +92,82 @@ export async function probeSeedance(): Promise<ModelHealth> {
       provider: "seedance",
       status: "unavailable",
       detail: "Seedance 2.0 연결에 필요한 ARK_API_KEY 또는 ARK_BASE_URL이 없습니다.",
+      validation: {
+        credential: key ? "unknown" : "missing",
+        model: "unknown",
+        endpoint: configuredEndpoint ? "unknown" : "not_configured",
+        configuredEndpoint: configuredEndpoint ?? null,
+      },
     };
   }
 
   try {
-    const res = await fetch(`${base}/contents/generations/tasks/health-probe-000`, {
-      headers: { Authorization: `Bearer ${key}` },
-    });
-    if (res.status === 401 || res.status === 403) {
+    const headers = { Authorization: `Bearer ${key}` };
+    const [authResponse, modelsResponse] = await Promise.all([
+      fetch(`${base}/contents/generations/tasks/health-probe-000`, { headers }),
+      fetch(`${base}/models`, { headers }),
+    ]);
+
+    if (
+      authResponse.status === 401 ||
+      authResponse.status === 403 ||
+      modelsResponse.status === 401 ||
+      modelsResponse.status === 403
+    ) {
       return {
         id: seedance2Model,
         label,
         provider: "seedance",
         status: "unavailable",
-        detail: "Authentication failed. Ask an administrator to verify the Seedance connection and permissions.",
+        detail: "The saved ARK API key was rejected. Verify that the key is active and belongs to the same BytePlus project as the video endpoint.",
+        validation: {
+          credential: "invalid",
+          model: "unknown",
+          endpoint: configuredEndpoint ? "unknown" : "not_configured",
+          configuredEndpoint: configuredEndpoint ?? null,
+        },
       };
     }
+
+    let modelIds: string[] = [];
+    if (modelsResponse.ok) {
+      const body = (await modelsResponse.json().catch(() => null)) as
+        | { data?: Array<{ id?: unknown }> }
+        | null;
+      modelIds = (body?.data ?? [])
+        .map((item) => (typeof item.id === "string" ? item.id : ""))
+        .filter(Boolean);
+    }
+
+    const modelAvailable = modelIds.includes(seedance2Model);
+    const endpointAvailable = configuredEndpoint
+      ? modelIds.includes(configuredEndpoint)
+      : false;
+    const catalogReadable = modelsResponse.ok;
+    const callableTargetAvailable = modelAvailable || endpointAvailable;
+
     return {
       id: seedance2Model,
       label,
       provider: "seedance",
-      status: "unknown",
-      detail:
-        `Authentication is working. Seedance 2.0 (${seedance2Model})${configuredEndpoint ? " and its configured endpoint" : ""} will be verified when generation starts.`,
+      status: callableTargetAvailable ? "available" : "unknown",
+      detail: callableTargetAvailable
+        ? `ARK authentication succeeded and ${endpointAvailable ? "the configured video endpoint" : "Seedance 2.0"} is available.`
+        : catalogReadable
+          ? "ARK authentication succeeded, but Seedance 2.0 or the configured endpoint was not returned by the model catalog. Check model activation and project ownership."
+          : "ARK authentication succeeded. The model catalog is unavailable, so the model will be confirmed when generation starts.",
+      validation: {
+        credential: "valid",
+        model: catalogReadable ? (modelAvailable ? "available" : "unavailable") : "unknown",
+        endpoint: configuredEndpoint
+          ? catalogReadable
+            ? endpointAvailable
+              ? "available"
+              : "unavailable"
+            : "unknown"
+          : "not_configured",
+        configuredEndpoint: configuredEndpoint ?? null,
+      },
     };
   } catch {
     return {
@@ -117,6 +176,12 @@ export async function probeSeedance(): Promise<ModelHealth> {
       provider: "seedance",
       status: "unknown",
       detail: "The Seedance service could not be reached. Check the connection again in a few moments.",
+      validation: {
+        credential: "unknown",
+        model: "unknown",
+        endpoint: configuredEndpoint ? "unknown" : "not_configured",
+        configuredEndpoint: configuredEndpoint ?? null,
+      },
     };
   }
 }
