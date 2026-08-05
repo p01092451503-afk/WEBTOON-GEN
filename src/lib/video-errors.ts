@@ -122,6 +122,9 @@ export function getKoreanVideoErrorSummary(raw: string): string {
   const info = explainVideoError(raw);
   const r = raw.toLowerCase();
 
+  if (r.includes("inputtextsensitivecontentdetected") || (r.includes("input text") && r.includes("sensitive information"))) {
+    return "Seedance(BytePlus)가 입력한 프롬프트 문구를 민감정보 포함 가능성으로 판단해 요청 자체를 거부했습니다. 영상은 생성되지 않았고, 앱·API 키·엔드포인트 문제가 아닙니다. 프롬프트에서 실명·연락처·주소·신분증/계정번호·유명인 및 브랜드명, 개인정보를 드러내라는 표현을 지우고 장면과 카메라 움직임만 중립적으로 묘사해 다시 시도해 주세요.";
+  }
   if (r.includes("sensitive information")) {
     return "Seedance(BytePlus)의 출력 안전 심사가 완성된 영상을 민감정보 포함 가능성으로 반려한 것입니다. 앱·API 키·엔드포인트 문제가 아닙니다. 참고 자료에서 이름, 연락처, 주소, 신분증, 계정정보, 화면 속 개인정보를 제거하고 중립적인 프롬프트로 다시 시도해 주세요.";
   }
