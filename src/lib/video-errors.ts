@@ -134,3 +134,75 @@ export function formatVideoError(raw: string): string {
   const checks = info.checks.map((item) => `• ${item}`).join("\n");
   return [`실패 원인: ${getKoreanVideoErrorSummary(raw)}`, "", info.title, info.hint, `Category: ${info.category.replace("_", " ")}`, checks ? `Check these parameters:\n${checks}` : "", `(raw: ${info.raw})`].filter(Boolean).join("\n");
 }
+
+/** Seedance(ARK) 요청/응답 맥락. 실패 리포트를 한글로 상세화하는 데 쓰인다. */
+export type VideoFailureContext = {
+  /** 실패가 발생한 단계 */
+  stage: "request" | "polling" | "download";
+  model?: string | null;
+  mode?: string | null;
+  aspectRatio?: string | null;
+  resolution?: string | null;
+  durationSeconds?: number | null;
+  referenceCount?: number | null;
+  taskId?: string | null;
+};
+
+const STAGE_LABEL: Record<VideoFailureContext["stage"], string> = {
+  request: "Seedance에 영상 작업 생성을 요청하는 중",
+  polling: "Seedance에서 생성 진행 상태를 확인하는 중",
+  download: "완성된 영상을 내려받아 저장하는 중",
+};
+
+/** raw 오류 문자열에서 공급자 응답의 HTTP 코드/에러 코드/메시지를 뽑아낸다. */
+function extractProviderResponse(raw: string): string {
+  const parts: string[] = [];
+  const http = raw.match(/(?:ARK_)?HTTP[_ ](\d{3})/i);
+  if (http) parts.push(`HTTP ${http[1]}`);
+  const code = raw.match(/"?code"?\s*[:=]\s*"?([A-Za-z][A-Za-z0-9_.]{2,40})"?/);
+  if (code) parts.push(`오류코드 ${code[1]}`);
+  const msg = raw.match(/"?message"?\s*[:=]\s*"([^"]{3,300})"/);
+  if (msg) parts.push(`메시지 "${msg[1]}"`);
+  else {
+    const tail = raw.split(":").slice(1).join(":").trim();
+    if (tail) parts.push(`메시지 "${tail.slice(0, 200)}"`);
+  }
+  return parts.length ? parts.join(" · ") : "공급자가 별도 응답 코드를 반환하지 않았습니다.";
+}
+
+function formatRequestSummary(ctx: VideoFailureContext): string {
+  const items = [
+    ctx.model ? `모델/엔드포인트 ${ctx.model}` : null,
+    ctx.mode ? `모드 ${ctx.mode}` : null,
+    ctx.aspectRatio ? `비율 ${ctx.aspectRatio}` : null,
+    ctx.resolution ? `해상도 ${ctx.resolution}` : null,
+    typeof ctx.durationSeconds === "number" ? `길이 ${ctx.durationSeconds}초` : null,
+    typeof ctx.referenceCount === "number" ? `참고자료 ${ctx.referenceCount}개` : null,
+    ctx.taskId ? `작업 ID ${ctx.taskId}` : null,
+  ].filter(Boolean);
+  return items.length ? items.join(" · ") : "요청 정보가 기록되지 않았습니다.";
+}
+
+/**
+ * Seedance(ARK) 요청/응답을 근거로 한글 실패 리포트를 만든다.
+ * 히스토리 error_message 에 그대로 저장된다.
+ */
+export function formatVideoFailureReport(raw: string, ctx: VideoFailureContext): string {
+  const info = explainVideoError(raw);
+  const checks = info.checks.length
+    ? info.checks.map((item) => `• ${item}`).join("\n")
+    : "• 같은 설정으로 한 번만 재시도한 뒤에도 반복되면 관리자에게 아래 기술 정보를 전달해 주세요.";
+
+  return [
+    `실패 원인: ${getKoreanVideoErrorSummary(raw)}`,
+    "",
+    `[발생 단계] ${STAGE_LABEL[ctx.stage]}`,
+    `[공급자 응답] ${extractProviderResponse(raw)}`,
+    `[요청 정보] ${formatRequestSummary(ctx)}`,
+    `[분류] ${info.category.replace("_", " ")}`,
+    "[조치 방법]",
+    checks,
+    "",
+    `(raw: ${info.raw})`,
+  ].join("\n");
+}
