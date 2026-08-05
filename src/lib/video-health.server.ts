@@ -71,21 +71,21 @@ export async function probeLovableVideoModel(model: string, label: string): Prom
 
 /** Seedance(ARK) 는 설정값과 인증 도달 여부만 확인한다 (작업 생성 없음). */
 export async function probeSeedance(): Promise<ModelHealth> {
-  const label = "Seedance (BytePlus ARK)";
+  const seedance2Model = "dreamina-seedance-2-0-260128";
+  const label = "Seedance 2.0";
   const key = process.env.ARK_API_KEY;
   const base = process.env.ARK_BASE_URL?.replace(/\/$/, "");
-  const endpoint =
+  const configuredEndpoint =
     process.env.ARK_VIDEO_ENDPOINT_ID?.trim() ||
-    process.env.ARK_VIDEO_MODEL_ID?.trim() ||
-    process.env.ARK_ENDPOINT_ID?.trim();
+    process.env.ARK_VIDEO_MODEL_ID?.trim();
 
-  if (!key || !base || !endpoint) {
+  if (!key || !base) {
     return {
-      id: endpoint ?? "seedance",
+      id: seedance2Model,
       label,
       provider: "seedance",
       status: "unavailable",
-      detail: "ARK_API_KEY / ARK_BASE_URL / ARK_VIDEO_ENDPOINT_ID 중 누락된 값이 있습니다.",
+      detail: "Seedance 2.0 연결에 필요한 ARK_API_KEY 또는 ARK_BASE_URL이 없습니다.",
     };
   }
 
@@ -95,7 +95,7 @@ export async function probeSeedance(): Promise<ModelHealth> {
     });
     if (res.status === 401 || res.status === 403) {
       return {
-        id: endpoint,
+        id: seedance2Model,
         label,
         provider: "seedance",
         status: "unavailable",
@@ -103,16 +103,16 @@ export async function probeSeedance(): Promise<ModelHealth> {
       };
     }
     return {
-      id: endpoint,
+      id: seedance2Model,
       label,
       provider: "seedance",
       status: "unknown",
       detail:
-        "Authentication is working. Model activation and Safe Experience mode can only be confirmed when a real generation starts.",
+        `Authentication is working. Seedance 2.0 (${seedance2Model})${configuredEndpoint ? " and its configured endpoint" : ""} will be verified when generation starts.`,
     };
   } catch {
     return {
-      id: endpoint,
+      id: seedance2Model,
       label,
       provider: "seedance",
       status: "unknown",

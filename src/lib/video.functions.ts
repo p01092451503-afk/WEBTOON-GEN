@@ -195,6 +195,9 @@ export const startVideoGeneration = createServerFn({ method: "POST" })
             aspectRatio: data.aspectRatio,
             resolution: data.resolution,
             durationSeconds: data.durationSeconds,
+            aspectRatio: data.aspectRatio,
+            resolution: data.resolution,
+            durationSeconds: data.durationSeconds,
           });
           taskId = fallback.taskId;
           model = fallback.model;
@@ -340,9 +343,9 @@ export const pollVideoGeneration = createServerFn({ method: "POST" })
             }),
             firstFrameUrl: signedUrls[0] ?? null,
             lastFrameUrl: signedUrls[1] ?? null,
-            aspectRatio: data.aspectRatio,
-            resolution: data.resolution,
-            durationSeconds: data.durationSeconds,
+            aspectRatio: row.aspect_ratio,
+            resolution: row.resolution,
+            durationSeconds: row.duration_seconds,
           });
           recoveryAttempts.push(recoveryAttempt("replicate", "poll", "failed", message));
           recoveryAttempts.push(
