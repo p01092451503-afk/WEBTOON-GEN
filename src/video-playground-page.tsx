@@ -204,10 +204,11 @@ export function VideoPlaygroundPage() {
         subject: brief?.subject ?? "", action: plainPrompt,
         camera: [brief?.camera, brief?.motion].filter(Boolean).join("; "),
         lighting: brief?.lighting ?? "", style: brief?.style ?? "",
+        safetyMode: "normal",
       } });
       await gen.run({
         workLabel: "Playground", provider: "seedance", mode: firstReference ? "i2v" : "t2v",
-        finalPrompt: composed.finalPrompt, negativePrompt: brief?.negative || undefined,
+        finalPrompt: composed.finalPrompt, negativePrompt: composed.negativePrompt || brief?.negative || undefined,
          rawPrompt: plainPrompt, promptEdited: true, aspectRatio: aspectRatio === "Auto" ? "adaptive" : aspectRatio, resolution,
          durationSeconds, outputQuantity, generateAudio, cameraFixed: false, seed: null, imagePaths: studyPaths,
         options: { playground: true, referenceStudyPaths: studyPaths, referenceHasVideo: hasVideo, referenceBrief: brief,
@@ -217,6 +218,22 @@ export function VideoPlaygroundPage() {
     } catch (error) { toast.error(error instanceof Error ? error.message : String(error)); }
     finally { setPreparing(false); }
   }
+
+  async function polishPrompt() {
+    if (!prompt.trim()) return toast.error("Describe the video you want to polish.");
+    setPolishing(true);
+    try {
+      const plainPrompt = removeLegacyMentionMarkers(prompt.trim());
+      const composed = await compose({ data: {
+        subject: "", action: plainPrompt, camera: "", lighting: "", style: "", safetyMode: "strict",
+      } });
+      setPrompt(composed.finalPrompt);
+      setSafetyPolished(true);
+      toast.success("Prompt polished for safety. Review it before generating.");
+    } catch (error) { toast.error(error instanceof Error ? error.message : String(error)); }
+    finally { setPolishing(false); }
+  }
+
 
   return <main className="px-4 py-5 sm:px-6">
     <StudioSwitcher active="video" />
