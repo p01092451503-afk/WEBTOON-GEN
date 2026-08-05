@@ -189,7 +189,7 @@ export function VideoPlaygroundPage() {
         }
       }
       if (!added.length) throw new Error("Add an image or video file.");
-      setAssets((current) => [...current, ...added].slice(0, 6));
+      setAssets((current) => assignReferenceTags([...current, ...added]).slice(0, 6));
       const missingNotice = prepared.missingFigureNumbers.length
         ? ` Missing: ${prepared.missingFigureNumbers.map((number) => `Figure ${number}`).join(", ")}.`
         : "";
