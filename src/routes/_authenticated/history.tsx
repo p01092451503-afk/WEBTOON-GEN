@@ -515,10 +515,10 @@ function VideoDetailCard({
 
         {row.error_message && (
           <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-xs text-destructive">
-            <p className="font-semibold">실패 원인</p>
-            <p className="mt-1 whitespace-pre-wrap text-foreground/90">
+            <p className="font-semibold">실패 사유 (한글 상세)</p>
+            <p className="mt-1 whitespace-pre-wrap leading-relaxed text-foreground/90">
               {row.error_message.includes("실패 원인:")
-                ? row.error_message.split("실패 원인:")[1]?.split("\n")[0]
+                ? row.error_message.split("(raw:")[0]?.trim()
                 : getKoreanVideoErrorSummary(row.error_message)}
             </p>
             <details className="mt-3">
@@ -529,6 +529,7 @@ function VideoDetailCard({
             </details>
           </div>
         )}
+
 
         {row.final_prompt && (
           <div>
