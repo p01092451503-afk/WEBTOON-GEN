@@ -152,8 +152,17 @@ export const startVideoGeneration = createServerFn({ method: "POST" })
       return { videoGenerationId: videoId, status: "running" as const, recoveryNotice: null };
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      const { formatVideoError } = await import("@/lib/video-errors");
-      const friendly = formatVideoError(message);
+      const { formatVideoFailureReport } = await import("@/lib/video-errors");
+      const friendly = formatVideoFailureReport(message, {
+        stage: "request",
+        model: process.env.ARK_VIDEO_ENDPOINT_ID ?? process.env.ARK_VIDEO_MODEL_ID ?? null,
+        mode: data.imagePaths.length === 1 ? "first_frame (시작 프레임)" : data.imagePaths.length > 1 ? "reference_media (참고 미디어)" : "t2v (텍스트만)",
+        aspectRatio: data.aspectRatio,
+        resolution: data.resolution,
+        durationSeconds: data.durationSeconds,
+        referenceCount: data.imagePaths.length,
+      });
+
       await supabase
         .from("video_generations")
         .update({
