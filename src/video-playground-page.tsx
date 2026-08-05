@@ -21,17 +21,42 @@ import { recoverStaleServerFunction } from "@/lib/server-function-recovery";
 import { estimateSeedanceVideoCost, type SeedanceResolution } from "@/lib/video-constants";
 import { extractVideoFrames } from "@/lib/videoFrames";
 
-type MediaAsset = { id: string; name: string; kind: "image" | "video"; coverPath: string; framePaths: string[] };
+type MediaAsset = { id: string; name: string; kind: "image" | "video"; coverPath: string; framePaths: string[]; tag?: string };
+
 type ValidationState = "valid" | "invalid" | "missing" | "available" | "configured" | "unavailable" | "not_configured" | "unknown";
+
 type HealthModel = { provider: string; label: string; status: "available" | "unavailable" | "unknown"; detail: string; validation?: { credential: ValidationState; model: ValidationState; endpoint: ValidationState; configuredEndpoint: string | null } };
+
 type Health = { checkedAt: string; models: HealthModel[] };
+
 type CostSummary = { completedCount: number; estimatedTotal: number };
 
-function removeLegacyMentionMarkers(value: string) {
-  return value.replace(/@(?=[\p{L}\p{N}_-])/gu, "");
+function assignReferenceTags(assets: MediaAsset[]): MediaAsset[] {
+  let imageCount = 0;
+  let videoCount = 0;
+  return assets.map((asset) => {
+    if (asset.kind === "video") {
+      videoCount += 1;
+      return { ...asset, tag: `video${videoCount}` };
+    }
+    imageCount += 1;
+    return { ...asset, tag: `img${imageCount}` };
+  });
+}
+
+function expandReferenceMentions(text: string, assets: MediaAsset[]) {
+  return text
+    .replace(/@video\b/gi, "the uploaded reference video (video1)")
+    .replace(/@(img|video)(\d+)\b/gi, (_, kind, number) => {
+      const tag = `${kind.toLowerCase()}${number}`;
+      const asset = assets.find((a) => a.tag === tag);
+      if (!asset) return `the uploaded ${kind.toLowerCase() === "video" ? "video" : "image"} reference (${tag})`;
+      return `the ${asset.kind === "video" ? "reference video" : "reference image"} labeled ${tag}`;
+    });
 }
 
 function getFigureNumber(fileName: string) {
+
   const match = fileName.match(/(?:^|[^\p{L}\p{N}])figure[\s_-]*(\d+)/iu);
   if (!match) return null;
   const value = Number(match[1]);
@@ -164,7 +189,7 @@ export function VideoPlaygroundPage() {
         }
       }
       if (!added.length) throw new Error("Add an image or video file.");
-      setAssets((current) => [...current, ...added].slice(0, 6));
+      setAssets((current) => assignReferenceTags([...current, ...added]).slice(0, 6));
       const missingNotice = prepared.missingFigureNumbers.length
         ? ` Missing: ${prepared.missingFigureNumbers.map((number) => `Figure ${number}`).join(", ")}.`
         : "";
@@ -195,7 +220,7 @@ export function VideoPlaygroundPage() {
     if (!prompt.trim()) return toast.error("Describe the video you want to create.");
     setPreparing(true);
     try {
-      const plainPrompt = removeLegacyMentionMarkers(prompt.trim());
+      const plainPrompt = expandReferenceMentions(prompt.trim(), assets);
       let brief: ReferenceBrief | null = null;
       if (studyPaths.length) {
         brief = await analyze({ data: { imagePaths: studyPaths, intent: plainPrompt, hasVideoFrames: hasVideo } }) as ReferenceBrief;
@@ -223,7 +248,7 @@ export function VideoPlaygroundPage() {
     if (!prompt.trim()) return toast.error("Describe the video you want to polish.");
     setPolishing(true);
     try {
-      const plainPrompt = removeLegacyMentionMarkers(prompt.trim());
+      const plainPrompt = expandReferenceMentions(prompt.trim(), assets);
       const composed = await compose({ data: {
         subject: "", action: plainPrompt, camera: "", lighting: "", style: "", safetyMode: "strict",
       } });
@@ -253,9 +278,9 @@ export function VideoPlaygroundPage() {
             <div data-video-tour="references" className="space-y-3"><div className="flex items-center justify-between"><Label className="font-bold">Reference images & videos</Label>{assets.length > 0 && <Button variant="ghost" size="sm" onClick={() => setAssets([])}><Trash2 className="h-4 w-4" /> Clear</Button>}</div>
               <label onDragEnter={handleReferenceDrag} onDragOver={handleReferenceDrag} onDragLeave={handleReferenceDrag} onDrop={handleReferenceDrop} className={`flex min-h-36 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed px-5 text-center transition-colors ${dragActive ? "border-primary bg-primary-soft" : "border-border bg-muted/30 hover:border-primary/50 hover:bg-primary-soft"}`}>{uploading ? <Loader2 className="h-7 w-7 animate-spin text-primary" /> : <ImagePlus className="h-7 w-7 text-primary" />}<span className="text-sm font-bold">{uploading ? "Preparing references…" : dragActive ? "Drop files to add them" : "Add or drag images and videos"}</span><span className="text-xs text-muted-foreground">Up to 6 files · images teach appearance and style · videos teach motion</span>
                 <input type="file" accept="image/*,video/*" multiple className="hidden" disabled={busy} onChange={(event) => { if (event.target.files?.length) void addMedia(event.target.files); event.target.value = ""; }} /></label>
-              {assets.length > 0 && <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">{assets.map((asset) => <div key={asset.id} className="overflow-hidden rounded-lg border border-border bg-muted/30"><SignedImage bucket="character-refs" path={asset.coverPath} alt={asset.name} className="aspect-video w-full object-cover" /><div className="flex items-center gap-2 px-3 py-2">{asset.kind === "video" ? <Video className="h-3.5 w-3.5 text-primary" /> : <ImagePlus className="h-3.5 w-3.5 text-primary" />}<span className="min-w-0 flex-1 truncate text-xs font-semibold">{asset.name}</span><Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setAssets((current) => current.filter((item) => item.id !== asset.id))} aria-label={`Remove ${asset.name}`}><X className="h-3.5 w-3.5" /></Button></div></div>)}</div>}
+              {assets.length > 0 && <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">{assets.map((asset) => <div key={asset.id} className="overflow-hidden rounded-lg border border-border bg-muted/30"><SignedImage bucket="character-refs" path={asset.coverPath} alt={asset.name} className="aspect-video w-full object-cover" /><div className="flex items-center gap-2 px-3 py-2">{asset.kind === "video" ? <Video className="h-3.5 w-3.5 text-primary" /> : <ImagePlus className="h-3.5 w-3.5 text-primary" />}<span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary uppercase">{asset.tag}</span><span className="min-w-0 flex-1 truncate text-xs font-semibold">{asset.name}</span><Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setAssets((current) => current.filter((item) => item.id !== asset.id))} aria-label={`Remove ${asset.name}`}><X className="h-3.5 w-3.5" /></Button></div></div>)}</div>}
             </div>
-            <div data-video-tour="prompt" className="space-y-3"><div className="flex justify-between"><Label htmlFor="video-prompt" className="font-bold">Describe your video</Label><span className="text-xs text-muted-foreground">{prompt.length}/3000</span></div><Textarea id="video-prompt" value={prompt} maxLength={3000} disabled={busy} onChange={(event) => { setPrompt(event.target.value); setSafetyPolished(false); }} placeholder="A woman in a red coat walks through a rainy neon street, then turns toward the camera and smiles…" className="min-h-44 resize-y rounded-lg text-base leading-relaxed" /><div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"><p className="text-xs text-muted-foreground">Write naturally in Korean or English. Uploaded references are used automatically—no tags are needed.</p><Button variant="outline" size="sm" onClick={() => void polishPrompt()} disabled={polishing || busy || !prompt.trim()} className="shrink-0">{polishing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}Polish for safety</Button></div>{safetyPolished && <p className="text-xs text-primary"><CheckCircle2 className="mr-1 inline h-3.5 w-3.5" />Prompt has been safety-polished. Review it before generating.</p>}<div className="rounded-lg border border-border bg-muted/20 p-3"><p className="text-xs font-bold text-foreground">Safety tips</p><ul className="mt-1.5 list-disc space-y-1 pl-4 text-xs text-muted-foreground"><li>Avoid real names, phone numbers, addresses, IDs, or screens with personal info.</li><li>Replace copyrighted characters or brands with generic descriptions.</li><li>Use medium or wide shots rather than extreme close-ups of sensitive body areas.</li><li>Keep clothing, poses, and interactions neutral and cinematic.</li></ul></div></div>
+            <div data-video-tour="prompt" className="space-y-3"><div className="flex justify-between"><Label htmlFor="video-prompt" className="font-bold">Describe your video</Label><span className="text-xs text-muted-foreground">{prompt.length}/3000</span></div><Textarea id="video-prompt" value={prompt} maxLength={3000} disabled={busy} onChange={(event) => { setPrompt(event.target.value); setSafetyPolished(false); }} placeholder="A woman in a red coat walks through a rainy neon street, then turns toward the camera and smiles…" className="min-h-44 resize-y rounded-lg text-base leading-relaxed" /><div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"><p className="text-xs text-muted-foreground">Write naturally in Korean or English. Use <span className="font-semibold text-foreground">@img1</span>, <span className="font-semibold text-foreground">@img2</span>, <span className="font-semibold text-foreground">@video1</span> to refer to uploaded references. References are used automatically.</p><Button variant="outline" size="sm" onClick={() => void polishPrompt()} disabled={polishing || busy || !prompt.trim()} className="shrink-0">{polishing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}Polish for safety</Button></div>{safetyPolished && <p className="text-xs text-primary"><CheckCircle2 className="mr-1 inline h-3.5 w-3.5" />Prompt has been safety-polished. Review it before generating.</p>}<div className="rounded-lg border border-border bg-muted/20 p-3"><p className="text-xs font-bold text-foreground">Safety tips</p><ul className="mt-1.5 list-disc space-y-1 pl-4 text-xs text-muted-foreground"><li>Avoid real names, phone numbers, addresses, IDs, or screens with personal info.</li><li>Replace copyrighted characters or brands with generic descriptions.</li><li>Use medium or wide shots rather than extreme close-ups of sensitive body areas.</li><li>Keep clothing, poses, and interactions neutral and cinematic.</li></ul></div></div>
              <div className="space-y-5 rounded-lg border border-border bg-muted/20 p-4">
                <p className="text-xs leading-relaxed text-muted-foreground">Default settings are preset to the most common short-form format: <span className="font-semibold text-foreground">9:16 ratio, 480p resolution, 5 seconds, 1 video, sound on</span>. You can change them below.</p>
                <OptionRow label="Ratio"><div className="grid grid-cols-4 gap-1 sm:grid-cols-7">{["21:9", "16:9", "4:3", "1:1", "3:4", "9:16", "Auto"].map((ratio) => <Button key={ratio} type="button" size="sm" variant={aspectRatio === ratio ? "default" : "ghost"} className="h-9 px-2 text-xs" disabled={busy} onClick={() => setAspectRatio(ratio)}><Monitor className="h-3.5 w-3.5" />{ratio}</Button>)}</div></OptionRow>
