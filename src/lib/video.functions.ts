@@ -293,8 +293,8 @@ export const pollVideoGeneration = createServerFn({ method: "POST" })
       return { status: "done" as const, error: null };
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      const { formatVideoError } = await import("@/lib/video-errors");
-      const friendly = formatVideoError(message);
+      const friendly = formatVideoFailureReport(message, { stage: "download", ...failureContext });
+
       await supabaseAdmin
         .from("video_generations")
         .update({
