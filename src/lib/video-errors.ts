@@ -15,7 +15,10 @@ function guide(category: ErrorGuide["category"], title: string, hint: string, ch
 
 function pick(raw: string): ErrorGuide {
   const r = raw.toLowerCase();
-  if (r.includes("first/last frame content cannot be mixed with reference media content")) {
+  if (
+    r.includes("first/last frame content cannot be mixed with reference media content") ||
+    r.includes("seedance_reference_mode_conflict")
+  ) {
     return guide(
       "input",
       "The references were sent in two incompatible Seedance modes.",

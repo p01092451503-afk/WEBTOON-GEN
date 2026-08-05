@@ -60,10 +60,19 @@ export async function createVideoTask(params: {
 }): Promise<{ taskId: string; model: string }> {
   const { key, base, candidates } = arkEnv();
 
-  const distinctReferenceUrls = [...new Set(params.referenceImageUrls ?? [])].filter(
-    (url) => url !== params.lastFrameUrl,
+  const frameUrls = new Set(
+    [params.firstFrameUrl, params.lastFrameUrl].filter((url): url is string => Boolean(url)),
   );
-  const useFrameMode = Boolean(params.firstFrameUrl) && distinctReferenceUrls.length <= 1;
+  const distinctReferenceUrls = [...new Set(params.referenceImageUrls ?? [])].filter(
+    (url) => !frameUrls.has(url),
+  );
+  const useFrameMode = Boolean(params.firstFrameUrl || params.lastFrameUrl);
+
+  if (useFrameMode && distinctReferenceUrls.length > 0) {
+    throw new Error(
+      "SEEDANCE_REFERENCE_MODE_CONFLICT: First/last frames cannot be combined with reference media.",
+    );
+  }
 
   const content: Array<Record<string, unknown>> = [{ type: "text", text: params.text }];
   if (useFrameMode && params.firstFrameUrl) {
@@ -115,6 +124,9 @@ export async function createVideoTask(params: {
       has_first_frame: useFrameMode && Boolean(params.firstFrameUrl),
       has_last_frame: useFrameMode && Boolean(params.lastFrameUrl),
       reference_image_count: useFrameMode ? 0 : distinctReferenceUrls.length,
+      content_roles: content
+        .map((item) => item.role)
+        .filter((role): role is string => typeof role === "string"),
     });
 
     const res = await fetch(`${base}/contents/generations/tasks`, {
