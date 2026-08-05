@@ -21,17 +21,42 @@ import { recoverStaleServerFunction } from "@/lib/server-function-recovery";
 import { estimateSeedanceVideoCost, type SeedanceResolution } from "@/lib/video-constants";
 import { extractVideoFrames } from "@/lib/videoFrames";
 
-type MediaAsset = { id: string; name: string; kind: "image" | "video"; coverPath: string; framePaths: string[] };
+type MediaAsset = { id: string; name: string; kind: "image" | "video"; coverPath: string; framePaths: string[]; tag?: string };
+
 type ValidationState = "valid" | "invalid" | "missing" | "available" | "configured" | "unavailable" | "not_configured" | "unknown";
+
 type HealthModel = { provider: string; label: string; status: "available" | "unavailable" | "unknown"; detail: string; validation?: { credential: ValidationState; model: ValidationState; endpoint: ValidationState; configuredEndpoint: string | null } };
+
 type Health = { checkedAt: string; models: HealthModel[] };
+
 type CostSummary = { completedCount: number; estimatedTotal: number };
 
-function removeLegacyMentionMarkers(value: string) {
-  return value.replace(/@(?=[\p{L}\p{N}_-])/gu, "");
+function assignReferenceTags(assets: MediaAsset[]): MediaAsset[] {
+  let imageCount = 0;
+  let videoCount = 0;
+  return assets.map((asset) => {
+    if (asset.kind === "video") {
+      videoCount += 1;
+      return { ...asset, tag: `video${videoCount}` };
+    }
+    imageCount += 1;
+    return { ...asset, tag: `img${imageCount}` };
+  });
+}
+
+function expandReferenceMentions(text: string, assets: MediaAsset[]) {
+  return text
+    .replace(/@video\b/gi, "the uploaded reference video (video1)")
+    .replace(/@(img|video)(\d+)\b/gi, (_, kind, number) => {
+      const tag = `${kind.toLowerCase()}${number}`;
+      const asset = assets.find((a) => a.tag === tag);
+      if (!asset) return `the uploaded ${kind.toLowerCase() === "video" ? "video" : "image"} reference (${tag})`;
+      return `the ${asset.kind === "video" ? "reference video" : "reference image"} labeled ${tag}`;
+    });
 }
 
 function getFigureNumber(fileName: string) {
+
   const match = fileName.match(/(?:^|[^\p{L}\p{N}])figure[\s_-]*(\d+)/iu);
   if (!match) return null;
   const value = Number(match[1]);
