@@ -25,7 +25,7 @@ export function isRetryableVideoError(error: unknown) {
     value.includes("fetch failed") ||
     value.includes("network") ||
     value.includes("econnreset") ||
-    value.includes("temporarily unavailable")
+    value.includes("temporarily unavailable") || value.includes("safe experience mode") || value.includes("inference limit")
   );
 }
 
