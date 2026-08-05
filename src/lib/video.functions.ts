@@ -5,8 +5,8 @@ import type { VideoTaskState } from "@/lib/video.server";
 
 const startSchema = z.object({
   workLabel: z.string().default("V1"),
-  /** 영상 생성 프로바이더. 현재 사용 가능한 기본 엔진은 Replicate다. */
-  provider: z.enum(["auto", "seedance", "lovable", "replicate"]).default("replicate"),
+  /** 영상 생성 프로바이더. 기본 엔진은 Seedance 2.0이다. */
+  provider: z.enum(["auto", "seedance", "lovable", "replicate"]).default("seedance"),
   mode: z.enum(["t2v", "i2v"]).default("t2v"),
 
   finalPrompt: z.string().min(1).max(4000),
@@ -87,7 +87,7 @@ export const startVideoGeneration = createServerFn({ method: "POST" })
         signedUrls.push(signed.signedUrl);
       }
 
-      const requestedProvider = data.provider === "auto" ? "lovable" : data.provider;
+      const requestedProvider = data.provider === "auto" ? "seedance" : data.provider;
       let provider = requestedProvider;
       if (requestedProvider === "lovable" || requestedProvider === "replicate") {
         const { probeLovableVideoModel, probeReplicate } = await import(
@@ -154,6 +154,9 @@ export const startVideoGeneration = createServerFn({ method: "POST" })
            }),
            firstFrameUrl: signedUrls[0] ?? null,
            lastFrameUrl: signedUrls[1] ?? null,
+           aspectRatio: data.aspectRatio,
+           resolution: data.resolution,
+           durationSeconds: data.durationSeconds,
          });
          taskId = started.taskId;
          model = started.model;
@@ -192,6 +195,9 @@ export const startVideoGeneration = createServerFn({ method: "POST" })
             }),
             firstFrameUrl: signedUrls[0] ?? null,
             lastFrameUrl: signedUrls[1] ?? null,
+            aspectRatio: data.aspectRatio,
+            resolution: data.resolution,
+            durationSeconds: data.durationSeconds,
           });
           taskId = fallback.taskId;
           model = fallback.model;
@@ -337,6 +343,9 @@ export const pollVideoGeneration = createServerFn({ method: "POST" })
             }),
             firstFrameUrl: signedUrls[0] ?? null,
             lastFrameUrl: signedUrls[1] ?? null,
+            aspectRatio: row.aspect_ratio,
+            resolution: row.resolution,
+            durationSeconds: row.duration_seconds,
           });
           recoveryAttempts.push(recoveryAttempt("replicate", "poll", "failed", message));
           recoveryAttempts.push(
