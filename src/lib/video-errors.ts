@@ -15,6 +15,17 @@ function guide(category: ErrorGuide["category"], title: string, hint: string, ch
 
 function pick(raw: string): ErrorGuide {
   const r = raw.toLowerCase();
+  if (r.includes("role must be specified for image contents")) {
+    return guide(
+      "input",
+      "One or more reference images were missing their Seedance role.",
+      "The app has corrected the request format. Please generate the video again with the same references.",
+      [
+        "The first uploaded frame is sent as the starting frame.",
+        "Additional uploaded images and extracted video frames are sent as reference images.",
+      ],
+    );
+  }
   if (
     r.includes("copyright restriction") ||
     r.includes("copyrighted") ||

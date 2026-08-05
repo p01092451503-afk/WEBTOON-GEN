@@ -77,7 +77,11 @@ export async function createVideoTask(params: {
   }
   for (const url of params.referenceImageUrls ?? []) {
     if (url === params.firstFrameUrl || url === params.lastFrameUrl) continue;
-    content.push({ type: "image_url", image_url: { url } });
+    content.push({
+      type: "image_url",
+      image_url: { url },
+      role: "reference_image",
+    });
   }
 
   const failures: string[] = [];
