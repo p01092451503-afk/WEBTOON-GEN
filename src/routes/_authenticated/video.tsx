@@ -410,7 +410,7 @@ function VideoStudioPage() {
       template.mode === "i2v" ? `${referenceMention}${template.action}` : template.action,
     );
     setNegativeText(template.negative);
-    setEditedPrompt(template.positive);
+    setEditedPrompt(null);
     setAspectRatio(template.aspectRatio);
     setResolution(template.resolution);
     setDuration(template.duration);
