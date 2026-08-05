@@ -53,6 +53,7 @@ export async function createVideoTask(params: {
   text: string;
   firstFrameUrl?: string | null;
   lastFrameUrl?: string | null;
+  referenceImageUrls?: string[];
   aspectRatio?: string | null;
   resolution?: string | null;
   durationSeconds?: number | null;
@@ -73,6 +74,10 @@ export async function createVideoTask(params: {
       image_url: { url: params.lastFrameUrl },
       role: "last_frame",
     });
+  }
+  for (const url of params.referenceImageUrls ?? []) {
+    if (url === params.firstFrameUrl || url === params.lastFrameUrl) continue;
+    content.push({ type: "image_url", image_url: { url } });
   }
 
   const failures: string[] = [];
@@ -99,6 +104,7 @@ export async function createVideoTask(params: {
       generate_audio: body.generate_audio,
       has_first_frame: Boolean(params.firstFrameUrl),
       has_last_frame: Boolean(params.lastFrameUrl),
+      reference_image_count: params.referenceImageUrls?.length ?? 0,
     });
 
     const res = await fetch(`${base}/contents/generations/tasks`, {
