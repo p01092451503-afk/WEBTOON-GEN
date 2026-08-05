@@ -162,7 +162,7 @@ export const pollVideoGeneration = createServerFn({ method: "POST" })
 
     const { data: row } = await supabase
       .from("video_generations")
-      .select("id, tenant_id, status, task_id, duration_seconds, error_message, moderation_status, final_prompt, negative_prompt, aspect_ratio, resolution, camera_fixed, seed, image_paths, options")
+      .select("id, tenant_id, status, task_id, duration_seconds, error_message, moderation_status")
       .eq("id", data.videoGenerationId)
       .maybeSingle();
     if (!row) throw new Error("VIDEO_NOT_FOUND");
@@ -172,10 +172,6 @@ export const pollVideoGeneration = createServerFn({ method: "POST" })
     if (!row.task_id) return { status: "running" as const, error: null };
 
     const { getVideoTask } = await import("@/lib/video.server");
-    const options =
-      row.options && typeof row.options === "object" && !Array.isArray(row.options)
-        ? (row.options as Record<string, unknown>)
-        : {};
     let state: VideoTaskState;
     try {
       if (row.task_id.startsWith("replicate:") || row.task_id.startsWith("lovable:")) {
