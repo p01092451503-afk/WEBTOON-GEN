@@ -15,7 +15,7 @@ const startSchema = z.object({
   promptEdited: z.boolean().default(false),
   aspectRatio: z.string().default("16:9"),
   resolution: z.enum(["480p", "720p", "1080p"]).default("720p"),
-  durationSeconds: z.number().int().min(3).max(12).default(5),
+  durationSeconds: z.number().int().min(3).max(12).default(10),
   cameraFixed: z.boolean().default(false),
   seed: z.number().int().nullable().optional(),
   /** character-refs 버킷의 storage path. [0]=first frame, [1]=last frame */
