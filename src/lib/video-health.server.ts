@@ -4,7 +4,7 @@
 export type ModelHealth = {
   id: string;
   label: string;
-  provider: "lovable" | "seedance" | "replicate";
+  provider: "seedance";
   status: "available" | "unavailable" | "unknown";
   detail: string;
   validation?: {
@@ -14,66 +14,6 @@ export type ModelHealth = {
     configuredEndpoint: string | null;
   };
 };
-
-const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/videos";
-
-
-/**
- * 빈 프롬프트로 프로브를 보낸다.
- * - "model is not available" → 아직 워크스페이스에서 열리지 않은 모델
- * - "invalid model: ..."     → 게이트웨이 카탈로그에 없는 모델
- * - 그 외 400(프롬프트 검증 오류) 또는 2xx → 모델 자체는 사용 가능
- */
-export async function probeLovableVideoModel(model: string, label: string): Promise<ModelHealth> {
-  const key = process.env.LOVABLE_API_KEY;
-  if (!key) {
-    return {
-      id: model,
-      label,
-      provider: "lovable",
-      status: "unknown",
-      detail: "LOVABLE_API_KEY 가 설정되지 않았습니다.",
-    };
-  }
-
-  try {
-    const res = await fetch(GATEWAY_URL, {
-      method: "POST",
-      headers: {
-        "Lovable-API-Key": key,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ model, prompt: "" }),
-    });
-    const text = await res.text().catch(() => "");
-    const lower = text.toLowerCase();
-
-    if (res.status === 402) {
-      return { id: model, label, provider: "lovable", status: "unavailable", detail: "Lovable AI 크레딧이 부족합니다." };
-    }
-    if (res.status === 429) {
-      return { id: model, label, provider: "lovable", status: "unknown", detail: "요청량 제한으로 확인하지 못했습니다. 잠시 후 다시 점검해 주세요." };
-    }
-    if (lower.includes("model is not available")) {
-      return { id: model, label, provider: "lovable", status: "unavailable", detail: "이 워크스페이스에서 아직 열리지 않은 모델입니다." };
-    }
-    if (lower.includes("invalid model")) {
-      return { id: model, label, provider: "lovable", status: "unavailable", detail: "게이트웨이 카탈로그에 없는 모델 ID 입니다." };
-    }
-    if (res.ok || res.status === 400) {
-      return { id: model, label, provider: "lovable", status: "available", detail: "모델 호출이 허용됩니다. 영상 생성이 가능합니다." };
-    }
-    return { id: model, label, provider: "lovable", status: "unknown", detail: `HTTP ${res.status}: ${text.slice(0, 160)}` };
-  } catch (err) {
-    return {
-      id: model,
-      label,
-      provider: "lovable",
-      status: "unknown",
-      detail: err instanceof Error ? err.message : String(err),
-    };
-  }
-}
 
 /** Seedance(ARK) 는 설정값과 인증 도달 여부만 확인한다 (작업 생성 없음). */
 export async function probeSeedance(): Promise<ModelHealth> {
@@ -187,5 +127,4 @@ export async function probeSeedance(): Promise<ModelHealth> {
   }
 }
 
-export { probeReplicate } from "@/lib/video-replicate.server";
 
