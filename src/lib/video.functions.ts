@@ -154,6 +154,9 @@ export const startVideoGeneration = createServerFn({ method: "POST" })
            }),
            firstFrameUrl: signedUrls[0] ?? null,
            lastFrameUrl: signedUrls[1] ?? null,
+           aspectRatio: data.aspectRatio,
+           resolution: data.resolution,
+           durationSeconds: data.durationSeconds,
          });
          taskId = started.taskId;
          model = started.model;
@@ -192,9 +195,6 @@ export const startVideoGeneration = createServerFn({ method: "POST" })
             }),
             firstFrameUrl: signedUrls[0] ?? null,
             lastFrameUrl: signedUrls[1] ?? null,
-            aspectRatio: data.aspectRatio,
-            resolution: data.resolution,
-            durationSeconds: data.durationSeconds,
             aspectRatio: data.aspectRatio,
             resolution: data.resolution,
             durationSeconds: data.durationSeconds,
