@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type DragEvent, type ReactNode } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { AlertCircle, CheckCircle2, CircleHelp, Download, Film, ImagePlus, Loader2, Monitor, RefreshCw, Trash2, Video, Volume2, VolumeX, X } from "lucide-react";
+import { AlertCircle, CheckCircle2, CircleHelp, Download, Film, ImagePlus, Loader2, Monitor, RefreshCw, Sparkles, Trash2, Video, Volume2, VolumeX, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/hooks/useTenant";
 import { useVideoGeneration } from "@/hooks/useVideoGeneration";
@@ -84,6 +84,9 @@ export function VideoPlaygroundPage() {
   const [health, setHealth] = useState<Health | null>(null);
   const [checkingHealth, setCheckingHealth] = useState(false);
   const [costSummary, setCostSummary] = useState<CostSummary>({ completedCount: 0, estimatedTotal: 0 });
+  const [polishing, setPolishing] = useState(false);
+  const [safetyPolished, setSafetyPolished] = useState(false);
+
 
   useEffect(() => { if (shouldStartVideoTour()) setTourOpen(true); }, []);
   useEffect(() => {
@@ -201,10 +204,11 @@ export function VideoPlaygroundPage() {
         subject: brief?.subject ?? "", action: plainPrompt,
         camera: [brief?.camera, brief?.motion].filter(Boolean).join("; "),
         lighting: brief?.lighting ?? "", style: brief?.style ?? "",
+        safetyMode: "normal",
       } });
       await gen.run({
         workLabel: "Playground", provider: "seedance", mode: firstReference ? "i2v" : "t2v",
-        finalPrompt: composed.finalPrompt, negativePrompt: brief?.negative || undefined,
+        finalPrompt: composed.finalPrompt, negativePrompt: composed.negativePrompt || brief?.negative || undefined,
          rawPrompt: plainPrompt, promptEdited: true, aspectRatio: aspectRatio === "Auto" ? "adaptive" : aspectRatio, resolution,
          durationSeconds, outputQuantity, generateAudio, cameraFixed: false, seed: null, imagePaths: studyPaths,
         options: { playground: true, referenceStudyPaths: studyPaths, referenceHasVideo: hasVideo, referenceBrief: brief,
@@ -214,6 +218,22 @@ export function VideoPlaygroundPage() {
     } catch (error) { toast.error(error instanceof Error ? error.message : String(error)); }
     finally { setPreparing(false); }
   }
+
+  async function polishPrompt() {
+    if (!prompt.trim()) return toast.error("Describe the video you want to polish.");
+    setPolishing(true);
+    try {
+      const plainPrompt = removeLegacyMentionMarkers(prompt.trim());
+      const composed = await compose({ data: {
+        subject: "", action: plainPrompt, camera: "", lighting: "", style: "", safetyMode: "strict",
+      } });
+      setPrompt(composed.finalPrompt);
+      setSafetyPolished(true);
+      toast.success("Prompt polished for safety. Review it before generating.");
+    } catch (error) { toast.error(error instanceof Error ? error.message : String(error)); }
+    finally { setPolishing(false); }
+  }
+
 
   return <main className="px-4 py-5 sm:px-6">
     <StudioSwitcher active="video" />
@@ -235,7 +255,7 @@ export function VideoPlaygroundPage() {
                 <input type="file" accept="image/*,video/*" multiple className="hidden" disabled={busy} onChange={(event) => { if (event.target.files?.length) void addMedia(event.target.files); event.target.value = ""; }} /></label>
               {assets.length > 0 && <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">{assets.map((asset) => <div key={asset.id} className="overflow-hidden rounded-lg border border-border bg-muted/30"><SignedImage bucket="character-refs" path={asset.coverPath} alt={asset.name} className="aspect-video w-full object-cover" /><div className="flex items-center gap-2 px-3 py-2">{asset.kind === "video" ? <Video className="h-3.5 w-3.5 text-primary" /> : <ImagePlus className="h-3.5 w-3.5 text-primary" />}<span className="min-w-0 flex-1 truncate text-xs font-semibold">{asset.name}</span><Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setAssets((current) => current.filter((item) => item.id !== asset.id))} aria-label={`Remove ${asset.name}`}><X className="h-3.5 w-3.5" /></Button></div></div>)}</div>}
             </div>
-            <div data-video-tour="prompt" className="space-y-3"><div className="flex justify-between"><Label htmlFor="video-prompt" className="font-bold">Describe your video</Label><span className="text-xs text-muted-foreground">{prompt.length}/3000</span></div><Textarea id="video-prompt" value={prompt} maxLength={3000} disabled={busy} onChange={(event) => setPrompt(event.target.value)} placeholder="A woman in a red coat walks through a rainy neon street, then turns toward the camera and smiles…" className="min-h-44 resize-y rounded-lg text-base leading-relaxed" /><p className="text-xs text-muted-foreground">Write naturally in Korean or English. Uploaded references are used automatically—no tags are needed.</p></div>
+            <div data-video-tour="prompt" className="space-y-3"><div className="flex justify-between"><Label htmlFor="video-prompt" className="font-bold">Describe your video</Label><span className="text-xs text-muted-foreground">{prompt.length}/3000</span></div><Textarea id="video-prompt" value={prompt} maxLength={3000} disabled={busy} onChange={(event) => { setPrompt(event.target.value); setSafetyPolished(false); }} placeholder="A woman in a red coat walks through a rainy neon street, then turns toward the camera and smiles…" className="min-h-44 resize-y rounded-lg text-base leading-relaxed" /><div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"><p className="text-xs text-muted-foreground">Write naturally in Korean or English. Uploaded references are used automatically—no tags are needed.</p><Button variant="outline" size="sm" onClick={() => void polishPrompt()} disabled={polishing || busy || !prompt.trim()} className="shrink-0">{polishing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}Polish for safety</Button></div>{safetyPolished && <p className="text-xs text-primary"><CheckCircle2 className="mr-1 inline h-3.5 w-3.5" />Prompt has been safety-polished. Review it before generating.</p>}<div className="rounded-lg border border-border bg-muted/20 p-3"><p className="text-xs font-bold text-foreground">Safety tips</p><ul className="mt-1.5 list-disc space-y-1 pl-4 text-xs text-muted-foreground"><li>Avoid real names, phone numbers, addresses, IDs, or screens with personal info.</li><li>Replace copyrighted characters or brands with generic descriptions.</li><li>Use medium or wide shots rather than extreme close-ups of sensitive body areas.</li><li>Keep clothing, poses, and interactions neutral and cinematic.</li></ul></div></div>
              <div className="space-y-5 rounded-lg border border-border bg-muted/20 p-4">
                <p className="text-xs leading-relaxed text-muted-foreground">Default settings are preset to the most common short-form format: <span className="font-semibold text-foreground">9:16 ratio, 480p resolution, 5 seconds, 1 video, sound on</span>. You can change them below.</p>
                <OptionRow label="Ratio"><div className="grid grid-cols-4 gap-1 sm:grid-cols-7">{["21:9", "16:9", "4:3", "1:1", "3:4", "9:16", "Auto"].map((ratio) => <Button key={ratio} type="button" size="sm" variant={aspectRatio === ratio ? "default" : "ghost"} className="h-9 px-2 text-xs" disabled={busy} onClick={() => setAspectRatio(ratio)}><Monitor className="h-3.5 w-3.5" />{ratio}</Button>)}</div></OptionRow>
