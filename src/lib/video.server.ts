@@ -60,28 +60,34 @@ export async function createVideoTask(params: {
 }): Promise<{ taskId: string; model: string }> {
   const { key, base, candidates } = arkEnv();
 
+  const distinctReferenceUrls = [...new Set(params.referenceImageUrls ?? [])].filter(
+    (url) => url !== params.lastFrameUrl,
+  );
+  const useFrameMode = Boolean(params.firstFrameUrl) && distinctReferenceUrls.length <= 1;
+
   const content: Array<Record<string, unknown>> = [{ type: "text", text: params.text }];
-  if (params.firstFrameUrl) {
+  if (useFrameMode && params.firstFrameUrl) {
     content.push({
       type: "image_url",
       image_url: { url: params.firstFrameUrl },
       role: "first_frame",
     });
   }
-  if (params.lastFrameUrl) {
+  if (useFrameMode && params.lastFrameUrl) {
     content.push({
       type: "image_url",
       image_url: { url: params.lastFrameUrl },
       role: "last_frame",
     });
   }
-  for (const url of params.referenceImageUrls ?? []) {
-    if (url === params.firstFrameUrl || url === params.lastFrameUrl) continue;
-    content.push({
-      type: "image_url",
-      image_url: { url },
-      role: "reference_image",
-    });
+  if (!useFrameMode) {
+    for (const url of distinctReferenceUrls) {
+      content.push({
+        type: "image_url",
+        image_url: { url },
+        role: "reference_image",
+      });
+    }
   }
 
   const failures: string[] = [];
@@ -90,7 +96,7 @@ export async function createVideoTask(params: {
     const body = {
       model,
       content,
-      ratio: params.firstFrameUrl ? "adaptive" : params.aspectRatio || "16:9",
+      ratio: useFrameMode ? "adaptive" : params.aspectRatio || "16:9",
       resolution: params.resolution || "720p",
       duration: params.durationSeconds || 10,
       generate_audio: true,
@@ -100,15 +106,15 @@ export async function createVideoTask(params: {
     console.info("[video-provider-request]", {
       provider: "seedance",
       model,
-      mode: params.firstFrameUrl ? "i2v" : "t2v",
+      mode: useFrameMode ? "first_frame" : distinctReferenceUrls.length ? "reference_media" : "t2v",
       prompt: params.text,
       ratio: body.ratio,
       resolution: body.resolution,
       duration: body.duration,
       generate_audio: body.generate_audio,
-      has_first_frame: Boolean(params.firstFrameUrl),
-      has_last_frame: Boolean(params.lastFrameUrl),
-      reference_image_count: params.referenceImageUrls?.length ?? 0,
+      has_first_frame: useFrameMode && Boolean(params.firstFrameUrl),
+      has_last_frame: useFrameMode && Boolean(params.lastFrameUrl),
+      reference_image_count: useFrameMode ? 0 : distinctReferenceUrls.length,
     });
 
     const res = await fetch(`${base}/contents/generations/tasks`, {

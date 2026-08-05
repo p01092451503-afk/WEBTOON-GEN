@@ -15,6 +15,17 @@ function guide(category: ErrorGuide["category"], title: string, hint: string, ch
 
 function pick(raw: string): ErrorGuide {
   const r = raw.toLowerCase();
+  if (r.includes("first/last frame content cannot be mixed with reference media content")) {
+    return guide(
+      "input",
+      "The references were sent in two incompatible Seedance modes.",
+      "The app now sends one image as a starting frame, or multiple images as reference media without mixing the two modes. Please generate again.",
+      [
+        "One reference: it controls the video's starting frame.",
+        "Two or more references: all items guide subject, style, lighting, and motion.",
+      ],
+    );
+  }
   if (r.includes("role must be specified for image contents")) {
     return guide(
       "input",
