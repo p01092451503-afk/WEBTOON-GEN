@@ -167,7 +167,7 @@ export const startVideoGeneration = createServerFn({ method: "POST" })
         .from("video_generations")
         .update({
           status: "error",
-          error_message: friendly.slice(0, 1000),
+          error_message: friendly.slice(0, 2000),
           completed_at: new Date().toISOString(),
         })
         .eq("id", videoId);
@@ -242,7 +242,7 @@ export const pollVideoGeneration = createServerFn({ method: "POST" })
         .from("video_generations")
         .update({
           status: "error",
-          error_message: friendly.slice(0, 1000),
+          error_message: friendly.slice(0, 2000),
           completed_at: new Date().toISOString(),
         })
         .eq("id", row.id);
@@ -299,7 +299,7 @@ export const pollVideoGeneration = createServerFn({ method: "POST" })
         .from("video_generations")
         .update({
           status: "error",
-          error_message: friendly.slice(0, 1000),
+          error_message: friendly.slice(0, 2000),
           completed_at: new Date().toISOString(),
         })
         .eq("id", row.id);
