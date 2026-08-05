@@ -18,7 +18,7 @@ const startSchema = z.object({
   durationSeconds: z.number().int().min(3).max(12).default(10),
   cameraFixed: z.boolean().default(false),
   seed: z.number().int().nullable().optional(),
-  /** character-refs 버킷의 참고 이미지 및 영상 추출 프레임. 첫 항목은 시작 프레임이다. */
+  /** character-refs 버킷의 참고 이미지 및 영상 추출 프레임. 1개면 시작 프레임, 여러 개면 모두 참고 미디어다. */
   imagePaths: z.array(z.string()).max(8).default([]),
   options: z.record(z.any()).default({}),
 });
@@ -100,6 +100,7 @@ export const startVideoGeneration = createServerFn({ method: "POST" })
       });
 
       const { buildSeedanceText, createVideoTask } = await import("@/lib/video.server");
+      const useFirstFrame = signedUrls.length === 1;
       const started = await createVideoTask({
         text: buildSeedanceText({
           prompt,
@@ -108,9 +109,9 @@ export const startVideoGeneration = createServerFn({ method: "POST" })
           durationSeconds: data.durationSeconds,
           cameraFixed: data.cameraFixed,
           seed,
-          hasFirstFrame: Boolean(signedUrls[0]),
+          hasFirstFrame: useFirstFrame,
         }),
-        firstFrameUrl: signedUrls[0] ?? null,
+        firstFrameUrl: useFirstFrame ? signedUrls[0] : null,
         referenceImageUrls: signedUrls,
         aspectRatio: data.aspectRatio,
         resolution: data.resolution,
