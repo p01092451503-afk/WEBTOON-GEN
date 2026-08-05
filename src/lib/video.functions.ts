@@ -101,6 +101,8 @@ export const startVideoGeneration = createServerFn({ method: "POST" })
 
       const { buildSeedanceText, createVideoTask } = await import("@/lib/video.server");
       const useFirstFrame = signedUrls.length === 1;
+      const firstFrameUrl = useFirstFrame ? signedUrls[0] : null;
+      const referenceImageUrls = useFirstFrame ? [] : signedUrls;
       const started = await createVideoTask({
         text: buildSeedanceText({
           prompt,
@@ -111,8 +113,8 @@ export const startVideoGeneration = createServerFn({ method: "POST" })
           seed,
           hasFirstFrame: useFirstFrame,
         }),
-        firstFrameUrl: useFirstFrame ? signedUrls[0] : null,
-        referenceImageUrls: signedUrls,
+        firstFrameUrl,
+        referenceImageUrls,
         aspectRatio: data.aspectRatio,
         resolution: data.resolution,
         durationSeconds: data.durationSeconds,
