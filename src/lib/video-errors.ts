@@ -2,7 +2,7 @@
 export type VideoErrorInfo = {
   title: string;
   hint: string;
-  category: "input" | "authentication" | "model" | "billing" | "rate_limit" | "provider" | "storage" | "safety" | "unknown";
+  category: "input" | "authentication" | "model" | "billing" | "rate_limit" | "provider" | "storage" | "safety" | "copyright" | "unknown";
   checks: string[];
   raw: string;
 };
@@ -15,6 +15,23 @@ function guide(category: ErrorGuide["category"], title: string, hint: string, ch
 
 function pick(raw: string): ErrorGuide {
   const r = raw.toLowerCase();
+  if (
+    r.includes("copyright restriction") ||
+    r.includes("copyrighted") ||
+    r.includes("intellectual property") ||
+    r.includes("third-party character")
+  ) {
+    return guide(
+      "copyright",
+      "The reference or prompt is restricted by copyright protection.",
+      "Seedance recognized a protected character or visual property. This cannot be fixed by retrying the same request.",
+      [
+        "Remove the protected character name from the prompt.",
+        "Replace the reference image with an original character or material you own or are authorized to use.",
+        "Describe only general visual traits instead of asking to reproduce a named character or franchise.",
+      ],
+    );
+  }
   if (r.includes("content_blocked")) return guide("safety", "This request cannot be generated.", "Revise the content and try again.", ["Positive prompt: remove explicit, exploitative, hateful, or graphically violent descriptions.", "Reference media: replace any image or video that may trigger the safety policy."]);
   if (r.includes("content_check")) return guide("provider", "The safety check is temporarily unavailable.", "Your request was not sent to the provider. Try again shortly.");
   if (r.includes("unresolved_media_mention")) return guide("input", "A media mention could not be resolved.", "Choose the reference again from the @ menu.", ["@mention: confirm the referenced asset still exists and is selected from the menu."]);
