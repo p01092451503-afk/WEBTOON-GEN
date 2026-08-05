@@ -7,33 +7,27 @@ const STORAGE_KEY = "pilotstudio.video-tour.v1";
 const STEPS = [
   {
     selector: '[data-video-tour="references"]',
-    title: "Start with a reference",
+    title: "Add references if you have them",
     description:
-      "Upload an image or video for image-to-video, or leave this empty to create from text only.",
+      "Images guide the subject and look. Videos guide motion and camera behavior. You can also create from text only.",
   },
   {
     selector: '[data-video-tour="prompt"]',
-    title: "Describe the motion",
+    title: "Describe your video",
     description:
-      "Write what should happen. If you uploaded media, type @ to mention it, then add camera, lighting, and style controls.",
-  },
-  {
-    selector: '[data-video-tour="settings"]',
-    title: "Choose your output",
-    description:
-      "Set the format and duration. Veo prioritizes prompt fidelity; LTX or WAN provides a faster preview.",
-  },
-  {
-    selector: '[data-video-tour="compose"]',
-    title: "Compose the final prompt",
-    description:
-      "Let AI turn your choices into a video-ready English paragraph. Review and edit it before generation.",
+      "Write naturally in Korean or English. Describe who appears, what happens, and the mood you want.",
   },
   {
     selector: '[data-video-tour="generate"]',
-    title: "Create your first video",
+    title: "Generate with one click",
     description:
-      "Check the exact positive and negative prompts sent to the model, then start generation here.",
+      "pilotstudio studies your references, enhances the prompt, and selects an available engine automatically.",
+  },
+  {
+    selector: '[data-video-tour="result"]',
+    title: "Review and download",
+    description:
+      "Your finished video appears here. Play it, download it, or inspect the enhanced prompt.",
   },
 ] as const;
 
