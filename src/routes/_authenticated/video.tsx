@@ -240,7 +240,7 @@ function VideoStudioPage() {
   const [styleId, setStyleId] = useState<string | null>(null);
   const [aspectRatio, setAspectRatio] = useState<string>("16:9");
   const [resolution, setResolution] = useState<(typeof RESOLUTIONS)[number]>("720p");
-  const [duration, setDuration] = useState<number>(5);
+  const [duration, setDuration] = useState<number>(10);
   const [cameraFixed, setCameraFixed] = useState(false);
   const [seedLocked, setSeedLocked] = useState(false);
   const [seed, setSeed] = useState<string>("");
