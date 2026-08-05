@@ -149,7 +149,7 @@ export const startVideoGeneration = createServerFn({ method: "POST" })
         })
         .eq("id", videoId);
 
-      return { videoGenerationId: videoId, status: "running" as const, recoveryNotice: null };
+      return { videoGenerationId: videoId, status: "running" as const, error: null as string | null, recoveryNotice: null };
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       const { formatVideoFailureReport } = await import("@/lib/video-errors");
@@ -171,7 +171,8 @@ export const startVideoGeneration = createServerFn({ method: "POST" })
           completed_at: new Date().toISOString(),
         })
         .eq("id", videoId);
-      throw new Error(friendly);
+      // 오류를 throw 하면 클라이언트가 흰 화면으로 죽으므로 결과로 반환한다.
+      return { videoGenerationId: videoId, status: "error" as const, error: friendly, recoveryNotice: null };
     }
   });
 

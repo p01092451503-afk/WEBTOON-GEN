@@ -131,6 +131,14 @@ export function useVideoGeneration(tenantId: string | null) {
     try {
       const res = await startFn({ data: input });
       setRecoveryNotice(res.recoveryNotice ?? null);
+      if (res.status === "error") {
+        // 공급자 거부(민감정보 등): 흰 화면 대신 화면에 사유를 표시한다.
+        setError(res.error ?? "VIDEO_FAILED");
+        setRunning(false);
+        writeStoredId(null);
+        await load(res.videoGenerationId);
+        return res;
+      }
       writeStoredId(res.videoGenerationId);
       setCurrentId(res.videoGenerationId);
       return res;
