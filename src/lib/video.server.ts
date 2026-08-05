@@ -203,6 +203,10 @@ export async function getVideoTask(taskId: string): Promise<VideoTaskState> {
   return {
     status,
     videoUrl: json.content?.video_url,
-    error: json.error?.message ?? (json.error?.code ? String(json.error.code) : undefined),
+    error: json.error
+      ? [json.error.code ? `code=${json.error.code}` : "", json.error.message ?? ""]
+          .filter(Boolean)
+          .join(" message=") || "ARK_TASK_FAILED"
+      : undefined,
   };
 }

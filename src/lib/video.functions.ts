@@ -152,13 +152,22 @@ export const startVideoGeneration = createServerFn({ method: "POST" })
       return { videoGenerationId: videoId, status: "running" as const, recoveryNotice: null };
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      const { formatVideoError } = await import("@/lib/video-errors");
-      const friendly = formatVideoError(message);
+      const { formatVideoFailureReport } = await import("@/lib/video-errors");
+      const friendly = formatVideoFailureReport(message, {
+        stage: "request",
+        model: process.env.ARK_VIDEO_ENDPOINT_ID ?? process.env.ARK_VIDEO_MODEL_ID ?? null,
+        mode: data.imagePaths.length === 1 ? "first_frame (시작 프레임)" : data.imagePaths.length > 1 ? "reference_media (참고 미디어)" : "t2v (텍스트만)",
+        aspectRatio: data.aspectRatio,
+        resolution: data.resolution,
+        durationSeconds: data.durationSeconds,
+        referenceCount: data.imagePaths.length,
+      });
+
       await supabase
         .from("video_generations")
         .update({
           status: "error",
-          error_message: friendly.slice(0, 1000),
+          error_message: friendly.slice(0, 2000),
           completed_at: new Date().toISOString(),
         })
         .eq("id", videoId);
@@ -176,7 +185,7 @@ export const pollVideoGeneration = createServerFn({ method: "POST" })
 
     const { data: row } = await supabase
       .from("video_generations")
-      .select("id, tenant_id, status, task_id, duration_seconds, error_message, moderation_status, options")
+      .select("id, tenant_id, status, task_id, duration_seconds, error_message, moderation_status, options, aspect_ratio, resolution, api_model, image_paths, mode")
       .eq("id", data.videoGenerationId)
       .maybeSingle();
     if (!row) throw new Error("VIDEO_NOT_FOUND");
@@ -214,16 +223,26 @@ export const pollVideoGeneration = createServerFn({ method: "POST" })
     }
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { formatVideoFailureReport } = await import("@/lib/video-errors");
+    const failureContext = {
+      model: row.api_model ?? null,
+      mode: row.mode ?? null,
+      aspectRatio: row.aspect_ratio ?? null,
+      resolution: row.resolution ?? null,
+      durationSeconds: row.duration_seconds ?? null,
+      referenceCount: Array.isArray(row.image_paths) ? row.image_paths.length : null,
+      taskId: row.task_id,
+    };
 
     if (state.status !== "succeeded" || !state.videoUrl) {
       const message = state.error ?? `VIDEO_TASK_${state.status.toUpperCase()}`;
-      const { formatVideoError } = await import("@/lib/video-errors");
-      const friendly = formatVideoError(message);
+      const friendly = formatVideoFailureReport(message, { stage: "polling", ...failureContext });
+
       await supabaseAdmin
         .from("video_generations")
         .update({
           status: "error",
-          error_message: friendly.slice(0, 1000),
+          error_message: friendly.slice(0, 2000),
           completed_at: new Date().toISOString(),
         })
         .eq("id", row.id);
@@ -274,13 +293,13 @@ export const pollVideoGeneration = createServerFn({ method: "POST" })
       return { status: "done" as const, error: null };
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      const { formatVideoError } = await import("@/lib/video-errors");
-      const friendly = formatVideoError(message);
+      const friendly = formatVideoFailureReport(message, { stage: "download", ...failureContext });
+
       await supabaseAdmin
         .from("video_generations")
         .update({
           status: "error",
-          error_message: friendly.slice(0, 1000),
+          error_message: friendly.slice(0, 2000),
           completed_at: new Date().toISOString(),
         })
         .eq("id", row.id);
