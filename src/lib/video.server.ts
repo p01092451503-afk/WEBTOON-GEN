@@ -16,9 +16,9 @@ function arkEnv() {
   const ARK_API_KEY = process.env.ARK_API_KEY;
   const ARK_BASE_URL = process.env.ARK_BASE_URL;
   const candidates = [
-    SEEDANCE_2_MODEL,
     process.env.ARK_VIDEO_ENDPOINT_ID,
     process.env.ARK_VIDEO_MODEL_ID,
+    SEEDANCE_2_MODEL,
   ]
     .map((v) => (v ?? "").trim())
     .filter((v, i, arr) => v.length > 0 && arr.indexOf(v) === i);
@@ -129,7 +129,7 @@ export async function createVideoTask(params: {
     const text = await res.text().catch(() => "");
     failures.push(`${model} → HTTP ${res.status} ${text.slice(0, 200)}`);
 
-    // 접근 불가/미활성 식별자는 다음 후보로 자동 폴백한다.
+    // 전용 엔드포인트를 먼저 사용하고, 같은 Seedance 2.0 모델 ID만 보조 대상으로 확인한다.
     const recoverable =
       res.status === 403 ||
       res.status === 404 ||
