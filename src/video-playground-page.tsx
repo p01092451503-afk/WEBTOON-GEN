@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type DragEvent } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { AlertCircle, CheckCircle2, CircleHelp, Download, Film, ImagePlus, Loader2, RefreshCw, Trash2, Video, X } from "lucide-react";
@@ -126,7 +126,7 @@ export function VideoPlaygroundPage() {
     finally { setUploading(false); }
   }
 
-  function handleReferenceDrag(event: React.DragEvent<HTMLLabelElement>) {
+  function handleReferenceDrag(event: DragEvent<HTMLLabelElement>) {
     event.preventDefault();
     event.stopPropagation();
     if (busy) return;
@@ -134,7 +134,7 @@ export function VideoPlaygroundPage() {
     if (event.type === "dragleave") setDragActive(false);
   }
 
-  function handleReferenceDrop(event: React.DragEvent<HTMLLabelElement>) {
+  function handleReferenceDrop(event: DragEvent<HTMLLabelElement>) {
     event.preventDefault();
     event.stopPropagation();
     setDragActive(false);
