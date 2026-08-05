@@ -73,7 +73,8 @@ export function readRecoveryAttempts(options: unknown): VideoRecoveryAttempt[] {
 export function recoveryMessage(attempts: VideoRecoveryAttempt[]) {
   const fallback = [...attempts].reverse().find((item) => item.outcome === "started");
   if (fallback) {
-    return "The primary video pipeline failed, so generation automatically switched to Seedance.";
+    const providerName = fallback.provider === "replicate" ? "Replicate" : "Seedance";
+    return `The original provider was unavailable, so generation automatically switched to ${providerName}.`;
   }
   const retry = [...attempts].reverse().find((item) => item.outcome === "retrying");
   return retry ? "A temporary provider error occurred. Retrying automatically…" : null;
