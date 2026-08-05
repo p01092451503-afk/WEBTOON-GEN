@@ -225,7 +225,7 @@ function HistoryPage() {
       await deleteVideoGenerations(targets);
       const removed = new Set(targets.map((r) => r.id));
       setVideoRows((prev) => (prev ?? []).filter((r) => !removed.has(r.id)));
-      if (id && removed.has(id)) navigate({ search: { tab } });
+      if (id && removed.has(id)) navigate({ search: { tab, id: undefined } });
       toast.success(`Deleted ${targets.length} item${targets.length > 1 ? "s" : ""}.`);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Delete failed");
