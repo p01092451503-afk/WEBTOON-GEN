@@ -104,7 +104,7 @@ export function VideoOnboardingTour({ open, onOpenChange }: { open: boolean; onO
       )}
 
       <div
-        className="fixed w-[calc(100vw-2rem)] max-w-[400px] rounded-2xl border border-border bg-popover p-5 text-popover-foreground shadow-toss-lg"
+        className="fixed w-[calc(100vw-2rem)] max-w-[400px] rounded-2xl border border-primary/15 bg-primary-soft p-5 text-popover-foreground shadow-toss-lg"
         style={{ top: tooltipTop, left: tooltipLeft }}
       >
         <div className="flex items-start justify-between gap-4">
