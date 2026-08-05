@@ -24,6 +24,10 @@ type ValidationState = "valid" | "invalid" | "missing" | "available" | "configur
 type HealthModel = { provider: string; label: string; status: "available" | "unavailable" | "unknown"; detail: string; validation?: { credential: ValidationState; model: ValidationState; endpoint: ValidationState; configuredEndpoint: string | null } };
 type Health = { checkedAt: string; models: HealthModel[] };
 
+function removeLegacyMentionMarkers(value: string) {
+  return value.replace(/@(?=[\p{L}\p{N}_-])/gu, "");
+}
+
 export function VideoPlaygroundPage() {
   const { tenantId } = useTenant();
   const gen = useVideoGeneration(tenantId);
@@ -90,19 +94,20 @@ export function VideoPlaygroundPage() {
     if (!prompt.trim()) return toast.error("Describe the video you want to create.");
     setPreparing(true);
     try {
+      const plainPrompt = removeLegacyMentionMarkers(prompt.trim());
       let brief: ReferenceBrief | null = null;
       if (studyPaths.length) {
-        brief = await analyze({ data: { imagePaths: studyPaths, intent: prompt.trim(), hasVideoFrames: hasVideo } }) as ReferenceBrief;
+        brief = await analyze({ data: { imagePaths: studyPaths, intent: plainPrompt, hasVideoFrames: hasVideo } }) as ReferenceBrief;
       }
       const composed = await compose({ data: {
-        subject: brief?.subject ?? "", action: prompt.trim(),
+        subject: brief?.subject ?? "", action: plainPrompt,
         camera: [brief?.camera, brief?.motion].filter(Boolean).join("; "),
         lighting: brief?.lighting ?? "", style: brief?.style ?? "",
       } });
       await gen.run({
         workLabel: "Playground", provider: "seedance", mode: firstReference ? "i2v" : "t2v",
         finalPrompt: composed.finalPrompt, negativePrompt: brief?.negative || undefined,
-        rawPrompt: prompt.trim(), promptEdited: true, aspectRatio: "16:9", resolution: "720p",
+        rawPrompt: plainPrompt, promptEdited: true, aspectRatio: "16:9", resolution: "720p",
         durationSeconds: 10, cameraFixed: false, seed: null, imagePaths: studyPaths,
         options: { playground: true, referenceStudyPaths: studyPaths, referenceHasVideo: hasVideo, referenceBrief: brief,
           references: assets.map((asset) => ({ name: asset.name, kind: asset.kind, directlySuppliedToModel: true })) },
@@ -132,7 +137,7 @@ export function VideoPlaygroundPage() {
                 <input type="file" accept="image/*,video/*" multiple className="hidden" disabled={busy} onChange={(event) => { if (event.target.files?.length) void addMedia(event.target.files); event.target.value = ""; }} /></label>
               {assets.length > 0 && <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">{assets.map((asset) => <div key={asset.id} className="overflow-hidden rounded-lg border border-border bg-muted/30"><SignedImage bucket="character-refs" path={asset.coverPath} alt={asset.name} className="aspect-video w-full object-cover" /><div className="flex items-center gap-2 px-3 py-2">{asset.kind === "video" ? <Video className="h-3.5 w-3.5 text-primary" /> : <ImagePlus className="h-3.5 w-3.5 text-primary" />}<span className="min-w-0 flex-1 truncate text-xs font-semibold">{asset.name}</span><Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setAssets((current) => current.filter((item) => item.id !== asset.id))} aria-label={`Remove ${asset.name}`}><X className="h-3.5 w-3.5" /></Button></div></div>)}</div>}
             </div>
-            <div data-video-tour="prompt" className="space-y-3"><div className="flex justify-between"><Label htmlFor="video-prompt" className="font-bold">Describe your video</Label><span className="text-xs text-muted-foreground">{prompt.length}/3000</span></div><Textarea id="video-prompt" value={prompt} maxLength={3000} disabled={busy} onChange={(event) => setPrompt(event.target.value)} placeholder="A woman in a red coat walks through a rainy neon street, then turns toward the camera and smiles…" className="min-h-44 resize-y rounded-lg text-base leading-relaxed" /><p className="text-xs text-muted-foreground">Write naturally in Korean or English. Your intent is preserved while the prompt is optimized automatically.</p></div>
+            <div data-video-tour="prompt" className="space-y-3"><div className="flex justify-between"><Label htmlFor="video-prompt" className="font-bold">Describe your video</Label><span className="text-xs text-muted-foreground">{prompt.length}/3000</span></div><Textarea id="video-prompt" value={prompt} maxLength={3000} disabled={busy} onChange={(event) => setPrompt(event.target.value)} placeholder="A woman in a red coat walks through a rainy neon street, then turns toward the camera and smiles…" className="min-h-44 resize-y rounded-lg text-base leading-relaxed" /><p className="text-xs text-muted-foreground">Write naturally in Korean or English. Uploaded references are used automatically—no tags are needed.</p></div>
             <Button data-video-tour="generate" onClick={generate} disabled={busy || !prompt.trim()} className="h-13 w-full text-base font-bold">{busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <Film className="h-5 w-5" />}{preparing ? "Preparing the best prompt…" : gen.running ? "Generating video…" : "Generate video"}</Button>
           </div>
         </section>
