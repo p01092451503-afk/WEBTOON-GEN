@@ -44,10 +44,10 @@ export const startVideoGeneration = createServerFn({ method: "POST" })
     const negativePrompt = data.negativePrompt?.trim() || DEFAULT_VIDEO_NEGATIVE_PROMPT;
     if (!prompt) throw new Error("EMPTY_PROMPT");
 
-    const { moderateVideoPrompt } = await import("@/lib/video-moderation.server");
-    const moderation = await moderateVideoPrompt(prompt);
-    if (moderation.status === "blocked")
-      throw new Error(`CONTENT_BLOCKED: ${moderation.reason || moderation.categories.join(", ")}`);
+    // 사전 검열 없음: 프롬프트는 Seedance(ARK) 로 그대로 전달되고,
+    // 안전성 판단은 공급자(Seedance) 심사에만 맡긴다.
+    const moderation = { status: "approved" as const, reason: null, categories: [] as string[], skipped: true };
+
 
     const seed = data.seed ?? null;
 
