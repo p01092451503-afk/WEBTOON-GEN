@@ -282,7 +282,7 @@ function HistoryPage() {
         <div className="mt-6">
           <DetailCard
             row={selected}
-            onClose={() => navigate({ search: { tab } })}
+            onClose={() => navigate({ search: { tab, id: undefined } })}
             locale={locale}
           />
         </div>
@@ -292,7 +292,7 @@ function HistoryPage() {
         <div className="mt-6">
           <VideoDetailCard
             row={selectedVideo}
-            onClose={() => navigate({ search: { tab } })}
+            onClose={() => navigate({ search: { tab, id: undefined } })}
             onDelete={() => removeVideos([selectedVideo])}
             locale={locale}
           />
