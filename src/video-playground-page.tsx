@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState, type DragEvent } from "react";
+import { useEffect, useMemo, useState, type DragEvent, type ReactNode } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { AlertCircle, CheckCircle2, CircleHelp, Download, Film, ImagePlus, Loader2, RefreshCw, Trash2, Video, X } from "lucide-react";
+import { AlertCircle, CheckCircle2, CircleHelp, Download, Film, ImagePlus, Loader2, Monitor, RefreshCw, Trash2, Video, Volume2, VolumeX, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/hooks/useTenant";
 import { useVideoGeneration } from "@/hooks/useVideoGeneration";
@@ -74,6 +74,9 @@ export function VideoPlaygroundPage() {
   const [prompt, setPrompt] = useState("");
   const [resolution, setResolution] = useState<SeedanceResolution>("720p");
   const [durationSeconds, setDurationSeconds] = useState(10);
+  const [aspectRatio, setAspectRatio] = useState("16:9");
+  const [outputQuantity, setOutputQuantity] = useState(1);
+  const [generateAudio, setGenerateAudio] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const [preparing, setPreparing] = useState(false);
@@ -99,7 +102,7 @@ export function VideoPlaygroundPage() {
     const loadCostSummary = async () => {
       const { data, error } = await supabase
         .from("video_generations")
-        .select("resolution, duration_seconds, actual_resolution, actual_duration_seconds")
+        .select("resolution, duration_seconds, actual_resolution, actual_duration_seconds, options")
         .eq("tenant_id", tenantId)
         .eq("status", "done");
       if (!active || error) return;
@@ -108,7 +111,11 @@ export function VideoPlaygroundPage() {
         const safeResolution: SeedanceResolution =
           selectedResolution === "480p" || selectedResolution === "1080p" ? selectedResolution : "720p";
         const selectedDuration = item.actual_duration_seconds ?? item.duration_seconds ?? 0;
-        return total + estimateSeedanceVideoCost(safeResolution, Number(selectedDuration));
+        const options = item.options && typeof item.options === "object" && !Array.isArray(item.options)
+          ? item.options as Record<string, unknown>
+          : {};
+        const quantity = typeof options.outputQuantity === "number" ? options.outputQuantity : 1;
+        return total + estimateSeedanceVideoCost(safeResolution, Number(selectedDuration)) * quantity;
       }, 0);
       setCostSummary({ completedCount: data?.length ?? 0, estimatedTotal });
     };
@@ -123,8 +130,8 @@ export function VideoPlaygroundPage() {
   const seedanceHealth = health?.models.find((model) => model.provider === "seedance") ?? null;
   const busy = uploading || preparing || gen.running;
   const estimatedCost = useMemo(
-    () => estimateSeedanceVideoCost(resolution, durationSeconds),
-    [resolution, durationSeconds],
+    () => estimateSeedanceVideoCost(resolution, durationSeconds) * outputQuantity,
+    [resolution, durationSeconds, outputQuantity],
   );
 
   async function uploadBlob(blob: Blob, name: string) {
@@ -198,8 +205,8 @@ export function VideoPlaygroundPage() {
       await gen.run({
         workLabel: "Playground", provider: "seedance", mode: firstReference ? "i2v" : "t2v",
         finalPrompt: composed.finalPrompt, negativePrompt: brief?.negative || undefined,
-        rawPrompt: plainPrompt, promptEdited: true, aspectRatio: "16:9", resolution,
-        durationSeconds, cameraFixed: false, seed: null, imagePaths: studyPaths,
+         rawPrompt: plainPrompt, promptEdited: true, aspectRatio: aspectRatio === "Auto" ? "adaptive" : aspectRatio, resolution,
+         durationSeconds, outputQuantity, generateAudio, cameraFixed: false, seed: null, imagePaths: studyPaths,
         options: { playground: true, referenceStudyPaths: studyPaths, referenceHasVideo: hasVideo, referenceBrief: brief,
           references: assets.map((asset) => ({ name: asset.name, kind: asset.kind, directlySuppliedToModel: true })) },
       });
@@ -229,11 +236,14 @@ export function VideoPlaygroundPage() {
               {assets.length > 0 && <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">{assets.map((asset) => <div key={asset.id} className="overflow-hidden rounded-lg border border-border bg-muted/30"><SignedImage bucket="character-refs" path={asset.coverPath} alt={asset.name} className="aspect-video w-full object-cover" /><div className="flex items-center gap-2 px-3 py-2">{asset.kind === "video" ? <Video className="h-3.5 w-3.5 text-primary" /> : <ImagePlus className="h-3.5 w-3.5 text-primary" />}<span className="min-w-0 flex-1 truncate text-xs font-semibold">{asset.name}</span><Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setAssets((current) => current.filter((item) => item.id !== asset.id))} aria-label={`Remove ${asset.name}`}><X className="h-3.5 w-3.5" /></Button></div></div>)}</div>}
             </div>
             <div data-video-tour="prompt" className="space-y-3"><div className="flex justify-between"><Label htmlFor="video-prompt" className="font-bold">Describe your video</Label><span className="text-xs text-muted-foreground">{prompt.length}/3000</span></div><Textarea id="video-prompt" value={prompt} maxLength={3000} disabled={busy} onChange={(event) => setPrompt(event.target.value)} placeholder="A woman in a red coat walks through a rainy neon street, then turns toward the camera and smiles…" className="min-h-44 resize-y rounded-lg text-base leading-relaxed" /><p className="text-xs text-muted-foreground">Write naturally in Korean or English. Uploaded references are used automatically—no tags are needed.</p></div>
-            <div className="grid gap-4 rounded-lg border border-border bg-muted/20 p-4 sm:grid-cols-2">
-              <div className="space-y-2"><Label htmlFor="video-resolution" className="text-xs font-bold">Resolution</Label><Select value={resolution} onValueChange={(value) => setResolution(value as SeedanceResolution)} disabled={busy}><SelectTrigger id="video-resolution" className="h-10 bg-card"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="480p">480p</SelectItem><SelectItem value="720p">720p</SelectItem><SelectItem value="1080p">1080p</SelectItem></SelectContent></Select></div>
-              <div className="space-y-2"><Label htmlFor="video-duration" className="text-xs font-bold">Duration</Label><Select value={String(durationSeconds)} onValueChange={(value) => setDurationSeconds(Number(value))} disabled={busy}><SelectTrigger id="video-duration" className="h-10 bg-card"><SelectValue /></SelectTrigger><SelectContent>{[4, 5, 8, 10, 12].map((seconds) => <SelectItem key={seconds} value={String(seconds)}>{seconds} seconds</SelectItem>)}</SelectContent></Select></div>
+             <div className="space-y-5 rounded-lg border border-border bg-muted/20 p-4">
+               <OptionRow label="Ratio"><div className="grid grid-cols-4 gap-1 sm:grid-cols-7">{["21:9", "16:9", "4:3", "1:1", "3:4", "9:16", "Auto"].map((ratio) => <Button key={ratio} type="button" size="sm" variant={aspectRatio === ratio ? "default" : "ghost"} className="h-9 px-2 text-xs" disabled={busy} onClick={() => setAspectRatio(ratio)}><Monitor className="h-3.5 w-3.5" />{ratio}</Button>)}</div></OptionRow>
+               <OptionRow label="Resolution"><div className="grid grid-cols-3 gap-1">{(["480p", "720p", "1080p"] as SeedanceResolution[]).map((value) => <Button key={value} type="button" size="sm" variant={resolution === value ? "default" : "ghost"} className="h-9" disabled={busy} onClick={() => setResolution(value)}>{value.toUpperCase()}</Button>)}</div></OptionRow>
+               <OptionRow label="Duration"><div className="grid grid-cols-5 gap-1">{[4, 5, 6, 8, 10].map((seconds) => <Button key={seconds} type="button" size="sm" variant={durationSeconds === seconds ? "default" : "ghost"} className="h-9" disabled={busy} onClick={() => setDurationSeconds(seconds)}>{seconds}s</Button>)}</div></OptionRow>
+               <OptionRow label="Number of videos"><div className="grid grid-cols-4 gap-1">{[1, 2, 3, 4].map((quantity) => <Button key={quantity} type="button" size="sm" variant={outputQuantity === quantity ? "default" : "ghost"} className="h-9" disabled={busy} onClick={() => setOutputQuantity(quantity)}>{quantity}</Button>)}</div></OptionRow>
+               <OptionRow label="Output sound"><div className="grid grid-cols-2 gap-1"><Button type="button" size="sm" variant={generateAudio ? "default" : "ghost"} className="h-9" disabled={busy} onClick={() => setGenerateAudio(true)}><Volume2 className="h-4 w-4" />On</Button><Button type="button" size="sm" variant={!generateAudio ? "default" : "ghost"} className="h-9" disabled={busy} onClick={() => setGenerateAudio(false)}><VolumeX className="h-4 w-4" />Off</Button></div></OptionRow>
               <div className="grid gap-4 border-t border-border pt-3 sm:col-span-2 sm:grid-cols-2">
-                <div className="flex items-end justify-between gap-3 border-b border-border pb-4 sm:border-b-0 sm:border-r sm:pb-0 sm:pr-4"><div><p className="text-xs font-bold">Estimated cost per generation</p><p className="mt-1 text-xs leading-relaxed text-muted-foreground">Current resolution and duration</p></div><p className="shrink-0 text-xl font-extrabold tabular-nums">${estimatedCost.toFixed(2)} <span className="text-xs font-semibold text-muted-foreground">USD</span></p></div>
+                 <div className="flex items-end justify-between gap-3 border-b border-border pb-4 sm:border-b-0 sm:border-r sm:pb-0 sm:pr-4"><div><p className="text-xs font-bold">Estimated request cost</p><p className="mt-1 text-xs leading-relaxed text-muted-foreground">{outputQuantity} video{outputQuantity === 1 ? "" : "s"} · current settings</p></div><p className="shrink-0 text-xl font-extrabold tabular-nums">${estimatedCost.toFixed(2)} <span className="text-xs font-semibold text-muted-foreground">USD</span></p></div>
                 <div className="flex items-end justify-between gap-3 sm:pl-1"><div><p className="text-xs font-bold">Estimated cumulative cost</p><p className="mt-1 text-xs leading-relaxed text-muted-foreground">{costSummary.completedCount} completed generation{costSummary.completedCount === 1 ? "" : "s"}</p></div><p className="shrink-0 text-xl font-extrabold tabular-nums">${costSummary.estimatedTotal.toFixed(2)} <span className="text-xs font-semibold text-muted-foreground">USD</span></p></div>
               </div>
               <p className="text-xs leading-relaxed text-muted-foreground sm:col-span-2">Based on BytePlus Seedance 2.0 pay-as-you-go examples. Final billing can vary with the tokens reported by the provider. Uploaded videos are converted to reference frames in this playground.</p>
@@ -254,3 +264,4 @@ function EmptyResult({ loading = false }: { loading?: boolean }) { return <div c
 function ErrorCard({ message }: { message: string }) { const info = explainVideoError(message); return <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-xs"><p className="font-bold text-destructive">{info.title}</p><p className="mt-1 text-foreground/80">{info.hint}</p>{info.checks.length > 0 && <ul className="mt-2 list-disc space-y-1 pl-4">{info.checks.map((item) => <li key={item}>{item}</li>)}</ul>}</div>; }
 function ResultVideo({ path }: { path: string }) { const url = useSignedUrl("generation-outputs", path, 300); const [downloading, setDownloading] = useState(false); async function download() { setDownloading(true); try { const name = path.split("/").pop() || "pilotstudio-video.mp4"; const { data, error } = await supabase.storage.from("generation-outputs").createSignedUrl(path, 60, { download: name }); if (error || !data?.signedUrl) throw error || new Error("Download failed"); const link = document.createElement("a"); link.href = data.signedUrl; link.download = name; document.body.appendChild(link); link.click(); link.remove(); } catch (error) { toast.error(error instanceof Error ? error.message : "Download failed"); } finally { setDownloading(false); } } if (!url) return <div className="aspect-video animate-pulse rounded-lg bg-muted" />; return <div className="space-y-3"><video src={url} controls playsInline className="aspect-video w-full rounded-lg border border-border bg-foreground object-contain" /><Button variant="outline" className="w-full" onClick={download} disabled={downloading}>{downloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />} Download</Button></div>; }
 function ValidationItem({ label, value }: { label: string; value: ValidationState }) { const positive = value === "valid" || value === "available"; return <div className="flex items-center justify-between rounded-md border border-border bg-muted/20 px-3 py-2 text-xs"><span className="text-muted-foreground">{label}</span><span className="font-bold">{positive ? "Ready" : value === "configured" ? "Configured" : value === "not_configured" ? "Not set" : value === "invalid" || value === "unavailable" || value === "missing" ? "Check required" : "Unknown"}</span></div>; }
+function OptionRow({ label, children }: { label: string; children: ReactNode }) { return <div className="space-y-2"><Label className="text-xs font-bold">{label}</Label><div className="rounded-md border border-border bg-card p-1">{children}</div></div>; }

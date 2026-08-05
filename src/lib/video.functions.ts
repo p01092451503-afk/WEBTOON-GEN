@@ -16,6 +16,8 @@ const startSchema = z.object({
   aspectRatio: z.string().default("16:9"),
   resolution: z.enum(["480p", "720p", "1080p"]).default("720p"),
   durationSeconds: z.number().int().min(3).max(12).default(10),
+  outputQuantity: z.number().int().min(1).max(4).default(1),
+  generateAudio: z.boolean().default(true),
   cameraFixed: z.boolean().default(false),
   seed: z.number().int().nullable().optional(),
   /** character-refs 버킷의 참고 이미지 및 영상 추출 프레임. 1개면 시작 프레임, 여러 개면 모두 참고 미디어다. */
@@ -103,24 +105,31 @@ export const startVideoGeneration = createServerFn({ method: "POST" })
       const useFirstFrame = signedUrls.length === 1;
       const firstFrameUrl = useFirstFrame ? signedUrls[0] : null;
       const referenceImageUrls = useFirstFrame ? [] : signedUrls;
-      const started = await createVideoTask({
-        text: buildSeedanceText({
-          prompt,
+      const taskIds: string[] = [];
+      let startedModel = "";
+      for (let index = 0; index < data.outputQuantity; index += 1) {
+        const started = await createVideoTask({
+          text: buildSeedanceText({
+            prompt,
+            aspectRatio: data.aspectRatio,
+            resolution: data.resolution,
+            durationSeconds: data.durationSeconds,
+            cameraFixed: data.cameraFixed,
+            seed,
+            hasFirstFrame: useFirstFrame,
+          }),
+          firstFrameUrl,
+          referenceImageUrls,
           aspectRatio: data.aspectRatio,
           resolution: data.resolution,
           durationSeconds: data.durationSeconds,
-          cameraFixed: data.cameraFixed,
-          seed,
-          hasFirstFrame: useFirstFrame,
-        }),
-        firstFrameUrl,
-        referenceImageUrls,
-        aspectRatio: data.aspectRatio,
-        resolution: data.resolution,
-        durationSeconds: data.durationSeconds,
-      });
-      taskId = started.taskId;
-      model = started.model;
+          generateAudio: data.generateAudio,
+        });
+        taskIds.push(started.taskId);
+        startedModel = started.model;
+      }
+      taskId = taskIds[0];
+      model = startedModel;
       modelVersion = null;
 
       await supabase
@@ -133,6 +142,9 @@ export const startVideoGeneration = createServerFn({ method: "POST" })
              ...data.options,
              selectedProvider: provider,
              fallbackUsed: false,
+              taskIds,
+              outputQuantity: data.outputQuantity,
+              generateAudio: data.generateAudio,
            },
         })
         .eq("id", videoId);
@@ -164,7 +176,7 @@ export const pollVideoGeneration = createServerFn({ method: "POST" })
 
     const { data: row } = await supabase
       .from("video_generations")
-      .select("id, tenant_id, status, task_id, duration_seconds, error_message, moderation_status")
+      .select("id, tenant_id, status, task_id, duration_seconds, error_message, moderation_status, options")
       .eq("id", data.videoGenerationId)
       .maybeSingle();
     if (!row) throw new Error("VIDEO_NOT_FOUND");
@@ -179,7 +191,19 @@ export const pollVideoGeneration = createServerFn({ method: "POST" })
       if (row.task_id.startsWith("replicate:") || row.task_id.startsWith("lovable:")) {
         throw new Error("LEGACY_VIDEO_PROVIDER_UNSUPPORTED: Start a new Seedance 2.0 generation.");
       }
-      state = await getVideoTask(row.task_id);
+      const options = row.options && typeof row.options === "object" && !Array.isArray(row.options)
+        ? row.options as Record<string, unknown>
+        : {};
+      const storedTaskIds = Array.isArray(options.taskIds)
+        ? options.taskIds.filter((value): value is string => typeof value === "string")
+        : [];
+      const taskIds = storedTaskIds.length ? storedTaskIds : [row.task_id];
+      const states = await Promise.all(taskIds.map((taskId) => getVideoTask(taskId)));
+      const failed = states.find((item) => item.status === "failed" || item.status === "cancelled");
+      const pending = states.some((item) => item.status === "queued" || item.status === "running");
+      state = failed ?? (pending
+        ? { status: "running" }
+        : { status: "succeeded", videoUrl: states.map((item) => item.videoUrl).filter(Boolean).join("\n") });
     } catch (pollError) {
       const reason = pollError instanceof Error ? pollError.message : String(pollError);
       state = { status: "failed", error: reason };
@@ -207,29 +231,34 @@ export const pollVideoGeneration = createServerFn({ method: "POST" })
     }
 
     try {
-      const res = await fetch(state.videoUrl);
-      if (!res.ok) throw new Error(`FETCH_VIDEO_FAILED: ${res.status}`);
-      const bytes = new Uint8Array(await res.arrayBuffer());
       const { readMp4Metadata } = await import("@/lib/mp4-metadata.server");
-      const metadata = readMp4Metadata(bytes);
-      const storagePath = `${row.tenant_id}/video/${row.id}/0.mp4`;
-
-      const { error: upErr } = await supabaseAdmin.storage
-        .from("generation-outputs")
-        .upload(storagePath, bytes, { contentType: "video/mp4", upsert: true });
-      if (upErr) throw new Error(`STORAGE_UPLOAD_FAILED: ${upErr.message}`);
-
-      await supabaseAdmin.from("video_results").insert({
-        video_generation_id: row.id,
-        seq: 0,
-        storage_path: storagePath,
-        source_url: null,
-        duration_seconds: metadata.durationSeconds,
-        width: metadata.width,
-        height: metadata.height,
-        moderation_status: row.moderation_status === "approved" ? "approved" : "failed",
-        metadata: { measured: true, requestedDurationSeconds: row.duration_seconds },
-      });
+      const videoUrls = state.videoUrl.split("\n").filter(Boolean);
+      const measured = [];
+      for (let index = 0; index < videoUrls.length; index += 1) {
+        const res = await fetch(videoUrls[index]);
+        if (!res.ok) throw new Error(`FETCH_VIDEO_FAILED: ${res.status}`);
+        const bytes = new Uint8Array(await res.arrayBuffer());
+        const metadata = readMp4Metadata(bytes);
+        measured.push(metadata);
+        const storagePath = `${row.tenant_id}/video/${row.id}/${index}.mp4`;
+        const { error: upErr } = await supabaseAdmin.storage
+          .from("generation-outputs")
+          .upload(storagePath, bytes, { contentType: "video/mp4", upsert: true });
+        if (upErr) throw new Error(`STORAGE_UPLOAD_FAILED: ${upErr.message}`);
+        await supabaseAdmin.from("video_results").insert({
+          video_generation_id: row.id,
+          seq: index,
+          storage_path: storagePath,
+          source_url: null,
+          duration_seconds: metadata.durationSeconds,
+          width: metadata.width,
+          height: metadata.height,
+          moderation_status: row.moderation_status === "approved" ? "approved" : "failed",
+          metadata: { measured: true, requestedDurationSeconds: row.duration_seconds },
+        });
+      }
+      const metadata = measured[0];
+      if (!metadata) throw new Error("VIDEO_RESULT_MISSING");
 
       await supabaseAdmin
         .from("video_generations")
