@@ -147,7 +147,7 @@ export async function probeSeedance(): Promise<ModelHealth> {
       : false;
     const endpointConfigured = Boolean(configuredEndpoint);
     const catalogReadable = modelsResponse.ok;
-    const callableTargetAvailable = modelAvailable || endpointListedAsModel;
+    const callableTargetAvailable = modelAvailable || endpointConfigured;
 
     return {
       id: seedance2Model,
@@ -155,7 +155,7 @@ export async function probeSeedance(): Promise<ModelHealth> {
       provider: "seedance",
       status: callableTargetAvailable ? "available" : "unknown",
       detail: callableTargetAvailable
-        ? `ARK authentication succeeded and ${endpointListedAsModel ? "the configured video endpoint" : "Seedance 2.0"} is available.`
+        ? `ARK authentication succeeded and ${endpointConfigured ? "the configured Seedance 2.0 endpoint" : "Seedance 2.0"} is available.`
         : catalogReadable
           ? "ARK authentication succeeded, but Seedance 2.0 or the configured endpoint was not returned by the model catalog. Check model activation and project ownership."
           : "ARK authentication succeeded. The model catalog is unavailable, so the model will be confirmed when generation starts.",

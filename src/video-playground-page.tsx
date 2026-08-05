@@ -100,7 +100,7 @@ export function VideoPlaygroundPage() {
         lighting: brief?.lighting ?? "", style: brief?.style ?? "",
       } });
       await gen.run({
-        workLabel: "Playground", provider: "auto", mode: firstReference ? "i2v" : "t2v",
+        workLabel: "Playground", provider: "seedance", mode: firstReference ? "i2v" : "t2v",
         finalPrompt: composed.finalPrompt, negativePrompt: brief?.negative || undefined,
         rawPrompt: prompt.trim(), promptEdited: true, aspectRatio: "16:9", resolution: "720p",
         durationSeconds: 10, cameraFixed: false, seed: null, imagePaths: studyPaths,
