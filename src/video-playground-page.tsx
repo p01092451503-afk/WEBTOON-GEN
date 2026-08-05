@@ -220,7 +220,7 @@ export function VideoPlaygroundPage() {
     if (!prompt.trim()) return toast.error("Describe the video you want to create.");
     setPreparing(true);
     try {
-      const plainPrompt = removeLegacyMentionMarkers(prompt.trim());
+      const plainPrompt = expandReferenceMentions(prompt.trim(), assets);
       let brief: ReferenceBrief | null = null;
       if (studyPaths.length) {
         brief = await analyze({ data: { imagePaths: studyPaths, intent: plainPrompt, hasVideoFrames: hasVideo } }) as ReferenceBrief;
@@ -248,7 +248,7 @@ export function VideoPlaygroundPage() {
     if (!prompt.trim()) return toast.error("Describe the video you want to polish.");
     setPolishing(true);
     try {
-      const plainPrompt = removeLegacyMentionMarkers(prompt.trim());
+      const plainPrompt = expandReferenceMentions(prompt.trim(), assets);
       const composed = await compose({ data: {
         subject: "", action: plainPrompt, camera: "", lighting: "", style: "", safetyMode: "strict",
       } });
