@@ -58,6 +58,21 @@ function pick(raw: string): ErrorGuide {
     );
   }
   if (
+    r.includes("inputtextsensitivecontentdetected") ||
+    r.includes("input text") && r.includes("sensitive information")
+  ) {
+    return guide(
+      "safety",
+      "Seedance rejected the prompt text before generation started.",
+      "The input text was flagged as possibly containing sensitive information. The video was never generated.",
+      [
+        "Prompt: remove real names, phone numbers, addresses, ID or account numbers, brand/celebrity names, and any private details.",
+        "Prompt: remove wording about revealing, exposing, or reproducing personal or confidential information.",
+        "Rewrite the prompt to describe only the scene, subject appearance, and camera motion in neutral language, then retry.",
+      ],
+    );
+  }
+  if (
     r.includes("output video may contain sensitive information") ||
     r.includes("output may contain sensitive information") ||
     r.includes("sensitive information")
