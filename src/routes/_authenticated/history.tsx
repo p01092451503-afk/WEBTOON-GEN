@@ -225,7 +225,7 @@ function HistoryPage() {
       await deleteVideoGenerations(targets);
       const removed = new Set(targets.map((r) => r.id));
       setVideoRows((prev) => (prev ?? []).filter((r) => !removed.has(r.id)));
-      if (id && removed.has(id)) navigate({ search: { tab, id: undefined } });
+      if (id && removed.has(id)) navigate({ search: { tab } });
       toast.success(`Deleted ${targets.length} item${targets.length > 1 ? "s" : ""}.`);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Delete failed");
@@ -282,7 +282,7 @@ function HistoryPage() {
         <div className="mt-6">
           <DetailCard
             row={selected}
-            onClose={() => navigate({ search: { tab, id: undefined } })}
+            onClose={() => navigate({ search: { tab } })}
             locale={locale}
           />
         </div>
@@ -292,7 +292,7 @@ function HistoryPage() {
         <div className="mt-6">
           <VideoDetailCard
             row={selectedVideo}
-            onClose={() => navigate({ search: { tab, id: undefined } })}
+            onClose={() => navigate({ search: { tab } })}
             onDelete={() => removeVideos([selectedVideo])}
             locale={locale}
           />

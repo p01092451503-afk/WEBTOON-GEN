@@ -1,8 +1,5 @@
 export const DEFAULT_VIDEO_NEGATIVE_PROMPT =
-  "low quality, worst quality, deformed, distorted, blurry, watermark, text, signature, username, " +
-  "address, phone number, id card, passport, screen, ui, interface, subtitle, static, jittery motion, " +
-  "duplicate frames, malformed hands, extra limbs, copyrighted logo, trademark";
-
+  "low quality, worst quality, deformed, distorted, blurry, watermark, text, static, jittery motion";
 
 export type SeedanceResolution = "480p" | "720p" | "1080p";
 
