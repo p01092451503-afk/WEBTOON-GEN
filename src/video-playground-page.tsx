@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type DragEvent } from "react";
+import { useEffect, useMemo, useState, type DragEvent, type ReactNode } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { AlertCircle, CheckCircle2, CircleHelp, Download, Film, ImagePlus, Loader2, Monitor, RefreshCw, Trash2, Video, Volume2, VolumeX, X } from "lucide-react";
@@ -102,7 +102,7 @@ export function VideoPlaygroundPage() {
     const loadCostSummary = async () => {
       const { data, error } = await supabase
         .from("video_generations")
-        .select("resolution, duration_seconds, actual_resolution, actual_duration_seconds")
+        .select("resolution, duration_seconds, actual_resolution, actual_duration_seconds, options")
         .eq("tenant_id", tenantId)
         .eq("status", "done");
       if (!active || error) return;
@@ -111,7 +111,11 @@ export function VideoPlaygroundPage() {
         const safeResolution: SeedanceResolution =
           selectedResolution === "480p" || selectedResolution === "1080p" ? selectedResolution : "720p";
         const selectedDuration = item.actual_duration_seconds ?? item.duration_seconds ?? 0;
-        return total + estimateSeedanceVideoCost(safeResolution, Number(selectedDuration));
+        const options = item.options && typeof item.options === "object" && !Array.isArray(item.options)
+          ? item.options as Record<string, unknown>
+          : {};
+        const quantity = typeof options.outputQuantity === "number" ? options.outputQuantity : 1;
+        return total + estimateSeedanceVideoCost(safeResolution, Number(selectedDuration)) * quantity;
       }, 0);
       setCostSummary({ completedCount: data?.length ?? 0, estimatedTotal });
     };
@@ -201,7 +205,7 @@ export function VideoPlaygroundPage() {
       await gen.run({
         workLabel: "Playground", provider: "seedance", mode: firstReference ? "i2v" : "t2v",
         finalPrompt: composed.finalPrompt, negativePrompt: brief?.negative || undefined,
-         rawPrompt: plainPrompt, promptEdited: true, aspectRatio, resolution,
+         rawPrompt: plainPrompt, promptEdited: true, aspectRatio: aspectRatio === "Auto" ? "adaptive" : aspectRatio, resolution,
          durationSeconds, outputQuantity, generateAudio, cameraFixed: false, seed: null, imagePaths: studyPaths,
         options: { playground: true, referenceStudyPaths: studyPaths, referenceHasVideo: hasVideo, referenceBrief: brief,
           references: assets.map((asset) => ({ name: asset.name, kind: asset.kind, directlySuppliedToModel: true })) },
@@ -260,4 +264,4 @@ function EmptyResult({ loading = false }: { loading?: boolean }) { return <div c
 function ErrorCard({ message }: { message: string }) { const info = explainVideoError(message); return <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-xs"><p className="font-bold text-destructive">{info.title}</p><p className="mt-1 text-foreground/80">{info.hint}</p>{info.checks.length > 0 && <ul className="mt-2 list-disc space-y-1 pl-4">{info.checks.map((item) => <li key={item}>{item}</li>)}</ul>}</div>; }
 function ResultVideo({ path }: { path: string }) { const url = useSignedUrl("generation-outputs", path, 300); const [downloading, setDownloading] = useState(false); async function download() { setDownloading(true); try { const name = path.split("/").pop() || "pilotstudio-video.mp4"; const { data, error } = await supabase.storage.from("generation-outputs").createSignedUrl(path, 60, { download: name }); if (error || !data?.signedUrl) throw error || new Error("Download failed"); const link = document.createElement("a"); link.href = data.signedUrl; link.download = name; document.body.appendChild(link); link.click(); link.remove(); } catch (error) { toast.error(error instanceof Error ? error.message : "Download failed"); } finally { setDownloading(false); } } if (!url) return <div className="aspect-video animate-pulse rounded-lg bg-muted" />; return <div className="space-y-3"><video src={url} controls playsInline className="aspect-video w-full rounded-lg border border-border bg-foreground object-contain" /><Button variant="outline" className="w-full" onClick={download} disabled={downloading}>{downloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />} Download</Button></div>; }
 function ValidationItem({ label, value }: { label: string; value: ValidationState }) { const positive = value === "valid" || value === "available"; return <div className="flex items-center justify-between rounded-md border border-border bg-muted/20 px-3 py-2 text-xs"><span className="text-muted-foreground">{label}</span><span className="font-bold">{positive ? "Ready" : value === "configured" ? "Configured" : value === "not_configured" ? "Not set" : value === "invalid" || value === "unavailable" || value === "missing" ? "Check required" : "Unknown"}</span></div>; }
-function OptionRow({ label, children }: { label: string; children: React.ReactNode }) { return <div className="space-y-2"><Label className="text-xs font-bold">{label}</Label><div className="rounded-md border border-border bg-card p-1">{children}</div></div>; }
+function OptionRow({ label, children }: { label: string; children: ReactNode }) { return <div className="space-y-2"><Label className="text-xs font-bold">{label}</Label><div className="rounded-md border border-border bg-card p-1">{children}</div></div>; }
