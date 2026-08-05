@@ -185,7 +185,7 @@ export const pollVideoGeneration = createServerFn({ method: "POST" })
 
     const { data: row } = await supabase
       .from("video_generations")
-      .select("id, tenant_id, status, task_id, duration_seconds, error_message, moderation_status, options")
+      .select("id, tenant_id, status, task_id, duration_seconds, error_message, moderation_status, options, aspect_ratio, resolution, api_model, image_paths, mode")
       .eq("id", data.videoGenerationId)
       .maybeSingle();
     if (!row) throw new Error("VIDEO_NOT_FOUND");
