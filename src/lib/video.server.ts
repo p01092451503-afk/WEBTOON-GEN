@@ -57,6 +57,7 @@ export async function createVideoTask(params: {
   aspectRatio?: string | null;
   resolution?: string | null;
   durationSeconds?: number | null;
+  generateAudio?: boolean;
 }): Promise<{ taskId: string; model: string }> {
   const { key, base, candidates } = arkEnv();
 
@@ -108,7 +109,7 @@ export async function createVideoTask(params: {
       ratio: useFrameMode ? "adaptive" : params.aspectRatio || "16:9",
       resolution: params.resolution || "720p",
       duration: params.durationSeconds || 10,
-      generate_audio: true,
+      generate_audio: params.generateAudio ?? true,
       watermark: false,
     };
 
