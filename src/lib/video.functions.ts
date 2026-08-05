@@ -367,7 +367,6 @@ export const pollVideoGeneration = createServerFn({ method: "POST" })
                durationSeconds: row.duration_seconds,
                firstFrameUrl: signedUrls[0] ?? null,
                lastFrameUrl: signedUrls[1] ?? null,
-               cameraFixed: row.camera_fixed,
                seed: row.seed,
              });
              fallback = {
