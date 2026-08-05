@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { startVideoGeneration, pollVideoGeneration } from "@/lib/video.functions";
+import { recoverStaleServerFunction } from "@/lib/server-function-recovery";
 
 export type VideoResult = {
   id: string;
@@ -105,6 +106,7 @@ export function useVideoGeneration(tenantId: string | null) {
         if (res.status === "error") setError(res.error ?? "VIDEO_FAILED");
       } catch (e) {
         if (cancelled) return;
+        if (recoverStaleServerFunction(e)) return;
         setError(e instanceof Error ? e.message : String(e));
         setRunning(false);
         writeStoredId(null);
@@ -133,6 +135,7 @@ export function useVideoGeneration(tenantId: string | null) {
       setCurrentId(res.videoGenerationId);
       return res;
     } catch (e) {
+      if (recoverStaleServerFunction(e)) return;
       setError(e instanceof Error ? e.message : String(e));
       setRunning(false);
       writeStoredId(null);
