@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { CircleHelp, Download, Film, ImagePlus, Loader2, RefreshCw, Sparkles, Trash2, Video, X } from "lucide-react";
+import { CircleHelp, Download, Film, ImagePlus, Loader2, RefreshCw, Trash2, Video, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/hooks/useTenant";
 import { useVideoGeneration } from "@/hooks/useVideoGeneration";
@@ -111,7 +111,7 @@ export function VideoPlaygroundPage() {
     <StudioSwitcher active="video" />
     <div className="mx-auto mt-5 max-w-6xl">
       <header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div><div className="flex items-center gap-2 text-xs font-bold uppercase text-primary"><Sparkles className="h-4 w-4" /> Video playground</div>
+        <div>
           <h1 className="mt-2 text-3xl font-extrabold">What do you want to create?</h1>
           <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">Add reference images or videos, then describe your scene. Their subjects, visual style, lighting, and motion are studied and supplied directly to the video model.</p></div>
         <div className="flex items-center gap-2"><span className="rounded-full border border-border bg-card px-3 py-2 text-xs font-semibold text-muted-foreground">{health ? `${readyCount} engine${readyCount === 1 ? "" : "s"} ready` : "Checking engines"}</span>
