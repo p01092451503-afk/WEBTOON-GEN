@@ -16,7 +16,8 @@ const SYSTEM_PROMPT =
   "emotion labels. Follow this order: Subject, Action, Camera, Lighting, Style. Preserve all " +
   "concrete details supplied by the user without inventing new characters or events. If the " +
   "Action control contains Korean, translate its meaning directly into natural cinematic English " +
-  "while preserving names, @mentions, actions, timing, direction, and spatial relationships. " +
+  "while preserving names, actions, timing, direction, and spatial relationships. Uploaded reference " +
+  "media is supplied separately to the video model, so do not add media tokens or mention syntax. " +
   "Do not use image-prompt conventions or introduce Figure 1/Figure 2 labels. Output English only, " +
   "with no Korean text, lists, headings, quotes, negative instructions, or commentary.";
 

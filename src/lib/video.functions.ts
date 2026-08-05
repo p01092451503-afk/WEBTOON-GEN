@@ -41,7 +41,6 @@ export const startVideoGeneration = createServerFn({ method: "POST" })
     const { DEFAULT_VIDEO_NEGATIVE_PROMPT } = await import("@/lib/video-constants");
     const negativePrompt = data.negativePrompt?.trim() || DEFAULT_VIDEO_NEGATIVE_PROMPT;
     if (!prompt) throw new Error("EMPTY_PROMPT");
-    if (/(^|\s)@[A-Za-z0-9_-]+/.test(prompt)) throw new Error("UNRESOLVED_MEDIA_MENTION");
 
     const { moderateVideoPrompt } = await import("@/lib/video-moderation.server");
     const moderation = await moderateVideoPrompt(prompt);
