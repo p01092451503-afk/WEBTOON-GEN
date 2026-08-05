@@ -42,6 +42,7 @@ export function VideoPlaygroundPage() {
   const [resolution, setResolution] = useState<SeedanceResolution>("720p");
   const [durationSeconds, setDurationSeconds] = useState(10);
   const [uploading, setUploading] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
   const [preparing, setPreparing] = useState(false);
   const [tourOpen, setTourOpen] = useState(false);
   const [health, setHealth] = useState<Health | null>(null);
@@ -125,6 +126,22 @@ export function VideoPlaygroundPage() {
     finally { setUploading(false); }
   }
 
+  function handleReferenceDrag(event: React.DragEvent<HTMLLabelElement>) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (busy) return;
+    if (event.type === "dragenter" || event.type === "dragover") setDragActive(true);
+    if (event.type === "dragleave") setDragActive(false);
+  }
+
+  function handleReferenceDrop(event: React.DragEvent<HTMLLabelElement>) {
+    event.preventDefault();
+    event.stopPropagation();
+    setDragActive(false);
+    if (busy || !event.dataTransfer.files.length) return;
+    void addMedia(event.dataTransfer.files);
+  }
+
   async function generate() {
     if (!prompt.trim()) return toast.error("Describe the video you want to create.");
     setPreparing(true);
@@ -168,7 +185,7 @@ export function VideoPlaygroundPage() {
           <div className="border-b border-border px-6 py-4"><h2 className="font-bold">Create a video</h2><p className="mt-1 text-xs text-muted-foreground">Uploaded references are analyzed and used during generation. Your prompt is required.</p></div>
           <div className="space-y-6 p-6">
             <div data-video-tour="references" className="space-y-3"><div className="flex items-center justify-between"><Label className="font-bold">Reference images & videos</Label>{assets.length > 0 && <Button variant="ghost" size="sm" onClick={() => setAssets([])}><Trash2 className="h-4 w-4" /> Clear</Button>}</div>
-              <label className="flex min-h-36 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border bg-muted/30 px-5 text-center hover:border-primary/50 hover:bg-primary-soft">{uploading ? <Loader2 className="h-7 w-7 animate-spin text-primary" /> : <ImagePlus className="h-7 w-7 text-primary" />}<span className="text-sm font-bold">{uploading ? "Preparing references…" : "Add images or videos"}</span><span className="text-xs text-muted-foreground">Up to 6 files · images teach appearance and style · videos teach motion</span>
+              <label onDragEnter={handleReferenceDrag} onDragOver={handleReferenceDrag} onDragLeave={handleReferenceDrag} onDrop={handleReferenceDrop} className={`flex min-h-36 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed px-5 text-center transition-colors ${dragActive ? "border-primary bg-primary-soft" : "border-border bg-muted/30 hover:border-primary/50 hover:bg-primary-soft"}`}>{uploading ? <Loader2 className="h-7 w-7 animate-spin text-primary" /> : <ImagePlus className="h-7 w-7 text-primary" />}<span className="text-sm font-bold">{uploading ? "Preparing references…" : dragActive ? "Drop files to add them" : "Add or drag images and videos"}</span><span className="text-xs text-muted-foreground">Up to 6 files · images teach appearance and style · videos teach motion</span>
                 <input type="file" accept="image/*,video/*" multiple className="hidden" disabled={busy} onChange={(event) => { if (event.target.files?.length) void addMedia(event.target.files); event.target.value = ""; }} /></label>
               {assets.length > 0 && <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">{assets.map((asset) => <div key={asset.id} className="overflow-hidden rounded-lg border border-border bg-muted/30"><SignedImage bucket="character-refs" path={asset.coverPath} alt={asset.name} className="aspect-video w-full object-cover" /><div className="flex items-center gap-2 px-3 py-2">{asset.kind === "video" ? <Video className="h-3.5 w-3.5 text-primary" /> : <ImagePlus className="h-3.5 w-3.5 text-primary" />}<span className="min-w-0 flex-1 truncate text-xs font-semibold">{asset.name}</span><Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setAssets((current) => current.filter((item) => item.id !== asset.id))} aria-label={`Remove ${asset.name}`}><X className="h-3.5 w-3.5" /></Button></div></div>)}</div>}
             </div>
