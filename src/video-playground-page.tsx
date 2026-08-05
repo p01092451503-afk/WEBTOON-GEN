@@ -25,6 +25,7 @@ type MediaAsset = { id: string; name: string; kind: "image" | "video"; coverPath
 type ValidationState = "valid" | "invalid" | "missing" | "available" | "configured" | "unavailable" | "not_configured" | "unknown";
 type HealthModel = { provider: string; label: string; status: "available" | "unavailable" | "unknown"; detail: string; validation?: { credential: ValidationState; model: ValidationState; endpoint: ValidationState; configuredEndpoint: string | null } };
 type Health = { checkedAt: string; models: HealthModel[] };
+type CostSummary = { completedCount: number; estimatedTotal: number };
 
 function removeLegacyMentionMarkers(value: string) {
   return value.replace(/@(?=[\p{L}\p{N}_-])/gu, "");
@@ -45,6 +46,7 @@ export function VideoPlaygroundPage() {
   const [tourOpen, setTourOpen] = useState(false);
   const [health, setHealth] = useState<Health | null>(null);
   const [checkingHealth, setCheckingHealth] = useState(false);
+  const [costSummary, setCostSummary] = useState<CostSummary>({ completedCount: 0, estimatedTotal: 0 });
 
   useEffect(() => { if (shouldStartVideoTour()) setTourOpen(true); }, []);
   useEffect(() => {
@@ -54,6 +56,31 @@ export function VideoPlaygroundPage() {
     const timer = window.setInterval(() => void run(), 30_000);
     return () => { active = false; window.clearInterval(timer); };
   }, [checkHealth]);
+  useEffect(() => {
+    if (!tenantId) {
+      setCostSummary({ completedCount: 0, estimatedTotal: 0 });
+      return;
+    }
+    let active = true;
+    const loadCostSummary = async () => {
+      const { data, error } = await supabase
+        .from("video_generations")
+        .select("resolution, duration_seconds, actual_resolution, actual_duration_seconds")
+        .eq("tenant_id", tenantId)
+        .eq("status", "done");
+      if (!active || error) return;
+      const estimatedTotal = (data ?? []).reduce((total, item) => {
+        const selectedResolution = item.actual_resolution ?? item.resolution;
+        const safeResolution: SeedanceResolution =
+          selectedResolution === "480p" || selectedResolution === "1080p" ? selectedResolution : "720p";
+        const selectedDuration = item.actual_duration_seconds ?? item.duration_seconds ?? 0;
+        return total + estimateSeedanceVideoCost(safeResolution, Number(selectedDuration));
+      }, 0);
+      setCostSummary({ completedCount: data?.length ?? 0, estimatedTotal });
+    };
+    void loadCostSummary();
+    return () => { active = false; };
+  }, [tenantId, gen.row?.id, gen.row?.status]);
 
   const studyPaths = useMemo(() => assets.flatMap((asset) => asset.framePaths).slice(0, 8), [assets]);
   const firstReference = studyPaths[0] ?? null;
@@ -149,7 +176,10 @@ export function VideoPlaygroundPage() {
             <div className="grid gap-4 rounded-lg border border-border bg-muted/20 p-4 sm:grid-cols-2">
               <div className="space-y-2"><Label htmlFor="video-resolution" className="text-xs font-bold">Resolution</Label><Select value={resolution} onValueChange={(value) => setResolution(value as SeedanceResolution)} disabled={busy}><SelectTrigger id="video-resolution" className="h-10 bg-card"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="480p">480p</SelectItem><SelectItem value="720p">720p</SelectItem><SelectItem value="1080p">1080p</SelectItem></SelectContent></Select></div>
               <div className="space-y-2"><Label htmlFor="video-duration" className="text-xs font-bold">Duration</Label><Select value={String(durationSeconds)} onValueChange={(value) => setDurationSeconds(Number(value))} disabled={busy}><SelectTrigger id="video-duration" className="h-10 bg-card"><SelectValue /></SelectTrigger><SelectContent>{[4, 5, 8, 10, 12].map((seconds) => <SelectItem key={seconds} value={String(seconds)}>{seconds} seconds</SelectItem>)}</SelectContent></Select></div>
-              <div className="flex items-end justify-between gap-4 border-t border-border pt-3 sm:col-span-2"><div><p className="text-xs font-bold">Estimated Seedance cost</p><p className="mt-1 text-xs leading-relaxed text-muted-foreground">Estimate for one successful generation. Failed or blocked generations are not billed.</p></div><p className="shrink-0 text-xl font-extrabold tabular-nums">${estimatedCost.toFixed(2)} <span className="text-xs font-semibold text-muted-foreground">USD</span></p></div>
+              <div className="grid gap-4 border-t border-border pt-3 sm:col-span-2 sm:grid-cols-2">
+                <div className="flex items-end justify-between gap-3 border-b border-border pb-4 sm:border-b-0 sm:border-r sm:pb-0 sm:pr-4"><div><p className="text-xs font-bold">Estimated cost per generation</p><p className="mt-1 text-xs leading-relaxed text-muted-foreground">Current resolution and duration</p></div><p className="shrink-0 text-xl font-extrabold tabular-nums">${estimatedCost.toFixed(2)} <span className="text-xs font-semibold text-muted-foreground">USD</span></p></div>
+                <div className="flex items-end justify-between gap-3 sm:pl-1"><div><p className="text-xs font-bold">Estimated cumulative cost</p><p className="mt-1 text-xs leading-relaxed text-muted-foreground">{costSummary.completedCount} completed generation{costSummary.completedCount === 1 ? "" : "s"}</p></div><p className="shrink-0 text-xl font-extrabold tabular-nums">${costSummary.estimatedTotal.toFixed(2)} <span className="text-xs font-semibold text-muted-foreground">USD</span></p></div>
+              </div>
               <p className="text-xs leading-relaxed text-muted-foreground sm:col-span-2">Based on BytePlus Seedance 2.0 pay-as-you-go examples. Final billing can vary with the tokens reported by the provider. Uploaded videos are converted to reference frames in this playground.</p>
             </div>
             <Button data-video-tour="generate" onClick={generate} disabled={busy || !prompt.trim()} className="h-13 w-full text-base font-bold">{busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <Film className="h-5 w-5" />}{preparing ? "Preparing the best prompt…" : gen.running ? "Generating video…" : "Generate video"}</Button>
