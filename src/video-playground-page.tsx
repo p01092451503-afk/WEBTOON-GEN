@@ -31,6 +31,39 @@ function removeLegacyMentionMarkers(value: string) {
   return value.replace(/@(?=[\p{L}\p{N}_-])/gu, "");
 }
 
+function getFigureNumber(fileName: string) {
+  const match = fileName.match(/(?:^|[^\p{L}\p{N}])figure[\s_-]*(\d+)/iu);
+  if (!match) return null;
+  const value = Number(match[1]);
+  return Number.isSafeInteger(value) && value > 0 ? value : null;
+}
+
+function prepareFigureFiles(fileList: FileList) {
+  const files = Array.from(fileList).map((file, originalIndex) => ({
+    file,
+    originalIndex,
+    figureNumber: getFigureNumber(file.name),
+  }));
+  const numberedFiles = files.filter((item) => item.figureNumber !== null);
+  const maxFigureNumber = numberedFiles.reduce((max, item) => Math.max(max, item.figureNumber ?? 0), 0);
+  const availableNumbers = new Set(numberedFiles.map((item) => item.figureNumber));
+  const missingFigureNumbers = Array.from(
+    { length: maxFigureNumber },
+    (_, index) => index + 1,
+  ).filter((figureNumber) => !availableNumbers.has(figureNumber));
+
+  files.sort((a, b) => {
+    if (a.figureNumber !== null && b.figureNumber !== null) {
+      return a.figureNumber - b.figureNumber || a.originalIndex - b.originalIndex;
+    }
+    if (a.figureNumber !== null) return -1;
+    if (b.figureNumber !== null) return 1;
+    return a.originalIndex - b.originalIndex;
+  });
+
+  return { files: files.map((item) => item.file), missingFigureNumbers };
+}
+
 export function VideoPlaygroundPage() {
   const { tenantId } = useTenant();
   const gen = useVideoGeneration(tenantId);
@@ -106,7 +139,8 @@ export function VideoPlaygroundPage() {
     setUploading(true);
     try {
       const added: MediaAsset[] = [];
-      for (const file of Array.from(files)) {
+      const prepared = prepareFigureFiles(files);
+      for (const file of prepared.files) {
         if (assets.length + added.length >= 6) break;
         if (file.type.startsWith("video/")) {
           const frames = await extractVideoFrames(file, 3);
@@ -121,7 +155,12 @@ export function VideoPlaygroundPage() {
       }
       if (!added.length) throw new Error("Add an image or video file.");
       setAssets((current) => [...current, ...added].slice(0, 6));
-      toast.success(`${added.length} reference${added.length === 1 ? "" : "s"} added.`);
+      const missingNotice = prepared.missingFigureNumbers.length
+        ? ` Missing: ${prepared.missingFigureNumbers.map((number) => `Figure ${number}`).join(", ")}.`
+        : "";
+      toast.success(`${added.length} reference${added.length === 1 ? "" : "s"} added in Figure order.${missingNotice}`, {
+        duration: prepared.missingFigureNumbers.length ? 7000 : 4000,
+      });
     } catch (error) { toast.error(error instanceof Error ? error.message : String(error)); }
     finally { setUploading(false); }
   }
