@@ -9,27 +9,22 @@ export type VideoTaskState = {
   error?: string;
 };
 
+/** BytePlus ModelArk official pinned Seedance 2.0 model version. */
+export const SEEDANCE_2_MODEL = "dreamina-seedance-2-0-260128";
+
 function arkEnv() {
   const ARK_API_KEY = process.env.ARK_API_KEY;
   const ARK_BASE_URL = process.env.ARK_BASE_URL;
-  // Ark 는 계정마다 사용 가능한 식별자가 다르다.
-  // (1) Online Inference Endpoint ID, (2) 활성화된 카탈로그 모델 ID.
-  // 어떤 값이 유효한지 사전에 알 수 없으므로 후보를 순서대로 시도한다.
   const candidates = [
+    SEEDANCE_2_MODEL,
     process.env.ARK_VIDEO_ENDPOINT_ID,
     process.env.ARK_VIDEO_MODEL_ID,
-    process.env.ARK_ENDPOINT_ID,
   ]
     .map((v) => (v ?? "").trim())
     .filter((v, i, arr) => v.length > 0 && arr.indexOf(v) === i);
 
   if (!ARK_API_KEY || !ARK_BASE_URL) {
     throw new Error("ARK 시크릿이 설정되지 않았습니다.");
-  }
-  if (candidates.length === 0) {
-    throw new Error(
-      "ARK_VIDEO_ENDPOINT_ID 또는 ARK_VIDEO_MODEL_ID가 설정되지 않았습니다. 활성화된 Seedance 엔드포인트 ID를 등록해 주세요.",
-    );
   }
   return {
     key: ARK_API_KEY,
@@ -49,15 +44,8 @@ export function buildSeedanceText(params: {
   seed?: number | null;
   hasFirstFrame?: boolean;
 }): string {
-  const flags: string[] = [];
-  // 이미지→영상(i2v)에서는 비율이 입력 이미지로 결정되므로 ratio 플래그를 생략한다.
-  if (params.aspectRatio && !params.hasFirstFrame) flags.push(`--ratio ${params.aspectRatio}`);
-  if (params.resolution) flags.push(`--resolution ${params.resolution}`);
-  if (params.durationSeconds) flags.push(`--duration ${params.durationSeconds}`);
-  flags.push(`--camerafixed ${params.cameraFixed ? "true" : "false"}`);
-  flags.push("--watermark false");
-  if (params.seed != null) flags.push(`--seed ${params.seed}`);
-  return `${params.prompt.trim()} ${flags.join(" ")}`.trim();
+  // Seedance 2.0 takes generation controls as top-level JSON fields.
+  return params.prompt.trim();
 }
 
 /** Seedance 비동기 작업을 생성하고 task id 를 반환한다. */
@@ -65,6 +53,9 @@ export async function createVideoTask(params: {
   text: string;
   firstFrameUrl?: string | null;
   lastFrameUrl?: string | null;
+  aspectRatio?: string | null;
+  resolution?: string | null;
+  durationSeconds?: number | null;
 }): Promise<{ taskId: string; model: string }> {
   const { key, base, candidates } = arkEnv();
 
@@ -87,13 +78,36 @@ export async function createVideoTask(params: {
   const failures: string[] = [];
 
   for (const model of candidates) {
+    const body = {
+      model,
+      content,
+      ratio: params.firstFrameUrl ? "adaptive" : params.aspectRatio || "16:9",
+      resolution: params.resolution || "720p",
+      duration: params.durationSeconds || 10,
+      generate_audio: true,
+      watermark: false,
+    };
+
+    console.info("[video-provider-request]", {
+      provider: "seedance",
+      model,
+      mode: params.firstFrameUrl ? "i2v" : "t2v",
+      prompt: params.text,
+      ratio: body.ratio,
+      resolution: body.resolution,
+      duration: body.duration,
+      generate_audio: body.generate_audio,
+      has_first_frame: Boolean(params.firstFrameUrl),
+      has_last_frame: Boolean(params.lastFrameUrl),
+    });
+
     const res = await fetch(`${base}/contents/generations/tasks`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${key}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ model, content }),
+      body: JSON.stringify(body),
     });
 
     if (res.status === 429) {
@@ -122,8 +136,8 @@ export async function createVideoTask(params: {
   }
 
   throw new Error(
-    "ARK_MODEL_NOT_ACTIVATED: 등록된 Seedance 식별자를 모두 시도했지만 사용할 수 없습니다. " +
-      "BytePlus Ark 콘솔 → Online Inference 에서 Seedance 엔드포인트가 '실행 중(Running)' 상태이고, " +
+    "ARK_MODEL_NOT_ACTIVATED: Seedance 2.0 모델과 등록된 전용 엔드포인트를 사용할 수 없습니다. " +
+      "BytePlus Ark에서 dreamina-seedance-2-0-260128 모델이 활성화되어 있거나 Seedance 2.0 엔드포인트가 실행 중인지 확인하고, " +
       "해당 엔드포인트를 만든 프로젝트와 동일한 프로젝트의 API Key 를 사용 중인지 확인한 뒤 " +
       "ARK_VIDEO_ENDPOINT_ID / ARK_API_KEY 를 갱신해 주세요. 시도 내역: " +
       failures.join(" | "),

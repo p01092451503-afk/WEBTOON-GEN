@@ -4,16 +4,16 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 export const checkVideoModelHealth = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async () => {
-    const { probeLovableVideoModel, probeReplicate } = await import(
+    const { probeSeedance, probeReplicate } = await import(
       "@/lib/video-health.server"
     );
 
-    const [veo, replicate] = await Promise.all([
-      probeLovableVideoModel("google/veo-3.1-fast", "Google Veo 3.1 Fast"),
+    const [seedance, replicate] = await Promise.all([
+      probeSeedance(),
       probeReplicate(),
     ]);
 
-    const models = [veo, replicate];
+    const models = [seedance, replicate];
 
     return {
       checkedAt: new Date().toISOString(),
