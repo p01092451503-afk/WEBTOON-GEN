@@ -223,11 +223,21 @@ export const pollVideoGeneration = createServerFn({ method: "POST" })
     }
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { formatVideoFailureReport } = await import("@/lib/video-errors");
+    const failureContext = {
+      model: row.api_model ?? null,
+      mode: row.mode ?? null,
+      aspectRatio: row.aspect_ratio ?? null,
+      resolution: row.resolution ?? null,
+      durationSeconds: row.duration_seconds ?? null,
+      referenceCount: Array.isArray(row.image_paths) ? row.image_paths.length : null,
+      taskId: row.task_id,
+    };
 
     if (state.status !== "succeeded" || !state.videoUrl) {
       const message = state.error ?? `VIDEO_TASK_${state.status.toUpperCase()}`;
-      const { formatVideoError } = await import("@/lib/video-errors");
-      const friendly = formatVideoError(message);
+      const friendly = formatVideoFailureReport(message, { stage: "polling", ...failureContext });
+
       await supabaseAdmin
         .from("video_generations")
         .update({
