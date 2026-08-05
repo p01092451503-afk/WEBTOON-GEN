@@ -21,7 +21,7 @@ export type ReferenceBrief = {
   promptSuffix: string;
 };
 
-const FALLBACK_MODELS = ["google/gemini-3-flash", "google/gemini-2.5-flash"];
+const FALLBACK_MODELS = ["google/gemini-3.6-flash"];
 
 export const analyzeReferences = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -75,7 +75,7 @@ export const analyzeReferences = createServerFn({ method: "POST" })
     for (const model of FALLBACK_MODELS) {
       const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
-        headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+        headers: { "Lovable-API-Key": apiKey, "Content-Type": "application/json" },
         body: JSON.stringify({ model, ...body }),
       });
 
