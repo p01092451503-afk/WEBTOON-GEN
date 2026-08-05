@@ -103,8 +103,34 @@ export function explainVideoError(raw: string): VideoErrorInfo {
   return { ...selected, raw: diagnostic.slice(0, 300) };
 }
 
+export function getKoreanVideoErrorSummary(raw: string): string {
+  const info = explainVideoError(raw);
+  const r = raw.toLowerCase();
+
+  if (r.includes("sensitive information")) {
+    return "Seedance(BytePlus)의 출력 안전 심사가 완성된 영상을 민감정보 포함 가능성으로 반려한 것입니다. 앱·API 키·엔드포인트 문제가 아닙니다. 참고 자료에서 이름, 연락처, 주소, 신분증, 계정정보, 화면 속 개인정보를 제거하고 중립적인 프롬프트로 다시 시도해 주세요.";
+  }
+  if (info.category === "copyright") {
+    return "Seedance(BytePlus)가 참고 자료 또는 프롬프트에서 저작권 보호 대상일 가능성을 감지해 생성을 반려한 것입니다. 앱·API 키·엔드포인트 문제가 아닙니다. 유명 캐릭터·작품명을 제거하고 직접 제작했거나 사용 권한이 있는 자료로 교체해 주세요.";
+  }
+
+  const summaries: Record<VideoErrorInfo["category"], string> = {
+    input: "Seedance(BytePlus)가 요청 파라미터 또는 참고 자료 구성을 허용하지 않아 생성이 시작되지 않았습니다. 프롬프트 길이, 영상 길이, 해상도, 비율 및 참고 자료 구성을 확인해 주세요.",
+    authentication: "Seedance(BytePlus) 인증 또는 접근 권한 확인에 실패했습니다. ARK API 키, 엔드포인트 ID, 리전과 프로젝트가 서로 일치하는지 확인해 주세요.",
+    model: "설정된 Seedance 모델 또는 엔드포인트를 사용할 수 없습니다. 모델 활성화 여부와 엔드포인트 실행 상태를 확인해 주세요.",
+    billing: "Seedance(BytePlus)의 결제·크레딧 또는 Safe Experience 제한으로 요청이 중단되었습니다. 계정의 결제 및 사용 제한 설정을 확인해 주세요.",
+    rate_limit: "Seedance(BytePlus)의 단시간 요청 한도를 초과했습니다. 약 1분 후 중복 요청 없이 다시 시도해 주세요.",
+    provider: "Seedance(BytePlus) 서비스가 일시적으로 응답하지 않거나 처리 중 오류가 발생했습니다. 잠시 후 같은 설정으로 한 번 다시 시도해 주세요.",
+    storage: "영상 생성 결과 또는 참고 자료를 비공개 저장소에서 읽거나 저장하는 과정에 실패했습니다. 자료를 다시 업로드한 뒤 재시도해 주세요.",
+    safety: "Seedance(BytePlus)의 콘텐츠 안전 심사가 요청 또는 생성 결과를 반려했습니다. 앱·API 키·엔드포인트 문제가 아닙니다. 참고 자료와 프롬프트에서 안전 심사 대상 요소를 제거해 주세요.",
+    copyright: "Seedance(BytePlus)의 저작권 보호 심사에서 요청이 반려되었습니다. 앱·API 키·엔드포인트 문제가 아닙니다. 보호 대상 이름과 자료를 제거해 주세요.",
+    unknown: "Seedance(BytePlus)가 구체적인 분류가 없는 오류를 반환했습니다. 모델 연결 상태를 확인한 후 한 번 더 시도하고, 반복되면 아래 기술 정보를 관리자에게 전달해 주세요.",
+  };
+  return summaries[info.category];
+}
+
 export function formatVideoError(raw: string): string {
   const info = explainVideoError(raw);
   const checks = info.checks.map((item) => `• ${item}`).join("\n");
-  return [info.title, info.hint, `Category: ${info.category.replace("_", " ")}`, checks ? `Check these parameters:\n${checks}` : "", `(raw: ${info.raw})`].filter(Boolean).join("\n");
+  return [`실패 원인: ${getKoreanVideoErrorSummary(raw)}`, "", info.title, info.hint, `Category: ${info.category.replace("_", " ")}`, checks ? `Check these parameters:\n${checks}` : "", `(raw: ${info.raw})`].filter(Boolean).join("\n");
 }
