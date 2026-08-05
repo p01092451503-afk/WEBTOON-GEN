@@ -140,27 +140,50 @@ export const startVideoGeneration = createServerFn({ method: "POST" })
          taskId = started.taskId;
          model = started.model;
          modelVersion = null;
-      } else if (provider === "seedance") {
-         const { buildSeedanceText, createVideoTask } = await import("@/lib/video.server");
-         const started = await createVideoTask({
-           text: buildSeedanceText({
-             prompt,
-             aspectRatio: data.aspectRatio,
-             resolution: data.resolution,
-             durationSeconds: data.durationSeconds,
-             cameraFixed: data.cameraFixed,
-             seed,
-             hasFirstFrame: Boolean(signedUrls[0]),
-           }),
-           firstFrameUrl: signedUrls[0] ?? null,
-           referenceImageUrls: signedUrls,
-           aspectRatio: data.aspectRatio,
-           resolution: data.resolution,
-           durationSeconds: data.durationSeconds,
-         });
-         taskId = started.taskId;
-         model = started.model;
-         modelVersion = null;
+       } else if (provider === "seedance") {
+          try {
+            const { buildSeedanceText, createVideoTask } = await import("@/lib/video.server");
+            const started = await createVideoTask({
+              text: buildSeedanceText({
+                prompt,
+                aspectRatio: data.aspectRatio,
+                resolution: data.resolution,
+                durationSeconds: data.durationSeconds,
+                cameraFixed: data.cameraFixed,
+                seed,
+                hasFirstFrame: Boolean(signedUrls[0]),
+              }),
+              firstFrameUrl: signedUrls[0] ?? null,
+              referenceImageUrls: signedUrls,
+              aspectRatio: data.aspectRatio,
+              resolution: data.resolution,
+              durationSeconds: data.durationSeconds,
+            });
+            taskId = started.taskId;
+            model = started.model;
+            modelVersion = null;
+          } catch (seedanceError) {
+            const reason = seedanceError instanceof Error ? seedanceError.message : String(seedanceError);
+            const { createReplicateWithRetry } = await import("@/lib/video-recovery.server");
+            recoveryAttempts.push(recoveryAttempt("seedance", "start", "failed", reason));
+            try {
+              const fallback = await createReplicateWithRetry(providerInput);
+              taskId = fallback.task.taskId;
+              model = fallback.task.model;
+              modelVersion = fallback.task.modelVersion;
+              provider = "replicate";
+              recoveryAttempts.push(...fallback.attempts);
+              recoveryAttempts.push(
+                recoveryAttempt("replicate", "fallback", "started", "Seedance start failed"),
+              );
+              recoveryNotice =
+                "Seedance is unavailable, so generation automatically switched to Replicate.";
+            } catch (fallbackError) {
+              const fallbackReason =
+                fallbackError instanceof Error ? fallbackError.message : String(fallbackError);
+              throw new Error(`${reason} || FALLBACK_FAILED: ${fallbackReason}`);
+            }
+          }
       } else try {
          const { createReplicateWithRetry, recoveryAttempt } = await import(
            "@/lib/video-recovery.server"
@@ -224,7 +247,7 @@ export const startVideoGeneration = createServerFn({ method: "POST" })
              ...data.options,
              selectedProvider: provider,
              recoveryAttempts,
-             fallbackUsed: provider === "replicate" && modelVersion === null,
+             fallbackUsed: provider !== requestedProvider,
            },
         })
         .eq("id", videoId);
@@ -317,7 +340,8 @@ export const pollVideoGeneration = createServerFn({ method: "POST" })
 
     if (state.status !== "succeeded" || !state.videoUrl) {
       const message = state.error ?? `VIDEO_TASK_${state.status.toUpperCase()}`;
-      const fallbackAlreadyUsed = options.fallbackUsed === true || !isReplicateTaskId(row.task_id);
+       const selectedProvider = typeof options.selectedProvider === "string" ? options.selectedProvider : null;
+       const fallbackAlreadyUsed = options.fallbackUsed === true;
       if (!fallbackAlreadyUsed) {
         try {
           const imagePaths = Array.isArray(row.image_paths)
@@ -331,41 +355,75 @@ export const pollVideoGeneration = createServerFn({ method: "POST" })
             if (signedError || !signed?.signedUrl) throw new Error(`SIGNED_URL_FAILED: ${path}`);
             signedUrls.push(signed.signedUrl);
           }
-          const fallback = await createVideoTask({
-            text: (await import("@/lib/video.server")).buildSeedanceText({
-              prompt: row.final_prompt,
-              aspectRatio: row.aspect_ratio,
-              resolution: row.resolution,
-              durationSeconds: row.duration_seconds,
-              cameraFixed: row.camera_fixed,
-              seed: row.seed,
-              hasFirstFrame: Boolean(signedUrls[0]),
-            }),
-            firstFrameUrl: signedUrls[0] ?? null,
-            referenceImageUrls: signedUrls,
-            aspectRatio: row.aspect_ratio,
-            resolution: row.resolution,
-            durationSeconds: row.duration_seconds,
-          });
-          recoveryAttempts.push(recoveryAttempt("replicate", "poll", "failed", message));
-          recoveryAttempts.push(
-            recoveryAttempt("seedance", "fallback", "started", "Primary task failed"),
-          );
+           const failedProvider = isReplicateTaskId(row.task_id) ? "replicate" : "seedance";
+           let fallback: { taskId: string; model: string; modelVersion: string | null };
+           if (failedProvider === "seedance" || selectedProvider === "seedance") {
+             const { createReplicateWithRetry } = await import("@/lib/video-recovery.server");
+             const started = await createReplicateWithRetry({
+               prompt: row.final_prompt,
+               negativePrompt: row.negative_prompt,
+               aspectRatio: row.aspect_ratio,
+               resolution: row.resolution,
+               durationSeconds: row.duration_seconds,
+               firstFrameUrl: signedUrls[0] ?? null,
+               lastFrameUrl: signedUrls[1] ?? null,
+               cameraFixed: row.camera_fixed,
+               seed: row.seed,
+             });
+             fallback = {
+               taskId: started.task.taskId,
+               model: started.task.model,
+               modelVersion: started.task.modelVersion,
+             };
+             recoveryAttempts.push(...started.attempts);
+             recoveryAttempts.push(recoveryAttempt("seedance", "poll", "failed", message));
+             recoveryAttempts.push(
+               recoveryAttempt("replicate", "fallback", "started", "Seedance task failed"),
+             );
+           } else {
+             const started = await createVideoTask({
+               text: (await import("@/lib/video.server")).buildSeedanceText({
+                 prompt: row.final_prompt,
+                 aspectRatio: row.aspect_ratio,
+                 resolution: row.resolution,
+                 durationSeconds: row.duration_seconds,
+                 cameraFixed: row.camera_fixed,
+                 seed: row.seed,
+                 hasFirstFrame: Boolean(signedUrls[0]),
+               }),
+               firstFrameUrl: signedUrls[0] ?? null,
+               referenceImageUrls: signedUrls,
+               aspectRatio: row.aspect_ratio,
+               resolution: row.resolution,
+               durationSeconds: row.duration_seconds,
+             });
+             fallback = { ...started, modelVersion: null };
+             recoveryAttempts.push(recoveryAttempt("replicate", "poll", "failed", message));
+             recoveryAttempts.push(
+               recoveryAttempt("seedance", "fallback", "started", "Replicate task failed"),
+             );
+           }
           await supabaseAdmin
             .from("video_generations")
             .update({
               task_id: fallback.taskId,
               api_model: fallback.model,
-              api_model_version: null,
+               api_model_version: fallback.modelVersion,
               error_message: null,
-              options: { ...options, fallbackUsed: true, recoveryAttempts },
+               options: {
+                 ...options,
+                 selectedProvider: failedProvider === "seedance" ? "replicate" : "seedance",
+                 fallbackUsed: true,
+                 recoveryAttempts,
+               },
             })
             .eq("id", row.id);
           return {
             status: "running" as const,
             error: null,
-            recoveryNotice:
-              "The primary pipeline failed. Generation automatically switched to Seedance.",
+             recoveryNotice: failedProvider === "seedance"
+               ? "Seedance could not complete the job. Generation automatically switched to Replicate."
+               : "Replicate could not complete the job. Generation automatically switched to Seedance.",
           };
         } catch (fallbackError) {
           const fallbackReason =
