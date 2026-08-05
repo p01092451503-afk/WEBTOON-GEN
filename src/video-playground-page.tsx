@@ -44,7 +44,7 @@ export function VideoPlaygroundPage() {
   }, [checkHealth]);
 
   const studyPaths = useMemo(() => assets.flatMap((asset) => asset.framePaths).slice(0, 8), [assets]);
-  const firstImage = assets.find((asset) => asset.kind === "image")?.coverPath ?? null;
+  const firstReference = studyPaths[0] ?? null;
   const hasVideo = assets.some((asset) => asset.kind === "video");
   const readyCount = health?.models.filter((model) => model.status === "available").length ?? 0;
   const busy = uploading || preparing || gen.running;
@@ -95,12 +95,12 @@ export function VideoPlaygroundPage() {
         lighting: brief?.lighting ?? "", style: brief?.style ?? "",
       } });
       await gen.run({
-        workLabel: "Playground", provider: "auto", mode: firstImage ? "i2v" : "t2v",
+        workLabel: "Playground", provider: "auto", mode: firstReference ? "i2v" : "t2v",
         finalPrompt: composed.finalPrompt, negativePrompt: brief?.negative || undefined,
         rawPrompt: prompt.trim(), promptEdited: true, aspectRatio: "16:9", resolution: "720p",
-        durationSeconds: 10, cameraFixed: false, seed: null, imagePaths: firstImage ? [firstImage] : [],
+        durationSeconds: 10, cameraFixed: false, seed: null, imagePaths: studyPaths,
         options: { playground: true, referenceStudyPaths: studyPaths, referenceHasVideo: hasVideo, referenceBrief: brief,
-          references: assets.map((asset) => ({ name: asset.name, kind: asset.kind, directlySuppliedToModel: asset.coverPath === firstImage })) },
+          references: assets.map((asset) => ({ name: asset.name, kind: asset.kind, directlySuppliedToModel: true })) },
       });
       toast.success("Your video is now being created.");
     } catch (error) { toast.error(error instanceof Error ? error.message : String(error)); }
@@ -113,16 +113,16 @@ export function VideoPlaygroundPage() {
       <header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div><div className="flex items-center gap-2 text-xs font-bold uppercase text-primary"><Sparkles className="h-4 w-4" /> Video playground</div>
           <h1 className="mt-2 text-3xl font-extrabold">What do you want to create?</h1>
-          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">Add optional reference images or videos, then describe your scene. Reference analysis, prompt enhancement, model selection, and quality settings are automatic.</p></div>
+          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">Add reference images or videos, then describe your scene. Their subjects, visual style, lighting, and motion are studied and supplied directly to the video model.</p></div>
         <div className="flex items-center gap-2"><span className="rounded-full border border-border bg-card px-3 py-2 text-xs font-semibold text-muted-foreground">{health ? `${readyCount} engine${readyCount === 1 ? "" : "s"} ready` : "Checking engines"}</span>
           <Button variant="outline" size="icon" onClick={() => setTourOpen(true)} aria-label="Open quick tour"><CircleHelp className="h-4 w-4" /></Button></div>
       </header>
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
         <section data-video-tour="playground" className="overflow-hidden rounded-lg border border-border bg-card">
-          <div className="border-b border-border px-6 py-4"><h2 className="font-bold">Create a video</h2><p className="mt-1 text-xs text-muted-foreground">References are optional. Your prompt is required.</p></div>
+          <div className="border-b border-border px-6 py-4"><h2 className="font-bold">Create a video</h2><p className="mt-1 text-xs text-muted-foreground">Uploaded references are analyzed and used during generation. Your prompt is required.</p></div>
           <div className="space-y-6 p-6">
             <div data-video-tour="references" className="space-y-3"><div className="flex items-center justify-between"><Label className="font-bold">Reference images & videos</Label>{assets.length > 0 && <Button variant="ghost" size="sm" onClick={() => setAssets([])}><Trash2 className="h-4 w-4" /> Clear</Button>}</div>
-              <label className="flex min-h-36 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border bg-muted/30 px-5 text-center hover:border-primary/50 hover:bg-primary-soft">{uploading ? <Loader2 className="h-7 w-7 animate-spin text-primary" /> : <ImagePlus className="h-7 w-7 text-primary" />}<span className="text-sm font-bold">{uploading ? "Preparing references…" : "Add images or videos"}</span><span className="text-xs text-muted-foreground">Up to 6 files · images guide the look · videos guide motion</span>
+              <label className="flex min-h-36 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border bg-muted/30 px-5 text-center hover:border-primary/50 hover:bg-primary-soft">{uploading ? <Loader2 className="h-7 w-7 animate-spin text-primary" /> : <ImagePlus className="h-7 w-7 text-primary" />}<span className="text-sm font-bold">{uploading ? "Preparing references…" : "Add images or videos"}</span><span className="text-xs text-muted-foreground">Up to 6 files · images teach appearance and style · videos teach motion</span>
                 <input type="file" accept="image/*,video/*" multiple className="hidden" disabled={busy} onChange={(event) => { if (event.target.files?.length) void addMedia(event.target.files); event.target.value = ""; }} /></label>
               {assets.length > 0 && <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">{assets.map((asset) => <div key={asset.id} className="overflow-hidden rounded-lg border border-border bg-muted/30"><SignedImage bucket="character-refs" path={asset.coverPath} alt={asset.name} className="aspect-video w-full object-cover" /><div className="flex items-center gap-2 px-3 py-2">{asset.kind === "video" ? <Video className="h-3.5 w-3.5 text-primary" /> : <ImagePlus className="h-3.5 w-3.5 text-primary" />}<span className="min-w-0 flex-1 truncate text-xs font-semibold">{asset.name}</span><Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setAssets((current) => current.filter((item) => item.id !== asset.id))} aria-label={`Remove ${asset.name}`}><X className="h-3.5 w-3.5" /></Button></div></div>)}</div>}
             </div>
