@@ -25,7 +25,7 @@ const startSchema = z.object({
 
 export const startVideoGeneration = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => startSchema.parse(data))
+  .validator((data: unknown) => startSchema.parse(data))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
 
@@ -273,7 +273,7 @@ const pollSchema = z.object({ videoGenerationId: z.string().uuid() });
 
 export const pollVideoGeneration = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => pollSchema.parse(data))
+  .validator((data: unknown) => pollSchema.parse(data))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
 

@@ -16,6 +16,7 @@ import { analyzeReferences, type ReferenceBrief } from "@/lib/reference-analysis
 import { composeVideoPrompt } from "@/lib/video-prompt.functions";
 import { checkVideoModelHealth } from "@/lib/video-health.functions";
 import { explainVideoError } from "@/lib/video-errors";
+import { recoverStaleServerFunction } from "@/lib/server-function-recovery";
 import { extractVideoFrames } from "@/lib/videoFrames";
 
 type MediaAsset = { id: string; name: string; kind: "image" | "video"; coverPath: string; framePaths: string[] };
@@ -37,7 +38,7 @@ export function VideoPlaygroundPage() {
   useEffect(() => { if (shouldStartVideoTour()) setTourOpen(true); }, []);
   useEffect(() => {
     let active = true;
-    const run = async () => { try { const result = await checkHealth({ data: undefined }); if (active) setHealth(result as Health); } catch { if (active) setHealth(null); } };
+    const run = async () => { try { const result = await checkHealth({ data: undefined }); if (active) setHealth(result as Health); } catch (error) { if (recoverStaleServerFunction(error)) return; if (active) setHealth(null); } };
     void run();
     const timer = window.setInterval(() => void run(), 30_000);
     return () => { active = false; window.clearInterval(timer); };
