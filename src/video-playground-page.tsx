@@ -11,12 +11,14 @@ import { StudioSwitcher } from "@/components/studio-switcher";
 import { VideoOnboardingTour, shouldStartVideoTour } from "@/components/video-onboarding-tour";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { analyzeReferences, type ReferenceBrief } from "@/lib/reference-analysis.functions";
 import { composeVideoPrompt } from "@/lib/video-prompt.functions";
 import { checkVideoModelHealth } from "@/lib/video-health.functions";
 import { explainVideoError } from "@/lib/video-errors";
 import { recoverStaleServerFunction } from "@/lib/server-function-recovery";
+import { estimateSeedanceVideoCost, type SeedanceResolution } from "@/lib/video-constants";
 import { extractVideoFrames } from "@/lib/videoFrames";
 
 type MediaAsset = { id: string; name: string; kind: "image" | "video"; coverPath: string; framePaths: string[] };
@@ -36,6 +38,8 @@ export function VideoPlaygroundPage() {
   const checkHealth = useServerFn(checkVideoModelHealth);
   const [assets, setAssets] = useState<MediaAsset[]>([]);
   const [prompt, setPrompt] = useState("");
+  const [resolution, setResolution] = useState<SeedanceResolution>("720p");
+  const [durationSeconds, setDurationSeconds] = useState(10);
   const [uploading, setUploading] = useState(false);
   const [preparing, setPreparing] = useState(false);
   const [tourOpen, setTourOpen] = useState(false);
@@ -57,6 +61,10 @@ export function VideoPlaygroundPage() {
   const readyCount = health?.models.filter((model) => model.status === "available").length ?? 0;
   const seedanceHealth = health?.models.find((model) => model.provider === "seedance") ?? null;
   const busy = uploading || preparing || gen.running;
+  const estimatedCost = useMemo(
+    () => estimateSeedanceVideoCost(resolution, durationSeconds),
+    [resolution, durationSeconds],
+  );
 
   async function uploadBlob(blob: Blob, name: string) {
     if (!tenantId) throw new Error("NO_TENANT");
@@ -107,8 +115,8 @@ export function VideoPlaygroundPage() {
       await gen.run({
         workLabel: "Playground", provider: "seedance", mode: firstReference ? "i2v" : "t2v",
         finalPrompt: composed.finalPrompt, negativePrompt: brief?.negative || undefined,
-        rawPrompt: plainPrompt, promptEdited: true, aspectRatio: "16:9", resolution: "720p",
-        durationSeconds: 10, cameraFixed: false, seed: null, imagePaths: studyPaths,
+        rawPrompt: plainPrompt, promptEdited: true, aspectRatio: "16:9", resolution,
+        durationSeconds, cameraFixed: false, seed: null, imagePaths: studyPaths,
         options: { playground: true, referenceStudyPaths: studyPaths, referenceHasVideo: hasVideo, referenceBrief: brief,
           references: assets.map((asset) => ({ name: asset.name, kind: asset.kind, directlySuppliedToModel: true })) },
       });
@@ -138,6 +146,12 @@ export function VideoPlaygroundPage() {
               {assets.length > 0 && <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">{assets.map((asset) => <div key={asset.id} className="overflow-hidden rounded-lg border border-border bg-muted/30"><SignedImage bucket="character-refs" path={asset.coverPath} alt={asset.name} className="aspect-video w-full object-cover" /><div className="flex items-center gap-2 px-3 py-2">{asset.kind === "video" ? <Video className="h-3.5 w-3.5 text-primary" /> : <ImagePlus className="h-3.5 w-3.5 text-primary" />}<span className="min-w-0 flex-1 truncate text-xs font-semibold">{asset.name}</span><Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setAssets((current) => current.filter((item) => item.id !== asset.id))} aria-label={`Remove ${asset.name}`}><X className="h-3.5 w-3.5" /></Button></div></div>)}</div>}
             </div>
             <div data-video-tour="prompt" className="space-y-3"><div className="flex justify-between"><Label htmlFor="video-prompt" className="font-bold">Describe your video</Label><span className="text-xs text-muted-foreground">{prompt.length}/3000</span></div><Textarea id="video-prompt" value={prompt} maxLength={3000} disabled={busy} onChange={(event) => setPrompt(event.target.value)} placeholder="A woman in a red coat walks through a rainy neon street, then turns toward the camera and smiles…" className="min-h-44 resize-y rounded-lg text-base leading-relaxed" /><p className="text-xs text-muted-foreground">Write naturally in Korean or English. Uploaded references are used automatically—no tags are needed.</p></div>
+            <div className="grid gap-4 rounded-lg border border-border bg-muted/20 p-4 sm:grid-cols-2">
+              <div className="space-y-2"><Label htmlFor="video-resolution" className="text-xs font-bold">Resolution</Label><Select value={resolution} onValueChange={(value) => setResolution(value as SeedanceResolution)} disabled={busy}><SelectTrigger id="video-resolution" className="h-10 bg-card"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="480p">480p</SelectItem><SelectItem value="720p">720p</SelectItem><SelectItem value="1080p">1080p</SelectItem></SelectContent></Select></div>
+              <div className="space-y-2"><Label htmlFor="video-duration" className="text-xs font-bold">Duration</Label><Select value={String(durationSeconds)} onValueChange={(value) => setDurationSeconds(Number(value))} disabled={busy}><SelectTrigger id="video-duration" className="h-10 bg-card"><SelectValue /></SelectTrigger><SelectContent>{[4, 5, 8, 10, 12].map((seconds) => <SelectItem key={seconds} value={String(seconds)}>{seconds} seconds</SelectItem>)}</SelectContent></Select></div>
+              <div className="flex items-end justify-between gap-4 border-t border-border pt-3 sm:col-span-2"><div><p className="text-xs font-bold">Estimated Seedance cost</p><p className="mt-1 text-xs leading-relaxed text-muted-foreground">Estimate for one successful generation. Failed or blocked generations are not billed.</p></div><p className="shrink-0 text-xl font-extrabold tabular-nums">${estimatedCost.toFixed(2)} <span className="text-xs font-semibold text-muted-foreground">USD</span></p></div>
+              <p className="text-xs leading-relaxed text-muted-foreground sm:col-span-2">Based on BytePlus Seedance 2.0 pay-as-you-go examples. Final billing can vary with the tokens reported by the provider. Uploaded videos are converted to reference frames in this playground.</p>
+            </div>
             <Button data-video-tour="generate" onClick={generate} disabled={busy || !prompt.trim()} className="h-13 w-full text-base font-bold">{busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <Film className="h-5 w-5" />}{preparing ? "Preparing the best prompt…" : gen.running ? "Generating video…" : "Generate video"}</Button>
           </div>
         </section>
