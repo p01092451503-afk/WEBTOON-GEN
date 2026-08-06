@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Film, History, Sparkles } from "lucide-react";
+import { Image as ImageIcon, History, Sparkles } from "lucide-react";
 
 
 export const Route = createFileRoute("/")({
@@ -11,13 +11,13 @@ export const Route = createFileRoute("/")({
   component: Index,
   head: () => ({
     meta: [
-      { title: "pilotstudio — AI short-clip video generation studio" },
+      { title: "pilotstudio — AI image generation studio" },
       {
         name: "description",
-        content: "Turn a written scene into a cinematic short clip, with every result saved to your history.",
+        content: "Turn a written scene into character-consistent images, with every result saved to your history.",
       },
       { property: "og:title", content: "pilotstudio" },
-      { property: "og:description", content: "AI short-clip video generation studio" },
+      { property: "og:description", content: "AI image generation studio" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -59,8 +59,8 @@ function Index() {
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
           <Button asChild size="lg" className="h-12 rounded-full px-7 text-base font-semibold shadow-toss">
             <Link to="/auth">
-              <Film className="mr-2 h-4 w-4" strokeWidth={2} />
-              {t("landing.start_video")}
+              <ImageIcon className="mr-2 h-4 w-4" strokeWidth={2} />
+              {t("landing.start_image")}
             </Link>
           </Button>
           <Button asChild size="lg" variant="ghost" className="h-12 rounded-full px-6 text-base font-semibold">
@@ -72,15 +72,15 @@ function Index() {
         <div className="mt-16 grid w-full max-w-3xl grid-cols-1 gap-4 sm:grid-cols-3">
           <FeatureCard
             index="01"
-            icon={<Film className="h-4 w-4" strokeWidth={1.75} />}
-            title={t("landing.feature_video")}
-            body={t("landing.feature_video_body")}
+            icon={<ImageIcon className="h-4 w-4" strokeWidth={1.75} />}
+            title={t("landing.feature_image")}
+            body={t("landing.feature_image_body")}
           />
           <FeatureCard
             index="02"
             icon={<Sparkles className="h-4 w-4" strokeWidth={1.75} />}
-            title="Cinematic presets"
-            body="Camera moves, lighting and mood presets built into the prompt."
+            title="Presets & seed lock"
+            body="Preset gallery, seed lock and up to 4 variations at once."
           />
 
           <FeatureCard

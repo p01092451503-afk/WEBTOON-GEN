@@ -29,7 +29,7 @@ const PAGE_META_KEYS: Record<string, string> = {
   "/projects": "header.projects",
   "/episodes": "header.episodes",
   "/characters": "header.characters",
-  "/video": "header.video",
+  "/generate": "header.generate",
   "/history": "header.history",
 };
 

@@ -1,12 +1,12 @@
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { Film, LayoutGrid } from "lucide-react";
+import { ImageIcon, LayoutGrid } from "lucide-react";
 
 /**
- * Video studio / Studio hub 전환 바. 이미지 스튜디오는 숨겨져 있어
- * Video 만 노출됩니다.
+ * Image studio / Studio hub 전환 바. 동영상 스튜디오는 숨겨져 있어
+ * Image 만 노출됩니다.
  */
-export function StudioSwitcher({ active }: { active: "video" }) {
+export function StudioSwitcher({ active }: { active: "image" }) {
   const { t } = useTranslation();
 
   const pill =
@@ -17,9 +17,9 @@ export function StudioSwitcher({ active }: { active: "video" }) {
   return (
     <div className="mb-4 flex flex-wrap items-center gap-2">
       <div className="inline-flex items-center gap-1 rounded-full border border-border bg-card p-1">
-        <Link to="/video" className={`${pill} ${active === "video" ? on : off}`}>
-          <Film className="h-4 w-4" />
-          {t("switcher.video")}
+        <Link to="/generate" className={`${pill} ${active === "image" ? on : off}`}>
+          <ImageIcon className="h-4 w-4" />
+          {t("switcher.image")}
         </Link>
       </div>
       <Link
