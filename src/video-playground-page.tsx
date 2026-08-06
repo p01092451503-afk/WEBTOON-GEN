@@ -7,7 +7,6 @@ import { useTenant } from "@/hooks/useTenant";
 import { useVideoGeneration } from "@/hooks/useVideoGeneration";
 import { useSignedUrl } from "@/hooks/useSignedUrl";
 import { SignedImage } from "@/components/SignedImage";
-import { StudioSwitcher } from "@/components/studio-switcher";
 import { VideoOnboardingTour, shouldStartVideoTour } from "@/components/video-onboarding-tour";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -216,7 +215,6 @@ export function VideoPlaygroundPage() {
   }
 
   return <main className="px-4 py-5 sm:px-6">
-    <StudioSwitcher active="video" />
     <div className="mx-auto mt-5 max-w-6xl">
       <header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
