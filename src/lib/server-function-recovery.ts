@@ -1,4 +1,4 @@
-const RECOVERY_KEY = "pilotstudio.server-function-recovery";
+const RECOVERY_KEY = "pilottoon.server-function-recovery";
 const RECOVERY_WINDOW_MS = 30_000;
 
 function isStaleServerFunctionError(error: unknown): boolean {

@@ -21,7 +21,7 @@ export type VideoGenerationRow = {
   results: VideoResult[];
 };
 
-const STORAGE_KEY = "pilotstudio.video.running";
+const STORAGE_KEY = "pilottoon.video.running";
 
 function readStoredId(): string | null {
   if (typeof window === "undefined") return null;

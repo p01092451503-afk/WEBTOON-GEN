@@ -20,7 +20,7 @@ import {
 
 export const Route = createFileRoute("/_authenticated/episodes/$id")({
   component: EpisodeStoryboard,
-  head: () => ({ meta: [{ title: "Storyboard · pilotstudio" }] }),
+  head: () => ({ meta: [{ title: "Storyboard · pilottoon" }] }),
 });
 
 function EpisodeStoryboard() {
