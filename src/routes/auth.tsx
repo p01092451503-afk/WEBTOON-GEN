@@ -13,10 +13,10 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
   head: () => ({
     meta: [
-      { title: "Sign in · pilotstudio" },
-      { name: "description", content: "Sign in or create your pilotstudio account" },
-      { property: "og:title", content: "pilotstudio sign in" },
-      { property: "og:description", content: "Sign in or create your pilotstudio account" },
+      { title: "Sign in · pilottoon" },
+      { name: "description", content: "Sign in or create your pilottoon account" },
+      { property: "og:title", content: "pilottoon sign in" },
+      { property: "og:description", content: "Sign in or create your pilottoon account" },
     ],
   }),
 });

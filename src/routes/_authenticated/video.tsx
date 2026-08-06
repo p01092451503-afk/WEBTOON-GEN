@@ -5,5 +5,5 @@ export const Route = createFileRoute("/_authenticated/video")({
     throw redirect({ to: "/generate", replace: true });
   },
   component: () => null,
-  head: () => ({ meta: [{ title: "Image Studio · pilotstudio" }] }),
+  head: () => ({ meta: [{ title: "Image Studio · pilottoon" }] }),
 });

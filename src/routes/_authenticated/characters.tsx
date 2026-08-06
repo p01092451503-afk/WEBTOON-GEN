@@ -12,7 +12,7 @@ import { ImagePlus, Trash2, Users } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/characters")({
   component: CharactersPage,
-  head: () => ({ meta: [{ title: "Character library · pilotstudio" }] }),
+  head: () => ({ meta: [{ title: "Character library · pilottoon" }] }),
 });
 
 function CharactersPage() {

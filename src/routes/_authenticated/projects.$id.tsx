@@ -20,7 +20,7 @@ import { ArrowRight, Trash2, Plus, UserPlus } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/projects/$id")({
   component: ProjectDetail,
-  head: () => ({ meta: [{ title: "Project · pilotstudio" }] }),
+  head: () => ({ meta: [{ title: "Project · pilottoon" }] }),
 });
 
 function ProjectDetail() {

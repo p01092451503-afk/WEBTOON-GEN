@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { ArrowLeft, ArrowRight, Check, Clapperboard, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-const STORAGE_KEY = "pilotstudio.video-tour.v1";
+const STORAGE_KEY = "pilottoon.video-tour.v1";
 
 const STEPS = [
   {
@@ -21,7 +21,7 @@ const STEPS = [
     selector: '[data-video-tour="generate"]',
     title: "Generate with one click",
     description:
-      "pilotstudio studies your references, enhances the prompt, and selects an available engine automatically.",
+      "pilottoon studies your references, enhances the prompt, and selects an available engine automatically.",
   },
   {
     selector: '[data-video-tour="result"]',

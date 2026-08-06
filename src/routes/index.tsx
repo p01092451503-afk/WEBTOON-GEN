@@ -11,12 +11,12 @@ export const Route = createFileRoute("/")({
   component: Index,
   head: () => ({
     meta: [
-      { title: "pilotstudio — AI image generation studio" },
+      { title: "pilottoon — AI image generation studio" },
       {
         name: "description",
         content: "Turn a written scene into character-consistent images, with every result saved to your history.",
       },
-      { property: "og:title", content: "pilotstudio" },
+      { property: "og:title", content: "pilottoon" },
       { property: "og:description", content: "AI image generation studio" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

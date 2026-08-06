@@ -6,15 +6,15 @@ export const Route = createFileRoute("/_authenticated/studio")({
   component: StudioHub,
   head: () => ({
     meta: [
-      { title: "Studio Hub · pilotstudio" },
+      { title: "Studio Hub · pilottoon" },
       {
         name: "description",
-        content: "Generate character-consistent images from prompts and presets in pilotstudio.",
+        content: "Generate character-consistent images from prompts and presets in pilottoon.",
       },
-      { property: "og:title", content: "Studio Hub · pilotstudio" },
+      { property: "og:title", content: "Studio Hub · pilottoon" },
       {
         property: "og:description",
-        content: "Generate character-consistent images from prompts and presets in pilotstudio.",
+        content: "Generate character-consistent images from prompts and presets in pilottoon.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

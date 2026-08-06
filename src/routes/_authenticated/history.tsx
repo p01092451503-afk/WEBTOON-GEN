@@ -65,7 +65,7 @@ export const Route = createFileRoute("/_authenticated/history")({
     id: typeof s.id === "string" ? s.id : undefined,
     tab: s.tab === "image" ? ("image" as const) : ("video" as const),
   }),
-  head: () => ({ meta: [{ title: "History · pilotstudio" }] }),
+  head: () => ({ meta: [{ title: "History · pilottoon" }] }),
 });
 
 type VideoRow = {
