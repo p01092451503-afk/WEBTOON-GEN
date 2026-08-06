@@ -103,8 +103,8 @@ export function GlobalSearch({ trigger }: Props) {
             <CommandItem onSelect={() => go("/characters")}>
               <Users className="mr-2 h-4 w-4" /> {t("header.characters.title")}
             </CommandItem>
-            <CommandItem onSelect={() => go("/video")}>
-              <Wand2 className="mr-2 h-4 w-4" /> {t("sidebar.video")}
+            <CommandItem onSelect={() => go("/generate")}>
+              <Wand2 className="mr-2 h-4 w-4" /> {t("sidebar.studio")}
             </CommandItem>
 
             <CommandItem onSelect={() => go("/history")}>
