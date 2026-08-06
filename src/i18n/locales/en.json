@@ -99,10 +99,10 @@
     "terms": "By continuing, you agree to the terms of service."
   },
   "landing": {
-    "badge": "Seedance · Beta",
-    "headline_1": "Short-clip videos,",
+    "badge": "Seedream · Beta",
+    "headline_1": "Image generation,",
     "headline_2": "all in ",
-    "subtitle": "Seedance short-clip video generation in one studio. Every result is saved to your history automatically.",
+    "subtitle": "Character-consistent image generation in one studio. Every result is saved to your history automatically.",
     "get_started": "Get started",
     "sign_in": "Sign in",
     "feature_library": "Character library",
@@ -298,7 +298,7 @@
     "go_home": "Go home"
   },
   "hub": {
-    "badge": "Seedance",
+    "badge": "Seedream",
     "title": "What are you creating today?",
     "subtitle": "Start from a still image or bring your characters to life in motion.",
     "image_title": "Image generation",
