@@ -7,10 +7,8 @@ import { bootstrapTenant } from "@/lib/onboarding.functions";
 import { Button } from "@/components/ui/button";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
-import { IconTooltip } from "@/components/icon-tooltip";
-import { GlobalSearch } from "@/components/global-search";
 import { LanguageSwitcher } from "@/components/language-switcher";
-import { Bell, LogOut, User as UserIcon, ChevronDown } from "lucide-react";
+import { LogOut, User as UserIcon, ChevronDown } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -137,21 +135,9 @@ function AuthenticatedLayout() {
               )}
             </div>
 
-            <GlobalSearch />
-
             <LanguageSwitcher />
 
 
-
-
-            <IconTooltip label={t("common.notifications")}>
-              <button
-                className="grid h-9 w-9 place-items-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
-                aria-label={t("common.notifications")}
-              >
-                <Bell className="h-4 w-4" aria-hidden="true" />
-              </button>
-            </IconTooltip>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
