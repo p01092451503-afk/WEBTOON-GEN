@@ -21,6 +21,8 @@ export type ImageModelHealth = {
   provider: "seedream";
   status: "available" | "unavailable" | "unknown";
   detail: string;
+  /** i18n key suffix for the human-readable detail message. */
+  detailCode: "missing_config" | "invalid_key" | "ready" | "no_endpoint" | "unreachable";
   validation: {
     credential: ValidationState;
     baseUrl: ValidationState;
@@ -51,6 +53,7 @@ export async function probeSeedream(): Promise<ImageModelHealth> {
       provider: "seedream",
       status: "unavailable",
       detail: "이미지 생성에 필요한 ARK_API_KEY 또는 ARK_BASE_URL이 설정되지 않았습니다.",
+      detailCode: "missing_config",
       validation: {
         credential: key ? "valid" : "missing",
         baseUrl: base ? "available" : "missing",
@@ -73,6 +76,7 @@ export async function probeSeedream(): Promise<ImageModelHealth> {
       provider: "seedream",
         status: "unavailable",
         detail: "저장된 ARK API 키가 거부되었습니다. 키가 활성 상태이고 엔드포인트와 같은 프로젝트인지 확인하세요.",
+        detailCode: "invalid_key",
         validation: {
           credential: "invalid",
           baseUrl: "available",
@@ -102,6 +106,7 @@ export async function probeSeedream(): Promise<ImageModelHealth> {
       detail: callable
         ? "ARK 인증에 성공했고 설정된 이미지 엔드포인트를 호출할 수 있습니다."
         : "ARK 인증에는 성공했지만 이미지 엔드포인트(ARK_ENDPOINT_ID)가 설정되지 않았습니다.",
+      detailCode: callable ? "ready" : "no_endpoint",
       validation: {
         credential: "valid",
         baseUrl: "available",
@@ -117,6 +122,7 @@ export async function probeSeedream(): Promise<ImageModelHealth> {
       provider: "seedream",
       status: "unknown",
       detail: "ARK 서비스에 연결하지 못했습니다. 잠시 후 다시 확인해 주세요.",
+      detailCode: "unreachable",
       validation: {
         credential: "unknown",
         baseUrl: "available",

@@ -288,6 +288,18 @@
       "not_configured": "Not set",
       "attention": "Check required",
       "unknown": "Unknown"
+    },
+    "detail": {
+      "missing_config": "ARK_API_KEY or ARK_BASE_URL is not configured for image generation.",
+      "invalid_key": "The stored ARK API key was rejected. Check that it is active and belongs to the same project as the endpoint.",
+      "ready": "ARK authentication succeeded and the configured image endpoint is callable.",
+      "no_endpoint": "ARK authentication succeeded, but the image endpoint (ARK_ENDPOINT_ID) is not set.",
+      "unreachable": "Could not reach the ARK service. Please try again shortly."
+    },
+    "status": {
+      "available": "available",
+      "unavailable": "unavailable",
+      "unknown": "unknown"
     }
   },
   "history": {
