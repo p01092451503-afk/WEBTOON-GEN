@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { LanguageSwitcher } from "@/components/language-switcher";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
@@ -66,6 +67,7 @@ function AuthPage() {
   return (
     <main className="min-h-screen bg-background">
       <div className="absolute right-5 top-5">
+        <LanguageSwitcher />
       </div>
       <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-5 py-10">
         <div className="mb-8 flex flex-col items-center">
