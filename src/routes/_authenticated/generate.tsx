@@ -31,6 +31,8 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { StudioSwitcher } from "@/components/studio-switcher";
+import { ImageModelHealthCard } from "@/components/image-model-health-card";
+
 
 import { IconTooltip } from "@/components/icon-tooltip";
 import { IconBadge } from "@/components/icon-badge";
@@ -305,6 +307,9 @@ function GeneratePage() {
           {t("studio.manage_characters")}
         </Link>
       </header>
+
+      <ImageModelHealthCard />
+
 
       {panelId && backEpisodeId && (
         <div className="mt-4">
