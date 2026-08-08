@@ -15,6 +15,7 @@ type HealthModel = {
   modelName?: string;
   status: "available" | "unavailable" | "unknown";
   detail: string;
+  detailCode?: "missing_config" | "invalid_key" | "ready" | "no_endpoint" | "unreachable";
   validation: {
     credential: ValidationState;
     baseUrl: ValidationState;
@@ -93,7 +94,7 @@ export function ImageModelHealthCard() {
               </code>
             )}
             <span className="rounded-full border border-border px-2 py-0.5 text-xs font-semibold">
-              {model ? model.status : checking ? t("image_health.checking") : t("image_health.unchecked")}
+              {model ? t(`image_health.status.${model.status}`) : checking ? t("image_health.checking") : t("image_health.unchecked")}
             </span>
             <Button
               variant="outline"
@@ -107,7 +108,11 @@ export function ImageModelHealthCard() {
             </Button>
           </div>
           <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-            {model ? model.detail : t("image_health.loading_detail")}
+            {model
+              ? model.detailCode
+                ? t(`image_health.detail.${model.detailCode}`)
+                : model.detail
+              : t("image_health.loading_detail")}
           </p>
           {model && (
             <div className="mt-3 grid gap-2 sm:grid-cols-3">
