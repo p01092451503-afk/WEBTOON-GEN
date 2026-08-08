@@ -87,6 +87,11 @@ export function ImageModelHealthCard() {
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="text-sm font-bold">{t("image_health.title")}</h2>
+            {model?.modelName && (
+              <code className="rounded bg-muted px-2 py-0.5 font-mono text-[11px] font-semibold text-foreground">
+                {model.modelName}
+              </code>
+            )}
             <span className="rounded-full border border-border px-2 py-0.5 text-xs font-semibold">
               {model ? model.status : checking ? t("image_health.checking") : t("image_health.unchecked")}
             </span>
