@@ -37,6 +37,7 @@ function Index() {
   return (
     <main className="min-h-screen bg-background">
       <div className="absolute right-5 top-5">
+        <LanguageSwitcher />
       </div>
       <div className="mx-auto flex min-h-screen max-w-5xl flex-col items-center justify-center px-6 py-16 text-center">
         
