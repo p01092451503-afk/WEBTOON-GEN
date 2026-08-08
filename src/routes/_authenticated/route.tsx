@@ -138,6 +138,10 @@ function AuthenticatedLayout() {
 
             <GlobalSearch />
 
+            <LanguageSwitcher />
+
+
+
 
             <IconTooltip label={t("common.notifications")}>
               <button
