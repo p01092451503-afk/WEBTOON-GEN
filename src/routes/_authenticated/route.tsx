@@ -9,6 +9,7 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { IconTooltip } from "@/components/icon-tooltip";
 import { GlobalSearch } from "@/components/global-search";
+import { LanguageSwitcher } from "@/components/language-switcher";
 import { Bell, LogOut, User as UserIcon, ChevronDown } from "lucide-react";
 import {
   DropdownMenu,
