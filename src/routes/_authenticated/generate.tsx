@@ -306,6 +306,9 @@ function GeneratePage() {
         </Link>
       </header>
 
+      <ImageModelHealthCard />
+
+
       {panelId && backEpisodeId && (
         <div className="mt-4">
           <Link
