@@ -51,7 +51,8 @@
     "video": "영상 스튜디오",
     "group_assets": "에셋",
     "group_studio": "스튜디오",
-    "group_records": "기록"
+    "group_records": "기록",
+    "usage": "API 사용량"
   },
   "header": {
     "projects": {
@@ -81,6 +82,10 @@
     "video": {
       "title": "영상 스튜디오",
       "sub": "AI 영상 생성"
+    },
+    "usage": {
+      "title": "API 사용량",
+      "sub": "예상 사용량과 실제 사용량"
     }
   },
   "auth": {
@@ -410,5 +415,28 @@
     "image": "이미지",
     "video": "영상",
     "hub": "스튜디오 허브"
+  },
+  "usage": {
+    "title": "API 사용량",
+    "subtitle": "Seedream 이미지 생성 예상 사용량을 월별·해상도별·모델별로 확인합니다.",
+    "refresh": "새로고침",
+    "month_cost": "이번 달 예상 비용",
+    "total_cost": "누적 예상 비용",
+    "success_ratio": "생성 성공 / 전체",
+    "images_count": "이미지 {{count}}장",
+    "by_month": "월별 비용",
+    "by_size": "해상도별 비용",
+    "by_model": "모델별 비용",
+    "other_cost": "기타 예상 비용",
+    "storage": "스토리지",
+    "storage_sub": "생성 이미지 용량 추정치 기준 월 예상 비용 · {{gb}} GB",
+    "gateway": "AI Gateway",
+    "gateway_sub": "현재 이미지 생성은 BytePlus ARK를 직접 호출하므로 Gateway 비용이 발생하지 않습니다.",
+    "not_used": "사용 안 함",
+    "month_total": "월 합계 예상 (이미지 + 스토리지)",
+    "empty": "아직 사용 내역이 없습니다.",
+    "disclaimer": "BytePlus 공식 요금표 기준의 예상값이며 실제 청구 금액과 다를 수 있습니다. 실패한 생성은 집계에서 제외됩니다.",
+    "rate_note": "요금 기준: 1K/2K 장당 $0.03, 4K 장당 $0.06. 스토리지는 GB당 월 $0.021을 적용했습니다.",
+    "events_note": "사용 이벤트 {{count}}건 기록됨"
   }
 }

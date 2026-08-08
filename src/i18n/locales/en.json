@@ -51,7 +51,8 @@
     "video": "Video studio",
     "group_assets": "Assets",
     "group_studio": "Studios",
-    "group_records": "Records"
+    "group_records": "Records",
+    "usage": "API usage"
   },
   "header": {
     "projects": {
@@ -81,6 +82,10 @@
     "video": {
       "title": "Video studio",
       "sub": "AI video generation"
+    },
+    "usage": {
+      "title": "API usage",
+      "sub": "Estimated vs. recorded usage"
     }
   },
   "auth": {
@@ -410,5 +415,28 @@
     "image": "Image",
     "video": "Video",
     "hub": "Studio hub"
+  },
+  "usage": {
+    "title": "API usage",
+    "subtitle": "Estimated Seedream image generation usage by month, size and model.",
+    "refresh": "Refresh",
+    "month_cost": "Estimated cost this month",
+    "total_cost": "Estimated cost (all time)",
+    "success_ratio": "Succeeded / total",
+    "images_count": "{{count}} images",
+    "by_month": "Monthly cost",
+    "by_size": "Cost by size",
+    "by_model": "Cost by model",
+    "other_cost": "Other estimated cost",
+    "storage": "Storage",
+    "storage_sub": "Monthly estimate for generated images · {{gb}} GB",
+    "gateway": "AI Gateway",
+    "gateway_sub": "Image generation calls BytePlus ARK directly, so no Gateway cost applies.",
+    "not_used": "Not used",
+    "month_total": "Monthly total estimate (images + storage)",
+    "empty": "No usage yet.",
+    "disclaimer": "Estimates are based on BytePlus official rates and may differ from your actual invoice. Failed generations are excluded.",
+    "rate_note": "Rates: 1K/2K $0.03 per image, 4K $0.06 per image. Storage is billed at $0.021 per GB per month.",
+    "events_note": "{{count}} usage events recorded"
   }
 }
