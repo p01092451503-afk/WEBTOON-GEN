@@ -152,6 +152,12 @@ function RootComponent() {
     };
   }, [router, queryClient]);
 
+  useEffect(() => {
+    initClientLanguage();
+  }, []);
+
+
+
 
   return (
     <I18nextProvider i18n={i18n}>
