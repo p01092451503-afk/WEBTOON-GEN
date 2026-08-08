@@ -18,6 +18,8 @@ const inputSchema = z.object({
   rawPrompt: z.string().max(PROMPT_MAX_CHARS).optional(),
   /** True when the user manually edited the auto-generated prompt. */
   promptEdited: z.boolean().default(false),
+  /** True when the user's prompt must be sent to Seedream (ARK) verbatim, with no cleanup or guards. */
+  rawPassthrough: z.boolean().default(false),
   compiledPrompt: z.string().optional(),
   imagePaths: z.array(z.string()).default([]),
   figureMap: z.array(z.any()).default([]),
@@ -47,20 +49,26 @@ export const generate = createServerFn({ method: "POST" })
     }
     const tenantId = profile.tenant_id;
 
-    // 2) 프롬프트 정리 및 가드 (편집된 프롬프트도 반드시 통과)
-    const cleanPrompt = sanitizePrompt(data.finalPrompt);
-    const v = validateFinalPrompt(cleanPrompt);
-    if (!v.ok) {
-      throw new Error(v.detail ? `${v.code}: ${v.detail}` : v.code);
-    }
-    if (checkFigureN(cleanPrompt)) {
-      throw new Error("FIGURE_N_NOT_REPLACED");
-    }
-    // 편집되지 않은 경우에만 원본 action 텍스트 포함 여부를 강제한다.
-    if (!data.promptEdited) {
-      const actionText = (data.options as Record<string, unknown>).actionText;
-      if (typeof actionText === "string" && checkActionMissing(cleanPrompt, actionText)) {
-        throw new Error("ACTION_TEXT_MISSING");
+    // 2) 프롬프트 정리 및 가드
+    // rawPassthrough=true 이면 사용자가 작성한 원문을 어떤 가공/검증도 없이 그대로 ARK 로 보낸다.
+    let cleanPrompt: string;
+    if (data.rawPassthrough) {
+      cleanPrompt = data.finalPrompt;
+    } else {
+      cleanPrompt = sanitizePrompt(data.finalPrompt);
+      const v = validateFinalPrompt(cleanPrompt);
+      if (!v.ok) {
+        throw new Error(v.detail ? `${v.code}: ${v.detail}` : v.code);
+      }
+      if (checkFigureN(cleanPrompt)) {
+        throw new Error("FIGURE_N_NOT_REPLACED");
+      }
+      // 편집되지 않은 경우에만 원본 action 텍스트 포함 여부를 강제한다.
+      if (!data.promptEdited) {
+        const actionText = (data.options as Record<string, unknown>).actionText;
+        if (typeof actionText === "string" && checkActionMissing(cleanPrompt, actionText)) {
+          throw new Error("ACTION_TEXT_MISSING");
+        }
       }
     }
 
@@ -98,9 +106,9 @@ export const generate = createServerFn({ method: "POST" })
         seed,
         compiled_prompt: data.compiledPrompt ?? null,
         final_prompt: cleanPrompt,
-        raw_prompt: data.rawPrompt ? sanitizePrompt(data.rawPrompt) : null,
+        raw_prompt: data.rawPrompt ? (data.rawPassthrough ? data.rawPrompt : sanitizePrompt(data.rawPrompt)) : null,
         prompt_edited: data.promptEdited === true,
-        options: data.options,
+        options: { ...data.options, rawPassthrough: data.rawPassthrough },
         figure_map: data.figureMap,
         batch_count: slotSeeds.length,
         panel_id: data.panelId ?? null,

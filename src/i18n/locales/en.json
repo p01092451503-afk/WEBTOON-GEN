@@ -263,7 +263,11 @@
       "translate_to_en": "Translate to English",
       "translate_to_ko": "Translate to Korean",
       "show_translation": "Show translation",
-      "hide_translation": "Hide translation"
+      "hide_translation": "Hide translation",
+      "raw_mode": "Send raw prompt",
+      "raw_badge": "Raw · sent as-is",
+      "raw_placeholder": "Type the exact prompt to send to Seedream.",
+      "raw_empty": "Enter a prompt to send."
     }
   },
   "image_health": {

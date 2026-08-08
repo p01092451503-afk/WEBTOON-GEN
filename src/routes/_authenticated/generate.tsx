@@ -100,6 +100,9 @@ function GeneratePage() {
   // 편집 가능한 최종 프롬프트: null 이면 자동 생성값(built.prompt)을 그대로 사용
   const [editedPrompt, setEditedPrompt] = useState<string | null>(null);
   const [promptEditMode, setPromptEditMode] = useState(false);
+  // 원문 그대로 전송(Raw passthrough): 프리셋 조합을 쓰지 않고 사용자가 쓴 프롬프트를 그대로 Seedream API 로 보낸다.
+  const [rawMode, setRawMode] = useState(false);
+  const [rawPrompt, setRawPrompt] = useState("");
 
   // Read query params: panel / charA / charB / back
   useEffect(() => {
@@ -161,8 +164,8 @@ function GeneratePage() {
   const built = useMemo(() => buildPrompt(work, figureMap, cfg), [work, figureMap, cfg]);
 
   // 사용자가 편집 중이면 편집본을, 아니면 자동 생성된 프롬프트를 최종값으로 사용
-  const effectivePrompt = editedPrompt ?? built.prompt;
-  const isEdited = editedPrompt !== null && editedPrompt.trim() !== built.prompt.trim();
+  const effectivePrompt = rawMode ? rawPrompt : (editedPrompt ?? built.prompt);
+  const isEdited = !rawMode && editedPrompt !== null && editedPrompt.trim() !== built.prompt.trim();
   const overLimit = effectivePrompt.length > 4000;
 
   // Reset translation whenever the source prompt changes
@@ -215,7 +218,11 @@ function GeneratePage() {
   );
 
   async function handleGenerate(opts?: { keepLocks?: boolean }) {
-    if (!charA?.primary_path && !charB?.primary_path) {
+    if (rawMode && !effectivePrompt.trim()) {
+      toast.error(t("studio.labels.raw_empty", "Enter a prompt to send."));
+      return;
+    }
+    if (!rawMode && !charA?.primary_path && !charB?.primary_path) {
       toast.error(t("studio.select_character_error"));
       return;
     }
@@ -243,9 +250,10 @@ function GeneratePage() {
         mode: "new",
         aspectRatio,
         finalPrompt: effectivePrompt,
-        rawPrompt: built.prompt,
+        rawPrompt: rawMode ? effectivePrompt : built.prompt,
         promptEdited: isEdited,
-        compiledPrompt: built.prompt,
+        rawPassthrough: rawMode,
+        compiledPrompt: rawMode ? undefined : built.prompt,
         imagePaths,
         figureMap,
         options: { ...work, aspectRatio },
@@ -493,7 +501,11 @@ function GeneratePage() {
           <div className="space-y-3">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 text-[11px]">
-                {isEdited ? (
+                {rawMode ? (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 font-semibold text-primary">
+                    {t("studio.labels.raw_badge", "Raw · sent as-is")}
+                  </span>
+                ) : isEdited ? (
                   <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 font-semibold text-amber-700">
                     <Sparkles className="h-3 w-3" aria-hidden="true" />
                     {t("studio.labels.edited_badge", "Edited")}
@@ -505,7 +517,21 @@ function GeneratePage() {
                 )}
               </div>
               <div className="flex items-center gap-1">
-                {promptEditMode ? (
+                <label className="mr-1 inline-flex cursor-pointer items-center gap-1.5 text-[11px] font-semibold text-muted-foreground">
+                  <input
+                    type="checkbox"
+                    checked={rawMode}
+                    onChange={(e) => {
+                      const on = e.target.checked;
+                      setRawMode(on);
+                      if (on && !rawPrompt) setRawPrompt(effectivePrompt);
+                      setPromptEditMode(false);
+                    }}
+                    className="h-3.5 w-3.5 accent-[hsl(var(--primary))]"
+                  />
+                  {t("studio.labels.raw_mode", "Send raw prompt")}
+                </label>
+                {rawMode ? null : promptEditMode ? (
                   <Button
                     type="button" size="sm" variant="ghost"
                     onClick={() => setPromptEditMode(false)}
@@ -525,7 +551,7 @@ function GeneratePage() {
                     {t("studio.labels.edit_prompt", "Edit")}
                   </Button>
                 )}
-                {isEdited && (
+                {!rawMode && isEdited && (
                   <Button
                     type="button" size="sm" variant="ghost"
                     onClick={resetEditedPrompt}
@@ -538,9 +564,10 @@ function GeneratePage() {
             </div>
             <Textarea
               rows={10}
-              readOnly={!promptEditMode}
+              readOnly={!rawMode && !promptEditMode}
               value={effectivePrompt}
-              onChange={(e) => setEditedPrompt(e.target.value)}
+              onChange={(e) => (rawMode ? setRawPrompt(e.target.value) : setEditedPrompt(e.target.value))}
+              placeholder={rawMode ? t("studio.labels.raw_placeholder", "Type the exact prompt to send to Seedream.") : undefined}
               maxLength={4000}
               className={`resize-none rounded-xl font-mono text-xs leading-relaxed ${
                 promptEditMode
@@ -590,7 +617,7 @@ function GeneratePage() {
                   {effectivePrompt.length}/4000
                 </span>
               </span>
-              {built.warnings.length > 0 && !isEdited && (
+              {!rawMode && built.warnings.length > 0 && !isEdited && (
                 <div className="text-right text-amber-600">
                   {built.warnings.map((w) => (
                     <div key={w}>{(WARN as Record<string, string>)[w] || w}</div>

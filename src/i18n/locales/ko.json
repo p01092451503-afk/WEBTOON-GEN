@@ -263,7 +263,11 @@
       "translate_to_en": "영어로 번역",
       "translate_to_ko": "한국어로 번역",
       "show_translation": "번역 보기",
-      "hide_translation": "번역 숨기기"
+      "hide_translation": "번역 숨기기",
+      "raw_mode": "원문 그대로 전송",
+      "raw_badge": "원문 전송 · 가공 없음",
+      "raw_placeholder": "Seedream API로 그대로 보낼 프롬프트를 입력하세요.",
+      "raw_empty": "보낼 프롬프트를 입력해 주세요."
     }
   },
   "image_health": {
