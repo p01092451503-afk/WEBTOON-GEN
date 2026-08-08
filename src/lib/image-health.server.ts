@@ -11,9 +11,13 @@ export type ValidationState =
   | "not_configured"
   | "unknown";
 
+/** 연동된 이미지 모델 세부 명칭 */
+export const IMAGE_MODEL_NAME = "seedream-5-0-260128";
+
 export type ImageModelHealth = {
   id: string;
   label: string;
+  modelName: string;
   provider: "seedream";
   status: "available" | "unavailable" | "unknown";
   detail: string;
@@ -33,7 +37,7 @@ function maskEndpoint(value: string | null): string | null {
 }
 
 export async function probeSeedream(): Promise<ImageModelHealth> {
-  const label = "Seedream (ARK)";
+  const label = `Seedream (ARK) · ${IMAGE_MODEL_NAME}`;
   const key = process.env.ARK_API_KEY?.trim();
   const base = process.env.ARK_BASE_URL?.trim().replace(/\/$/, "");
   const endpoint = process.env.ARK_ENDPOINT_ID?.trim() || null;
@@ -43,6 +47,7 @@ export async function probeSeedream(): Promise<ImageModelHealth> {
     return {
       id: endpoint ?? "unknown",
       label,
+      modelName: IMAGE_MODEL_NAME,
       provider: "seedream",
       status: "unavailable",
       detail: "이미지 생성에 필요한 ARK_API_KEY 또는 ARK_BASE_URL이 설정되지 않았습니다.",
@@ -64,7 +69,8 @@ export async function probeSeedream(): Promise<ImageModelHealth> {
       return {
         id: endpoint ?? "unknown",
         label,
-        provider: "seedream",
+        modelName: IMAGE_MODEL_NAME,
+      provider: "seedream",
         status: "unavailable",
         detail: "저장된 ARK API 키가 거부되었습니다. 키가 활성 상태이고 엔드포인트와 같은 프로젝트인지 확인하세요.",
         validation: {
@@ -90,6 +96,7 @@ export async function probeSeedream(): Promise<ImageModelHealth> {
     return {
       id: endpoint ?? "unknown",
       label,
+      modelName: IMAGE_MODEL_NAME,
       provider: "seedream",
       status: callable ? "available" : "unknown",
       detail: callable
@@ -106,6 +113,7 @@ export async function probeSeedream(): Promise<ImageModelHealth> {
     return {
       id: endpoint ?? "unknown",
       label,
+      modelName: IMAGE_MODEL_NAME,
       provider: "seedream",
       status: "unknown",
       detail: "ARK 서비스에 연결하지 못했습니다. 잠시 후 다시 확인해 주세요.",
