@@ -12,6 +12,7 @@ type ValidationState =
 
 type HealthModel = {
   label: string;
+  modelName?: string;
   status: "available" | "unavailable" | "unknown";
   detail: string;
   validation: {
