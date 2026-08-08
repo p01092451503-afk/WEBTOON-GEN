@@ -34,7 +34,8 @@
     "lock_seed": "Lock this seed",
     "unlock_seed": "Unlock this seed",
     "close_compare": "Close compare",
-    "toggle_sidebar": "Toggle sidebar"
+    "toggle_sidebar": "Toggle sidebar",
+    "language": "Language"
   },
   "sidebar": {
     "workspace": "Workspace",
@@ -258,6 +259,26 @@
       "translate_to_ko": "Translate to Korean",
       "show_translation": "Show translation",
       "hide_translation": "Hide translation"
+    }
+  },
+  "image_health": {
+    "title": "ARK / Seedream connection",
+    "check": "Check ARK connection",
+    "checking": "Checking",
+    "unchecked": "Not checked",
+    "loading_detail": "Checking the image model connection…",
+    "api_key": "API key",
+    "base_url": "ARK base URL",
+    "endpoint": "Image endpoint",
+    "last_checked": "Last checked",
+    "toast_ok": "ARK connection checked.",
+    "toast_fail": "Connection check failed.",
+    "state": {
+      "ready": "Ready",
+      "configured": "Configured",
+      "not_configured": "Not set",
+      "attention": "Check required",
+      "unknown": "Unknown"
     }
   },
   "history": {
