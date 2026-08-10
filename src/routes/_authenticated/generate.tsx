@@ -417,22 +417,25 @@ function GeneratePage() {
             </div>
 
             <FieldGroup label={t("studio.labels.action")}>
-              <Textarea
-                rows={2}
+              <AutoResizeTextarea
+                minHeight={110}
+                maxHeight={480}
                 value={work.actionText}
                 onChange={(e) => setWork({ ...work, actionText: e.target.value })}
                 placeholder={t("studio.labels.action_placeholder")}
-                className="resize-none rounded-xl bg-muted/50"
+                className="rounded-xl bg-muted/50 leading-relaxed"
               />
             </FieldGroup>
             <FieldGroup label={t("studio.labels.direction_memo")}>
-              <Textarea
-                rows={2}
+              <AutoResizeTextarea
+                minHeight={90}
+                maxHeight={400}
                 value={work.directionMemo}
                 onChange={(e) => setWork({ ...work, directionMemo: e.target.value })}
-                className="resize-none rounded-xl bg-muted/50"
+                className="rounded-xl bg-muted/50 leading-relaxed"
               />
             </FieldGroup>
+
 
             <div className="flex items-center justify-between rounded-xl bg-muted/50 px-4 py-3">
               <div>
