@@ -667,9 +667,9 @@ function DetailCard({ row, onClose, locale }: { row: Row; onClose: () => void; l
                         path={res.storage_path}
                         baseName={`${row.work_label}-${res.seq + 1}`}
                         className="w-full"
+                        buttonClassName="w-full"
                         size="sm"
                         variant="outline"
-                        showLabel
                       />
                     </div>
                   </>
