@@ -33,6 +33,21 @@ export async function makeThumbnailWebp(bytes: Uint8Array): Promise<Uint8Array> 
   return bytes;
 }
 
+/**
+ * ARK_BASE_URL 정규화.
+ * 값이 실수로 두 번 붙여넣어진 경우("https://a/api/v3https://a/api/v3")나
+ * 경로가 중복된 경우("/api/v3/api/v3"), 끝 슬래시 등을 안전하게 정리한다.
+ */
+export function normalizeArkBaseUrl(raw: string): string {
+  let v = raw.trim();
+  // 두 번째 스킴이 등장하면 마지막 URL만 사용
+  const lastScheme = v.lastIndexOf("http");
+  if (lastScheme > 0) v = v.slice(lastScheme);
+  v = v.replace(/\/+$/, "");
+  // 경로 중복 제거 (/api/v3/api/v3 → /api/v3)
+  v = v.replace(/(\/api\/v\d+)(\1)+$/, "$1");
+  return v;
+}
 
 
 export async function callArk(params: {
