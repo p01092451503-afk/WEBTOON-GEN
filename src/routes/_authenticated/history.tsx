@@ -390,36 +390,52 @@ function HistoryPage() {
           {(list as Row[]).map((r) => {
             const first = r.results[0];
             return (
-              <button
+              <div
                 key={r.id}
-                onClick={() => navigate({ search: { id: r.id, tab: "image" } })}
-                className="group overflow-hidden rounded-2xl border border-border bg-card text-left shadow-toss-sm transition hover:shadow-toss"
+                className="group relative overflow-hidden rounded-2xl border border-border bg-card text-left shadow-toss-sm transition hover:shadow-toss"
               >
-                <div className="relative aspect-square overflow-hidden bg-muted">
-                  {first?.thumb_path || first?.storage_path ? (
-                    <SignedImage
-                      bucket="generation-outputs"
-                      path={(first.thumb_path ?? first.storage_path) as string}
-                      alt={r.work_label}
-                      className="h-full w-full object-cover transition group-hover:scale-[1.02]"
-                    />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
-                      {r.status === "error" ? t("history.failed") : r.status}
+                <button
+                  type="button"
+                  onClick={() => navigate({ search: { id: r.id, tab: "image" } })}
+                  className="block w-full text-left"
+                >
+                  <div className="relative aspect-square overflow-hidden bg-muted">
+                    {first?.thumb_path || first?.storage_path ? (
+                      <SignedImage
+                        bucket="generation-outputs"
+                        path={(first.thumb_path ?? first.storage_path) as string}
+                        alt={r.work_label}
+                        className="h-full w-full object-cover transition group-hover:scale-[1.02]"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
+                        {r.status === "error" ? t("history.failed") : r.status}
+                      </div>
+                    )}
+                    <div className="absolute left-2 top-2">
+                      <StatusPill status={r.status} />
                     </div>
-                  )}
-                  <div className="absolute left-2 top-2">
-                    <StatusPill status={r.status} />
                   </div>
-                </div>
-                <div className="space-y-1 p-3">
-                  <div className="truncate text-sm font-bold">{r.work_label}</div>
-                  <div className="text-[11px] text-muted-foreground">
-                    {new Date(r.created_at).toLocaleString(locale)}
+                  <div className="space-y-1 p-3">
+                    <div className="truncate text-sm font-bold">{r.work_label}</div>
+                    <div className="text-[11px] text-muted-foreground">
+                      {new Date(r.created_at).toLocaleString(locale)}
+                    </div>
                   </div>
-                </div>
-              </button>
+                </button>
+                {first?.storage_path && (
+                  <ImageDownloadMenu
+                    bucket="generation-outputs"
+                    path={first.storage_path}
+                    baseName={`${r.work_label}-1`}
+                    className="absolute right-2 top-2"
+                    size="icon"
+                    variant="secondary"
+                  />
+                )}
+              </div>
             );
+
           })}
         </div>
       )}
