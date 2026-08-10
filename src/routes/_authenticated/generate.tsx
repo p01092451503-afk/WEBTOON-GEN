@@ -1243,8 +1243,23 @@ function VariationGrid({
   onSetAsPanel: ((resultId: string) => void) | null;
 }) {
   const { t } = useTranslation();
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const lightboxItems = results.map((r) => ({
+    id: r.id,
+    bucket: "generation-outputs",
+    path: r.storage_path ?? r.thumb_path,
+    alt: `#${r.seq + 1}`,
+  }));
   return (
     <div className={results.length === 1 ? "grid grid-cols-1 gap-3" : "grid grid-cols-1 gap-3 sm:grid-cols-2"}>
+      {lightboxIndex !== null && (
+        <ImageLightbox
+          items={lightboxItems}
+          index={lightboxIndex}
+          onIndexChange={setLightboxIndex}
+          onClose={() => setLightboxIndex(null)}
+        />
+      )}
       {results.map((r) => {
         const locked = r.seed != null && lockedSeeds[r.seq] === r.seed;
         const inCompare = compareIds.includes(r.id);
@@ -1256,18 +1271,35 @@ function VariationGrid({
               (inCompare ? "border-primary ring-2 ring-primary" : "border-border")
             }
           >
-            <SignedImage
-              bucket="generation-outputs"
-              path={r.storage_path ?? r.thumb_path}
-              alt={`variant-${r.seq}`}
-              className="h-auto w-full object-contain"
-            />
+            <button
+              type="button"
+              onClick={() => setLightboxIndex(results.findIndex((x) => x.id === r.id))}
+              aria-label={t("lightbox.open")}
+              className="block w-full cursor-zoom-in"
+            >
+              <SignedImage
+                bucket="generation-outputs"
+                path={r.storage_path ?? r.thumb_path}
+                alt={`variant-${r.seq}`}
+                className="h-auto w-full object-contain"
+              />
+            </button>
 
             <div className="absolute inset-x-0 top-0 flex items-center justify-between p-1.5">
               <span className="rounded-md bg-black/60 px-1.5 py-0.5 text-[10px] font-mono text-white">
                 #{r.seq + 1} · seed {r.seed ?? "—"}
               </span>
               <div className="flex items-center gap-1">
+                <IconTooltip label={t("lightbox.open")}>
+                  <button
+                    type="button"
+                    onClick={() => setLightboxIndex(results.findIndex((x) => x.id === r.id))}
+                    aria-label={t("lightbox.open")}
+                    className="grid h-6 w-6 place-items-center rounded-md bg-black/60 text-white hover:bg-black/80"
+                  >
+                    <Maximize2 className="h-3 w-3" aria-hidden="true" />
+                  </button>
+                </IconTooltip>
                 <ImageDownloadMenu
                   bucket="generation-outputs"
                   path={r.storage_path}
