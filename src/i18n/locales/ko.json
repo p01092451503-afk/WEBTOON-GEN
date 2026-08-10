@@ -35,7 +35,8 @@
     "unlock_seed": "시드 고정 해제",
     "close_compare": "비교 닫기",
     "toggle_sidebar": "사이드바 열기/닫기",
-    "language": "언어"
+    "language": "언어",
+    "generating_image": "이미지 생성 중…"
   },
   "sidebar": {
     "workspace": "워크스페이스",

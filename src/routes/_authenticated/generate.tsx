@@ -659,7 +659,7 @@ function GeneratePage() {
               className="h-12 w-full rounded-xl bg-primary text-[15px] font-bold text-primary-foreground shadow-toss hover:bg-primary/90"
             >
               <Sparkles className="mr-2 h-4 w-4" />
-              {gen.running ? t("common.requesting") : t("common.generate")}
+              {gen.running ? t("common.generating_image") : t("common.generate")}
             </Button>
 
             {gen.row && (
