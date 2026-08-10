@@ -620,20 +620,35 @@ function DetailCard({ row, onClose, locale }: { row: Row; onClose: () => void; l
       </header>
 
       <div className="space-y-5">
+        {lightboxIndex !== null && (
+          <ImageLightbox
+            items={lightboxItems}
+            index={lightboxIndex}
+            onIndexChange={setLightboxIndex}
+            onClose={() => setLightboxIndex(null)}
+          />
+        )}
         {row.results.length > 0 && (
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            {row.results.map((res) => (
+            {row.results.map((res, i) => (
               <div
                 key={res.id}
                 className="group relative overflow-hidden rounded-xl border border-border bg-muted"
               >
                 {(res.thumb_path || res.storage_path) && (
-                  <SignedImage
-                    bucket="generation-outputs"
-                    path={(res.thumb_path ?? res.storage_path) as string}
-                    alt={`result-${res.seq}`}
-                    className="aspect-square w-full object-cover"
-                  />
+                  <button
+                    type="button"
+                    onClick={() => setLightboxIndex(i)}
+                    aria-label={t("lightbox.open")}
+                    className="block w-full cursor-zoom-in"
+                  >
+                    <SignedImage
+                      bucket="generation-outputs"
+                      path={(res.thumb_path ?? res.storage_path) as string}
+                      alt={`result-${res.seq}`}
+                      className="aspect-square w-full object-cover"
+                    />
+                  </button>
                 )}
                 {res.storage_path && (
                   <ImageDownloadMenu
@@ -649,6 +664,7 @@ function DetailCard({ row, onClose, locale }: { row: Row; onClose: () => void; l
             ))}
           </div>
         )}
+
 
         <div className="grid grid-cols-2 gap-3 text-xs md:grid-cols-4">
           <Meta label={t("history.meta.mode")} value={row.mode} />
