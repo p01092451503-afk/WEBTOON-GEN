@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/hooks/useTenant";
 import { SignedImage } from "@/components/SignedImage";
+import { ImageDownloadMenu } from "@/components/image-download-menu";
 import { SignedVideo } from "@/components/SignedVideo";
 import { Button } from "@/components/ui/button";
 import { IconTooltip } from "@/components/icon-tooltip";
@@ -616,7 +617,7 @@ function DetailCard({ row, onClose, locale }: { row: Row; onClose: () => void; l
             {row.results.map((res) => (
               <div
                 key={res.id}
-                className="overflow-hidden rounded-xl border border-border bg-muted"
+                className="group relative overflow-hidden rounded-xl border border-border bg-muted"
               >
                 {(res.thumb_path || res.storage_path) && (
                   <SignedImage
@@ -624,6 +625,16 @@ function DetailCard({ row, onClose, locale }: { row: Row; onClose: () => void; l
                     path={(res.thumb_path ?? res.storage_path) as string}
                     alt={`result-${res.seq}`}
                     className="aspect-square w-full object-cover"
+                  />
+                )}
+                {res.storage_path && (
+                  <ImageDownloadMenu
+                    bucket="generation-outputs"
+                    path={res.storage_path}
+                    baseName={`${row.work_label}-${res.seq + 1}`}
+                    className="absolute right-2 top-2 opacity-0 transition group-hover:opacity-100 focus-within:opacity-100"
+                    size="icon"
+                    variant="secondary"
                   />
                 )}
               </div>
