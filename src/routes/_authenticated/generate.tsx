@@ -11,6 +11,7 @@ import { useGeneration } from "@/hooks/useGeneration";
 import { SignedImage } from "@/components/SignedImage";
 import { ImageDownloadMenu } from "@/components/image-download-menu";
 import { ImageLightbox } from "@/components/image-lightbox";
+import { generateErrorKey } from "@/lib/generate-error";
 import { buildFigureMap, buildPrompt, WARN, type WorkInput, type PresetItem } from "@/lib/promptEngine";
 import { updatePanel } from "@/lib/projects.functions";
 import { translatePrompt } from "@/lib/translate.functions";
@@ -267,7 +268,9 @@ function GeneratePage() {
       setCompareIds([]);
       toast.success(panelId ? t("studio.submitted_panel") : t("studio.submitted"));
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : String(e));
+      const msg = e instanceof Error ? e.message : String(e);
+      const key = generateErrorKey(msg);
+      toast.error(key ? t(key) : msg);
     }
   }
 

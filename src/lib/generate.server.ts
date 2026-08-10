@@ -99,6 +99,11 @@ export async function callArk(params: {
       }
       if (!res.ok) {
         const text = await res.text().catch(() => "");
+        if (text.includes("SensitiveContentDetected") || text.includes("ContentPolicy")) {
+          throw new Error(
+            "ARK_SENSITIVE_CONTENT: 프롬프트가 이미지 API의 콘텐츠 정책에 걸렸습니다. 표현을 순화해 다시 시도해 주세요.",
+          );
+        }
         throw new Error(`ARK_HTTP_${res.status}: ${text.slice(0, 500)}`);
       }
       // 응답이 비어 있거나 JSON 이 아닐 수 있으므로 text 로 읽고 안전하게 파싱한다.
