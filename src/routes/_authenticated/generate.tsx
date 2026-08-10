@@ -40,6 +40,7 @@ import { IconBadge } from "@/components/icon-badge";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { AutoResizeTextarea } from "@/components/auto-resize-textarea";
 import {
   Select,
   SelectTrigger,
@@ -417,22 +418,25 @@ function GeneratePage() {
             </div>
 
             <FieldGroup label={t("studio.labels.action")}>
-              <Textarea
-                rows={2}
+              <AutoResizeTextarea
+                minHeight={110}
+                maxHeight={480}
                 value={work.actionText}
                 onChange={(e) => setWork({ ...work, actionText: e.target.value })}
                 placeholder={t("studio.labels.action_placeholder")}
-                className="resize-none rounded-xl bg-muted/50"
+                className="rounded-xl bg-muted/50 leading-relaxed"
               />
             </FieldGroup>
             <FieldGroup label={t("studio.labels.direction_memo")}>
-              <Textarea
-                rows={2}
+              <AutoResizeTextarea
+                minHeight={90}
+                maxHeight={400}
                 value={work.directionMemo}
                 onChange={(e) => setWork({ ...work, directionMemo: e.target.value })}
-                className="resize-none rounded-xl bg-muted/50"
+                className="rounded-xl bg-muted/50 leading-relaxed"
               />
             </FieldGroup>
+
 
             <div className="flex items-center justify-between rounded-xl bg-muted/50 px-4 py-3">
               <div>
@@ -570,7 +574,7 @@ function GeneratePage() {
               onChange={(e) => (rawMode ? setRawPrompt(e.target.value) : setEditedPrompt(e.target.value))}
               placeholder={rawMode ? t("studio.labels.raw_placeholder", "Type the exact prompt to send to Seedream.") : undefined}
               maxLength={4000}
-              className={`resize-none rounded-xl font-mono text-xs leading-relaxed ${
+              className={`min-h-[240px] resize-y rounded-xl font-mono text-xs leading-relaxed ${
                 promptEditMode
                   ? "border-primary/50 bg-background"
                   : isEdited
@@ -578,6 +582,7 @@ function GeneratePage() {
                   : "bg-muted/50"
               }`}
             />
+
             {promptEditMode && (
               <p className="text-[11px] text-muted-foreground">
                 {t(
