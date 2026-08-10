@@ -1,5 +1,6 @@
 // Server-only helpers: 이미지 모델(ARK / Seedream) 연결 상태 점검.
 // 실제 이미지 생성 요청은 만들지 않고 인증/설정 도달 여부만 확인한다.
+import { normalizeArkBaseUrl } from "@/lib/generate.server";
 
 export type ValidationState =
   | "valid"
