@@ -473,5 +473,9 @@
     "next": "Next image",
     "open": "Open fullscreen viewer",
     "hint": "Scroll or pinch to zoom · drag to pan · double-click to toggle zoom · arrow keys to switch · Esc to close"
+  },
+  "download": {
+    "button": "Download",
+    "format": "Format"
   }
 }

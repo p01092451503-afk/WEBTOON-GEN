@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Download, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -73,6 +74,7 @@ export function ImageDownloadMenu({
   size?: "sm" | "icon";
   compact?: boolean;
 }) {
+  const { t } = useTranslation();
   const [busy, setBusy] = useState(false);
 
   async function handle(format: Format, ext: string) {
@@ -103,18 +105,18 @@ export function ImageDownloadMenu({
             variant={variant}
             size={size === "icon" ? "icon" : "sm"}
             className={cn("rounded-full", buttonClassName)}
-            aria-label="Download image"
+            aria-label={t("download.button")}
           >
             {busy ? (
               <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
             ) : (
               <Download className="h-4 w-4" aria-hidden="true" />
             )}
-            {!compact && size !== "icon" && <span className="ml-1.5">Download</span>}
+            {!compact && size !== "icon" && <span className="ml-1.5">{t("download.button")}</span>}
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-40">
-          <DropdownMenuLabel className="text-xs">Format</DropdownMenuLabel>
+          <DropdownMenuLabel className="text-xs">{t("download.format")}</DropdownMenuLabel>
           <DropdownMenuSeparator />
           {FORMATS.map((f) => (
             <DropdownMenuItem key={f.key} onSelect={() => void handle(f.key, f.ext)}>
