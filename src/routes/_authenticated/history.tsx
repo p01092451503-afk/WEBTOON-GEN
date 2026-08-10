@@ -566,6 +566,13 @@ function StatusPill({ status }: { status: string }) {
 
 function DetailCard({ row, onClose, locale }: { row: Row; onClose: () => void; locale: string }) {
   const { t } = useTranslation();
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const lightboxItems = row.results.map((res) => ({
+    id: res.id,
+    bucket: "generation-outputs",
+    path: (res.storage_path ?? res.thumb_path) as string | null,
+    alt: `${row.work_label} #${res.seq + 1}`,
+  }));
   function loadIntoGenerate() {
     try {
       sessionStorage.setItem(
