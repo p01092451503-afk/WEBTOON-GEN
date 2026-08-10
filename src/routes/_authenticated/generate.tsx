@@ -267,7 +267,9 @@ function GeneratePage() {
       setCompareIds([]);
       toast.success(panelId ? t("studio.submitted_panel") : t("studio.submitted"));
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : String(e));
+      const msg = e instanceof Error ? e.message : String(e);
+      const key = generateErrorKey(msg);
+      toast.error(key ? t(key) : msg);
     }
   }
 
