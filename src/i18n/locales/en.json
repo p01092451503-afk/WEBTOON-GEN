@@ -455,5 +455,15 @@
     "disclaimer": "Estimates are based on BytePlus official rates and may differ from your actual invoice. Failed generations are excluded.",
     "rate_note": "Rates: 1K/2K $0.03 per image, 4K $0.06 per image. Storage is billed at $0.021 per GB per month.",
     "events_note": "{{count}} usage events recorded"
+  },
+  "lightbox": {
+    "title": "Image viewer",
+    "zoom_in": "Zoom in",
+    "zoom_out": "Zoom out",
+    "reset": "Reset view",
+    "prev": "Previous image",
+    "next": "Next image",
+    "open": "Open fullscreen viewer",
+    "hint": "Scroll or pinch to zoom · drag to pan · double-click to toggle zoom · arrow keys to switch · Esc to close"
   }
 }
