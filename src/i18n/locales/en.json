@@ -35,7 +35,8 @@
     "unlock_seed": "Unlock this seed",
     "close_compare": "Close compare",
     "toggle_sidebar": "Toggle sidebar",
-    "language": "Language"
+    "language": "Language",
+    "generating_image": "Generating image…"
   },
   "sidebar": {
     "workspace": "Workspace",
