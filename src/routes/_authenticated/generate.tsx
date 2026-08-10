@@ -574,7 +574,7 @@ function GeneratePage() {
               onChange={(e) => (rawMode ? setRawPrompt(e.target.value) : setEditedPrompt(e.target.value))}
               placeholder={rawMode ? t("studio.labels.raw_placeholder", "Type the exact prompt to send to Seedream.") : undefined}
               maxLength={4000}
-              className={`resize-none rounded-xl font-mono text-xs leading-relaxed ${
+              className={`min-h-[240px] resize-y rounded-xl font-mono text-xs leading-relaxed ${
                 promptEditMode
                   ? "border-primary/50 bg-background"
                   : isEdited
@@ -582,6 +582,7 @@ function GeneratePage() {
                   : "bg-muted/50"
               }`}
             />
+
             {promptEditMode && (
               <p className="text-[11px] text-muted-foreground">
                 {t(
