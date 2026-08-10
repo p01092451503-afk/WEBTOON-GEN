@@ -1260,20 +1260,30 @@ function VariationGrid({
               <span className="rounded-md bg-black/60 px-1.5 py-0.5 text-[10px] font-mono text-white">
                 #{r.seq + 1} · seed {r.seed ?? "—"}
               </span>
-              <IconTooltip label={locked ? t("common.unlock_seed") : t("common.lock_seed")}>
-                <button
-                  type="button"
-                  onClick={() => onToggleLock(r.seq, r.seed)}
-                  aria-label={locked ? t("common.unlock_seed") : t("common.lock_seed")}
-                  disabled={r.seed == null}
-                  className={
-                    "grid h-6 w-6 place-items-center rounded-md text-white shadow-sm " +
-                    (locked ? "bg-primary" : "bg-black/60 hover:bg-black/80 disabled:opacity-40")
-                  }
-                >
-                  {locked ? <Lock className="h-3 w-3" aria-hidden="true" /> : <Unlock className="h-3 w-3" aria-hidden="true" />}
-                </button>
-              </IconTooltip>
+              <div className="flex items-center gap-1">
+                <ImageDownloadMenu
+                  bucket="generation-outputs"
+                  path={r.storage_path}
+                  baseName={`variant-${r.seq + 1}`}
+                  size="icon"
+                  variant="secondary"
+                  buttonClassName="h-6 w-6"
+                />
+                <IconTooltip label={locked ? t("common.unlock_seed") : t("common.lock_seed")}>
+                  <button
+                    type="button"
+                    onClick={() => onToggleLock(r.seq, r.seed)}
+                    aria-label={locked ? t("common.unlock_seed") : t("common.lock_seed")}
+                    disabled={r.seed == null}
+                    className={
+                      "grid h-6 w-6 place-items-center rounded-md text-white shadow-sm " +
+                      (locked ? "bg-primary" : "bg-black/60 hover:bg-black/80 disabled:opacity-40")
+                    }
+                  >
+                    {locked ? <Lock className="h-3 w-3" aria-hidden="true" /> : <Unlock className="h-3 w-3" aria-hidden="true" />}
+                  </button>
+                </IconTooltip>
+              </div>
             </div>
             <div className="absolute inset-x-0 bottom-0 flex items-center gap-1 bg-gradient-to-t from-black/70 to-transparent p-1.5 opacity-0 transition group-hover:opacity-100">
               <button
