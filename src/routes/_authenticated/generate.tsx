@@ -10,6 +10,7 @@ import { usePresets } from "@/hooks/usePresets";
 import { useGeneration } from "@/hooks/useGeneration";
 import { SignedImage } from "@/components/SignedImage";
 import { ImageDownloadMenu } from "@/components/image-download-menu";
+import { ImageLightbox } from "@/components/image-lightbox";
 import { buildFigureMap, buildPrompt, WARN, type WorkInput, type PresetItem } from "@/lib/promptEngine";
 import { updatePanel } from "@/lib/projects.functions";
 import { translatePrompt } from "@/lib/translate.functions";
