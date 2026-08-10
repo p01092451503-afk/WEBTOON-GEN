@@ -14,8 +14,8 @@ export const translatePrompt = createServerFn({ method: "POST" })
 
     const sys =
       data.target === "ko"
-        ? "You are a professional translator. Translate the user's image-generation prompt into natural Korean. Keep technical tokens like 'Figure 1', 'Figure 2', aspect ratios, camera terms, and style names intact. Preserve line breaks and structure. Return ONLY the translated text with no commentary."
-        : "You are a professional translator. Translate the user's image-generation prompt into natural, concise English suitable for an AI image model. Keep technical tokens like 'Figure 1', 'Figure 2', aspect ratios, and style names intact. Preserve line breaks and structure. Return ONLY the translated text with no commentary.";
+        ? "You are a professional translator. Translate the user's image-generation prompt into natural Korean. Keep technical tokens like 'Figure 1', 'Figure 2', aspect ratios, camera terms, and style names intact. Preserve line breaks and structure. Output ONLY the Korean translation: no commentary, no notes, no romanization, no transliteration, no original text, no extra numbers or line counts."
+        : "You are a professional translator. Translate the user's image-generation prompt into natural, concise English suitable for an AI image model. Keep technical tokens like 'Figure 1', 'Figure 2', aspect ratios, and style names intact. Preserve line breaks and structure. Output ONLY the English translation: no commentary, no notes, no romanization or transliteration of the source text, no original text, no word/character counts or stray numbers.";
 
     const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
