@@ -12,6 +12,7 @@ import { IconTooltip } from "@/components/icon-tooltip";
 import { toast } from "sonner";
 import { Clock, X, Film, Trash2 } from "lucide-react";
 import { getKoreanVideoErrorSummary } from "@/lib/video-errors";
+import { generateErrorKey } from "@/lib/generate-error";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -689,10 +690,17 @@ function DetailCard({ row, onClose, locale }: { row: Row; onClose: () => void; l
         </div>
 
         {row.error_message && (
-          <div className="whitespace-pre-wrap rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-xs text-destructive">
-            {row.error_message}
+          <div className="space-y-2 rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-xs text-destructive">
+            <p className="font-medium">
+              {t(generateErrorKey(row.error_message) ?? "studio.errors.api_failed")}
+            </p>
+            <details>
+              <summary className="cursor-pointer opacity-70">{t("history.raw_error")}</summary>
+              <p className="mt-1 whitespace-pre-wrap opacity-80">{row.error_message}</p>
+            </details>
           </div>
         )}
+
 
         {row.final_prompt && (
           <div>
