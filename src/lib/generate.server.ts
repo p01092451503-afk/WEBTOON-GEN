@@ -33,6 +33,21 @@ export async function makeThumbnailWebp(bytes: Uint8Array): Promise<Uint8Array> 
   return bytes;
 }
 
+/**
+ * ARK_BASE_URL 정규화.
+ * 값이 실수로 두 번 붙여넣어진 경우("https://a/api/v3https://a/api/v3")나
+ * 경로가 중복된 경우("/api/v3/api/v3"), 끝 슬래시 등을 안전하게 정리한다.
+ */
+export function normalizeArkBaseUrl(raw: string): string {
+  let v = raw.trim();
+  // 두 번째 스킴이 등장하면 마지막 URL만 사용
+  const lastScheme = v.lastIndexOf("http");
+  if (lastScheme > 0) v = v.slice(lastScheme);
+  v = v.replace(/\/+$/, "");
+  // 경로 중복 제거 (/api/v3/api/v3 → /api/v3)
+  v = v.replace(/(\/api\/v\d+)(\1)+$/, "$1");
+  return v;
+}
 
 
 export async function callArk(params: {
@@ -50,7 +65,7 @@ export async function callArk(params: {
     throw new Error("ARK 시크릿이 설정되지 않았습니다.");
   }
 
-  const url = `${ARK_BASE_URL.replace(/\/$/, "")}/images/generations`;
+  const url = `${normalizeArkBaseUrl(ARK_BASE_URL)}/images/generations`;
   const payload: Record<string, unknown> = {
     model: ARK_ENDPOINT_ID,
     prompt: params.prompt,
@@ -86,7 +101,19 @@ export async function callArk(params: {
         const text = await res.text().catch(() => "");
         throw new Error(`ARK_HTTP_${res.status}: ${text.slice(0, 500)}`);
       }
-      const json = (await res.json()) as { data?: Array<{ url?: string; size?: string }> };
+      // 응답이 비어 있거나 JSON 이 아닐 수 있으므로 text 로 읽고 안전하게 파싱한다.
+      const bodyText = await res.text();
+      if (!bodyText.trim()) {
+        throw new Error(
+          "ARK_EMPTY_RESPONSE: 이미지 API가 빈 응답을 반환했습니다. ARK 주소(ARK_BASE_URL) 설정을 확인해 주세요.",
+        );
+      }
+      let json: { data?: Array<{ url?: string; size?: string }> };
+      try {
+        json = JSON.parse(bodyText) as { data?: Array<{ url?: string; size?: string }> };
+      } catch {
+        throw new Error(`ARK_BAD_JSON: 이미지 API 응답을 해석할 수 없습니다. ${bodyText.slice(0, 200)}`);
+      }
       const items = Array.isArray(json.data) ? json.data : [];
       const results: ArkResult[] = [];
       for (const it of items) {

@@ -1,5 +1,6 @@
 // Server-only helpers: 이미지 모델(ARK / Seedream) 연결 상태 점검.
 // 실제 이미지 생성 요청은 만들지 않고 인증/설정 도달 여부만 확인한다.
+import { normalizeArkBaseUrl } from "@/lib/generate.server";
 
 export type ValidationState =
   | "valid"
@@ -41,7 +42,8 @@ function maskEndpoint(value: string | null): string | null {
 export async function probeSeedream(): Promise<ImageModelHealth> {
   const label = `Seedream (ARK) · ${IMAGE_MODEL_NAME}`;
   const key = process.env.ARK_API_KEY?.trim();
-  const base = process.env.ARK_BASE_URL?.trim().replace(/\/$/, "");
+  const rawBase = process.env.ARK_BASE_URL?.trim();
+  const base = rawBase ? normalizeArkBaseUrl(rawBase) : undefined;
   const endpoint = process.env.ARK_ENDPOINT_ID?.trim() || null;
   const masked = maskEndpoint(endpoint);
 
