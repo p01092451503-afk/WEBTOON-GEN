@@ -652,15 +652,29 @@ function DetailCard({ row, onClose, locale }: { row: Row; onClose: () => void; l
                   </button>
                 )}
                 {res.storage_path && (
-                  <ImageDownloadMenu
-                    bucket="generation-outputs"
-                    path={res.storage_path}
-                    baseName={`${row.work_label}-${res.seq + 1}`}
-                    className="absolute right-2 top-2 opacity-0 transition group-hover:opacity-100 focus-within:opacity-100"
-                    size="icon"
-                    variant="secondary"
-                  />
+                  <>
+                    <ImageDownloadMenu
+                      bucket="generation-outputs"
+                      path={res.storage_path}
+                      baseName={`${row.work_label}-${res.seq + 1}`}
+                      className="absolute right-2 top-2"
+                      size="icon"
+                      variant="secondary"
+                    />
+                    <div className="border-t border-border bg-background/80 p-2">
+                      <ImageDownloadMenu
+                        bucket="generation-outputs"
+                        path={res.storage_path}
+                        baseName={`${row.work_label}-${res.seq + 1}`}
+                        className="w-full"
+                        size="sm"
+                        variant="outline"
+                        showLabel
+                      />
+                    </div>
+                  </>
                 )}
+
               </div>
             ))}
           </div>
