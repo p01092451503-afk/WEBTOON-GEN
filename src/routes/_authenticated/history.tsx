@@ -12,6 +12,7 @@ import { IconTooltip } from "@/components/icon-tooltip";
 import { toast } from "sonner";
 import { Clock, X, Film, Trash2 } from "lucide-react";
 import { getKoreanVideoErrorSummary } from "@/lib/video-errors";
+import { generateErrorKey } from "@/lib/generate-error";
 import {
   AlertDialog,
   AlertDialogAction,

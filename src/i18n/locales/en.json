@@ -334,7 +334,8 @@
     "final_prompt": "Final Prompt",
     "raw_prompt": "Original auto-prompt",
     "edited_badge": "Edited",
-    "failed": "failed"
+    "failed": "failed",
+    "raw_error": "Raw error message"
   },
   "not_found": {
     "title": "Page not found",
