@@ -1244,7 +1244,7 @@ function VariationGrid({
 }) {
   const { t } = useTranslation();
   return (
-    <div className="grid grid-cols-2 gap-2">
+    <div className={results.length === 1 ? "grid grid-cols-1 gap-3" : "grid grid-cols-1 gap-3 sm:grid-cols-2"}>
       {results.map((r) => {
         const locked = r.seed != null && lockedSeeds[r.seq] === r.seed;
         const inCompare = compareIds.includes(r.id);
@@ -1252,16 +1252,17 @@ function VariationGrid({
           <div
             key={r.id}
             className={
-              "group relative overflow-hidden rounded-xl border " +
+              "group relative overflow-hidden rounded-xl border bg-muted/30 " +
               (inCompare ? "border-primary ring-2 ring-primary" : "border-border")
             }
           >
             <SignedImage
               bucket="generation-outputs"
-              path={r.thumb_path ?? r.storage_path}
+              path={r.storage_path ?? r.thumb_path}
               alt={`variant-${r.seq}`}
-              className="aspect-square w-full object-cover"
+              className="h-auto w-full object-contain"
             />
+
             <div className="absolute inset-x-0 top-0 flex items-center justify-between p-1.5">
               <span className="rounded-md bg-black/60 px-1.5 py-0.5 text-[10px] font-mono text-white">
                 #{r.seq + 1} · seed {r.seed ?? "—"}
