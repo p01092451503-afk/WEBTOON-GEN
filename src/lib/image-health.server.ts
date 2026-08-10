@@ -41,7 +41,8 @@ function maskEndpoint(value: string | null): string | null {
 export async function probeSeedream(): Promise<ImageModelHealth> {
   const label = `Seedream (ARK) · ${IMAGE_MODEL_NAME}`;
   const key = process.env.ARK_API_KEY?.trim();
-  const base = process.env.ARK_BASE_URL?.trim().replace(/\/$/, "");
+  const rawBase = process.env.ARK_BASE_URL?.trim();
+  const base = rawBase ? normalizeArkBaseUrl(rawBase) : undefined;
   const endpoint = process.env.ARK_ENDPOINT_ID?.trim() || null;
   const masked = maskEndpoint(endpoint);
 
