@@ -65,7 +65,7 @@ export async function callArk(params: {
     throw new Error("ARK 시크릿이 설정되지 않았습니다.");
   }
 
-  const url = `${ARK_BASE_URL.replace(/\/$/, "")}/images/generations`;
+  const url = `${normalizeArkBaseUrl(ARK_BASE_URL)}/images/generations`;
   const payload: Record<string, unknown> = {
     model: ARK_ENDPOINT_ID,
     prompt: params.prompt,
