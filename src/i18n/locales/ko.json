@@ -269,6 +269,13 @@
       "raw_badge": "원문 전송 · 가공 없음",
       "raw_placeholder": "Seedream API로 그대로 보낼 프롬프트를 입력하세요.",
       "raw_empty": "보낼 프롬프트를 입력해 주세요."
+    },
+    "errors": {
+      "sensitive_content": "이미지 API가 민감한 표현으로 판단해 요청을 거부했습니다. 표현을 순화(노골적·폭력적 문구 제거)해 다시 시도해 주세요.",
+      "rate_limited": "요청량 제한에 도달했습니다. 잠시 후 다시 시도해 주세요.",
+      "bad_response": "이미지 API 응답을 해석할 수 없습니다. ARK 주소 설정을 확인해 주세요.",
+      "auth_failed": "이미지 API 인증에 실패했습니다. ARK API 키를 확인해 주세요.",
+      "api_failed": "이미지 API 요청에 실패했습니다. 다시 시도해 주세요."
     }
   },
   "image_health": {

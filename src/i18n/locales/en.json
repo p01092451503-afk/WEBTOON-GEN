@@ -269,6 +269,13 @@
       "raw_badge": "Raw · sent as-is",
       "raw_placeholder": "Type the exact prompt to send to Seedream.",
       "raw_empty": "Enter a prompt to send."
+    },
+    "errors": {
+      "sensitive_content": "The image API blocked this prompt for sensitive content. Please soften the wording (avoid explicit or violent phrasing) and try again.",
+      "rate_limited": "Rate limit reached. Please try again in a moment.",
+      "bad_response": "The image API returned an unreadable response. Check the ARK address setting.",
+      "auth_failed": "Image API authentication failed. Check the ARK API key.",
+      "api_failed": "The image API request failed. Please try again."
     }
   },
   "image_health": {
