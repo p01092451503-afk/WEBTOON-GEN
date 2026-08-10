@@ -40,6 +40,7 @@ import { IconBadge } from "@/components/icon-badge";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { AutoResizeTextarea } from "@/components/auto-resize-textarea";
 import {
   Select,
   SelectTrigger,
