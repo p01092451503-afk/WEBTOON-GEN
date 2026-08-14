@@ -276,6 +276,40 @@
       "bad_response": "The image API returned an unreadable response. Check the ARK address setting.",
       "auth_failed": "Image API authentication failed. Check the ARK API key.",
       "api_failed": "The image API request failed. Please try again."
+    },
+    "make_image": "Create image",
+    "credits_estimate": "Estimated {{count}} CR",
+    "context_refs": "Context only: {{list}}",
+    "prompt": {
+      "title": "Prompt"
+    },
+    "roles": {
+      "character": "Character",
+      "background": "Background",
+      "costume": "Costume",
+      "pose": "Pose",
+      "composition": "Composition",
+      "style": "Style",
+      "prop": "Prop",
+      "etc": "Other"
+    },
+    "refs": {
+      "title": "Reference images",
+      "dropzone": "Drag & drop or paste images (up to 10)",
+      "upload": "Upload from computer",
+      "from_group": "Pick from image group",
+      "max_reached": "You can add up to 10 references.",
+      "cam_char": "Camera character"
+    },
+    "camera": {
+      "title": "Camera",
+      "preset": "Camera preset",
+      "presets": {
+        "dialogue_close": "Dialogue close-up",
+        "intro_full": "Full-body intro",
+        "tense_low": "Tense low angle",
+        "high_wide": "High-angle wide"
+      }
     }
   },
   "image_health": {

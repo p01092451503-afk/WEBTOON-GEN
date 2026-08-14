@@ -12,7 +12,9 @@ import { SignedImage } from "@/components/SignedImage";
 import { ImageDownloadMenu } from "@/components/image-download-menu";
 import { ImageLightbox } from "@/components/image-lightbox";
 import { generateErrorKey } from "@/lib/generate-error";
-import { buildFigureMap, buildPrompt, WARN, type WorkInput, type PresetItem } from "@/lib/promptEngine";
+import { buildPrompt, WARN, type WorkInput, type PresetItem } from "@/lib/promptEngine";
+import { buildStudioFigures, MAX_REFS, type StudioRef } from "@/lib/studioRefs";
+import { StudioControlPanel } from "@/components/studio/control-panel";
 import { updatePanel } from "@/lib/projects.functions";
 import { translatePrompt } from "@/lib/translate.functions";
 import { Languages, Loader2 } from "lucide-react";
@@ -57,7 +59,7 @@ export const Route = createFileRoute("/_authenticated/generate")({
   head: () => ({ meta: [{ title: "Studio · pilottoon" }] }),
 });
 
-type RefState = { path: string; url?: string } | null;
+
 
 const DEFAULT_WORK: WorkInput = {
   poseStrengthId: "POS_002",
@@ -83,14 +85,15 @@ function GeneratePage() {
   const { data: cfg = {} } = usePresets(tenantId);
   const gen = useGeneration(tenantId);
 
-  const [charAId, setCharAId] = useState<string | null>(null);
-  const [charBId, setCharBId] = useState<string | null>(null);
-  const [bgRef, setBgRef] = useState<RefState>(null);
-  const [poseRef, setPoseRef] = useState<RefState>(null);
-  const [styleRef, setStyleRef] = useState<RefState>(null);
+  const [refs, setRefs] = useState<StudioRef[]>([]);
+  const [charARefId, setCharARefId] = useState<string | null>(null);
+  const [charBRefId, setCharBRefId] = useState<string | null>(null);
+  const [cameraPresetKey, setCameraPresetKey] = useState<string | null>(null);
+  const [pendingCharIds, setPendingCharIds] = useState<string[]>([]);
   const [aspectRatio, setAspectRatio] = useState<string>("1:1");
   const [batchCount, setBatchCount] = useState<number>(1);
   const [work, setWork] = useState<WorkInput>(DEFAULT_WORK);
+
   const [restoredNote, setRestoredNote] = useState<string | null>(null);
   const [panelId, setPanelId] = useState<string | null>(null);
   const [backEpisodeId, setBackEpisodeId] = useState<string | null>(null);
@@ -118,9 +121,9 @@ function GeneratePage() {
     const back = q.get("back");
     if (panel) setPanelId(panel);
     if (back) setBackEpisodeId(back);
-    if (chA) setCharAId(chA);
-    if (chB) setCharBId(chB);
+    setPendingCharIds([chA, chB].filter(Boolean) as string[]);
   }, []);
+
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -148,22 +151,39 @@ function GeneratePage() {
     }
   }, []);
 
-  const charA = characters.find((c) => c.id === charAId) || null;
-  const charB = characters.find((c) => c.id === charBId) || null;
+  // 쿼리 파라미터(charA/charB)로 들어온 캐릭터를 레퍼런스로 승격
+  useEffect(() => {
+    if (pendingCharIds.length === 0 || characters.length === 0) return;
+    const picked = pendingCharIds
+      .map((id) => characters.find((c) => c.id === id))
+      .filter((c): c is NonNullable<typeof c> => !!c && !!c.primary_path);
+    if (picked.length === 0) {
+      setPendingCharIds([]);
+      return;
+    }
+    const added: StudioRef[] = picked.map((c) => ({
+      id: crypto.randomUUID(),
+      path: c.primary_path as string,
+      sourceName: c.display_name,
+      roles: ["character"],
+    }));
+    setRefs((prev) => [...prev, ...added].slice(0, MAX_REFS));
+    if (added[0]) setCharARefId(added[0].id);
+    if (added[1]) setCharBRefId(added[1].id);
+    setPendingCharIds([]);
+  }, [pendingCharIds, characters]);
 
-  const figureMap = useMemo(
+  const studioFigures = useMemo(
     () =>
-      buildFigureMap({
-        hasCharA: !!charA,
-        hasCharB: !!charB,
-        hasBg: !!bgRef,
-        hasPose: !!poseRef,
-        hasStyle: !!styleRef,
-        charAName: charA?.display_name,
-        charBName: charB?.display_name,
+      buildStudioFigures({
+        refs,
+        charARefId,
+        charBRefId,
       }),
-    [charA, charB, bgRef, poseRef, styleRef],
+    [refs, charARefId, charBRefId],
   );
+  const figureMap = studioFigures.figureMap;
+
 
   const built = useMemo(() => buildPrompt(work, figureMap, cfg), [work, figureMap, cfg]);
 
@@ -203,43 +223,17 @@ function GeneratePage() {
     }
   }
 
-  const uploadRef = useCallback(
-    async (file: File, kind: "bg" | "pose" | "style") => {
-      if (!tenantId) return;
-      const ext = file.name.split(".").pop()?.toLowerCase() || "png";
-      const path = `${tenantId}/refs/${kind}-${crypto.randomUUID()}.${ext}`;
-      const { error } = await supabase.storage
-        .from("character-refs")
-        .upload(path, file, { contentType: file.type });
-      if (error) {
-        toast.error(t("studio.upload_failed", { msg: error.message }));
-        return;
-      }
-      const setter = kind === "bg" ? setBgRef : kind === "pose" ? setPoseRef : setStyleRef;
-      setter({ path });
-    },
-    [tenantId],
-  );
-
   async function handleGenerate(opts?: { keepLocks?: boolean }) {
-    if (rawMode && !effectivePrompt.trim()) {
+    if (!effectivePrompt.trim()) {
       toast.error(t("studio.labels.raw_empty", "Enter a prompt to send."));
-      return;
-    }
-    if (!rawMode && !charA?.primary_path && !charB?.primary_path) {
-      toast.error(t("studio.select_character_error"));
       return;
     }
     if (overLimit) {
       toast.error(t("studio.labels.prompt_too_long", { max: 4000 }));
       return;
     }
-    const imagePaths: string[] = [];
-    if (charA?.primary_path) imagePaths.push(charA.primary_path);
-    if (charB?.primary_path) imagePaths.push(charB.primary_path);
-    if (bgRef) imagePaths.push(bgRef.path);
-    if (poseRef) imagePaths.push(poseRef.path);
-    if (styleRef) imagePaths.push(styleRef.path);
+    const imagePaths: string[] = studioFigures.imagePaths;
+
 
     const useLocks = opts?.keepLocks && Object.keys(lockedSeeds).length > 0;
     const seeds: number[] | undefined = useLocks
@@ -352,161 +346,68 @@ function GeneratePage() {
         </div>
       )}
 
-      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-start overflow-visible pt-4">
-        {/* Panel 1: References */}
-        <Panel step={1} title={t("studio.panels.references")} className="lg:col-span-3">
-          <div className="space-y-4">
-            <FieldGroup label={t("studio.labels.character_a")}>
-              <CharacterPicker value={charAId} onChange={setCharAId} characters={characters} />
-            </FieldGroup>
-            <FieldGroup label={t("studio.labels.character_b")}>
-              <CharacterPicker value={charBId} onChange={setCharBId} characters={characters} />
-            </FieldGroup>
-            <RefUpload
-              label={t("studio.labels.background")}
-              value={bgRef}
-              onFile={(f) => uploadRef(f, "bg")}
-              onClear={() => setBgRef(null)}
-            />
-            <RefUpload
-              label={t("studio.labels.pose")}
-              value={poseRef}
-              onFile={(f) => uploadRef(f, "pose")}
-              onClear={() => setPoseRef(null)}
-            />
-            <RefUpload
-              label={t("studio.labels.style")}
-              value={styleRef}
-              onFile={(f) => uploadRef(f, "style")}
-              onClear={() => setStyleRef(null)}
-            />
-          </div>
-        </Panel>
+      <div className="mt-6 grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(380px,440px)_1fr]">
+        {/* 좌측: 컨트롤 패널 */}
+        <aside className="rounded-3xl bg-card p-5 shadow-toss lg:sticky lg:top-24 lg:max-h-[calc(100vh-8rem)] lg:overflow-y-auto [scrollbar-width:thin]">
+          <StudioControlPanel
+            tenantId={tenantId}
+            cfg={cfg}
+            refs={refs}
+            setRefs={(next) => setRefs(next)}
+            charARefId={charARefId}
+            setCharARefId={setCharARefId}
+            charBRefId={charBRefId}
+            setCharBRefId={setCharBRefId}
+            work={work}
+            setWork={(patch) => setWork((prev) => ({ ...prev, ...patch }))}
+            cameraPresetKey={cameraPresetKey}
+            setCameraPresetKey={setCameraPresetKey}
+            aspectRatio={aspectRatio}
+            setAspectRatio={setAspectRatio}
+            batchCount={batchCount}
+            setBatchCount={setBatchCount}
+            prompt={work.actionText}
+            setPrompt={(v) => setWork((prev) => ({ ...prev, actionText: v }))}
+            onGenerate={() => handleGenerate()}
+            generating={gen.running}
+          />
+        </aside>
 
-        {/* Panel 2: Prompt Controls */}
-        <Panel step={2} title={t("studio.panels.controls")} className="lg:col-span-4">
-          <div className="space-y-5">
-            <PresetGallery
-              label={t("studio.labels.pose_strength")} sheet="PoseStrength" cfg={cfg}
-              value={work.poseStrengthId} onChange={(v) => setWork({ ...work, poseStrengthId: v })}
-              variant="chip"
-            />
-            <PresetGallery
-              label={t("studio.labels.camera_angle")} sheet="CameraAngle" cfg={cfg}
-              value={work.cameraAngleId} onChange={(v) => setWork({ ...work, cameraAngleId: v })}
-              variant="card"
-            />
-            <PresetGallery
-              label={t("studio.labels.camera_distance")} sheet="CameraDistance" cfg={cfg}
-              value={work.cameraDistanceId} onChange={(v) => setWork({ ...work, cameraDistanceId: v })}
-              variant="card"
-            />
-            <PresetGallery
-              label={t("studio.labels.camera_position")} sheet="CameraPosition" cfg={cfg}
-              value={work.cameraPositionId} onChange={(v) => setWork({ ...work, cameraPositionId: v })}
-              variant="card"
-            />
-            <PresetGallery
-              label={t("studio.labels.emotion")} sheet="Emotion" cfg={cfg}
-              value={work.emotionId} onChange={(v) => setWork({ ...work, emotionId: v })}
-              variant="face"
-            />
-
-            <div className="grid grid-cols-2 gap-2 pt-1">
-              <PresetSelect label={t("studio.labels.bg_strength")} sheet="BgStrength" cfg={cfg} value={work.bgStrengthId} onChange={(v) => setWork({ ...work, bgStrengthId: v })} />
-              <PresetSelect label={t("studio.labels.body_source")} sheet="BodySource" cfg={cfg} value={work.bodySourceId} onChange={(v) => setWork({ ...work, bodySourceId: v })} />
-              <PresetSelect label={t("studio.labels.focus")} sheet="FocusTarget" cfg={cfg} value={work.focusTargetId} onChange={(v) => setWork({ ...work, focusTargetId: v })} />
-              <PresetSelect label={t("studio.labels.bg_style")} sheet="BgStyle" cfg={cfg} value={work.bgStyleId} onChange={(v) => setWork({ ...work, bgStyleId: v })} />
-              <PresetSelect label={t("studio.labels.costume")} sheet="CostumeMode" cfg={cfg} value={work.costumeModeId} onChange={(v) => setWork({ ...work, costumeModeId: v })} />
-              <PresetSelect label={t("studio.labels.style_finish")} sheet="StyleFinish" cfg={cfg} value={work.styleFinishId} onChange={(v) => setWork({ ...work, styleFinishId: v })} />
-            </div>
-
-            <FieldGroup label={t("studio.labels.action")}>
-              <AutoResizeTextarea
-                minHeight={110}
-                maxHeight={480}
-                value={work.actionText}
-                onChange={(e) => setWork({ ...work, actionText: e.target.value })}
-                placeholder={t("studio.labels.action_placeholder")}
-                className="rounded-xl bg-muted/50 leading-relaxed"
-              />
-            </FieldGroup>
-            <FieldGroup label={t("studio.labels.direction_memo")}>
-              <AutoResizeTextarea
-                minHeight={90}
-                maxHeight={400}
-                value={work.directionMemo}
-                onChange={(e) => setWork({ ...work, directionMemo: e.target.value })}
-                className="rounded-xl bg-muted/50 leading-relaxed"
-              />
-            </FieldGroup>
-
-
-            <div className="flex items-center justify-between rounded-xl bg-muted/50 px-4 py-3">
-              <div>
-                <div className="text-sm font-semibold">{t("studio.labels.photopose")}</div>
-                <div className="text-xs text-muted-foreground">{t("studio.labels.photopose_hint")}</div>
+        {/* 우측: 피규어 맵 + 최종 프롬프트 + 결과 */}
+        <section className="space-y-4">
+          <div className="rounded-3xl bg-card p-5 shadow-toss">
+            <h2 className="mb-3 text-sm font-bold">{t("studio.panels.figure_map")}</h2>
+            {figureMap.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-border p-4 text-center text-xs text-muted-foreground">
+                {t("studio.labels.figure_hint")}
               </div>
-              <Switch
-                checked={work.isPhotopose}
-                onCheckedChange={(v) => setWork({ ...work, isPhotopose: v })}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-2">
-              <FieldGroup label={t("studio.labels.aspect_ratio")}>
-                <Select value={aspectRatio} onValueChange={setAspectRatio}>
-                  <SelectTrigger className="h-10 rounded-xl bg-muted/50">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {["1:1", "4:3", "3:4", "16:9", "9:16", "3:2", "2:3"].map((r) => (
-                      <SelectItem key={r} value={r}>{r}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FieldGroup>
-              <FieldGroup label={t("studio.labels.batch")}>
-                <Input
-                  type="number"
-                  min={1}
-                  max={4}
-                  value={batchCount}
-                  onChange={(e) =>
-                    setBatchCount(Math.max(1, Math.min(4, Number(e.target.value) || 1)))
-                  }
-                  className="h-10 rounded-xl bg-muted/50 px-3"
-                />
-              </FieldGroup>
-            </div>
+            ) : (
+              <div className="grid gap-2 sm:grid-cols-2">
+                {figureMap.map((f) => (
+                  <div key={f.figNo} className="flex items-center gap-2 rounded-xl bg-muted/60 px-3 py-2">
+                    <span className="grid h-6 w-6 shrink-0 place-items-center rounded-md bg-primary text-[10px] font-black text-primary-foreground">
+                      {f.figNo}
+                    </span>
+                    <span className="truncate text-xs font-medium">{f.label}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {studioFigures.contextRefs.length > 0 && (
+              <p className="mt-3 text-[11px] text-muted-foreground">
+                {t("studio.context_refs", {
+                  defaultValue: "컨텍스트로만 사용: {{list}}",
+                  list: studioFigures.contextRefs
+                    .map((r) => `@image${refs.findIndex((x) => x.id === r.id) + 1}`)
+                    .join(", "),
+                })}
+              </p>
+            )}
           </div>
-        </Panel>
 
-        {/* Panel 3: Figure Map */}
-        <Panel step={3} title={t("studio.panels.figure_map")} className="lg:col-span-2">
-          {figureMap.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-border p-4 text-center text-xs text-muted-foreground">
-              {t("studio.labels.figure_hint")}
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {figureMap.map((f) => (
-                <div
-                  key={f.figNo}
-                  className="flex items-center gap-2 rounded-xl bg-muted/60 px-3 py-2"
-                >
-                  <span className="grid h-6 w-6 shrink-0 place-items-center rounded-md bg-primary text-[10px] font-black text-primary-foreground">
-                    {f.figNo}
-                  </span>
-                  <span className="truncate text-xs font-medium">{f.label}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </Panel>
+          <div className="rounded-3xl bg-card p-5 shadow-toss">
+            <h2 className="mb-3 text-sm font-bold">{t("studio.panels.final_prompt")}</h2>
 
-        {/* Panel 4: Final Prompt & Result */}
-        <Panel step={4} title={t("studio.panels.final_prompt")} className="lg:col-span-3">
           <div className="space-y-3">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 text-[11px]">
@@ -724,8 +625,10 @@ function GeneratePage() {
               </div>
             )}
           </div>
-        </Panel>
+          </div>
+        </section>
       </div>
+
     </main>
   );
 }
@@ -813,107 +716,6 @@ function StatusPill({ status }: { status: string }) {
   const cls = styles[status] ?? "bg-muted text-muted-foreground";
   return (
     <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${cls}`}>{status}</span>
-  );
-}
-
-function CharacterPicker({
-  value,
-  onChange,
-  characters,
-}: {
-  value: string | null;
-  onChange: (id: string | null) => void;
-  characters: { id: string; display_name: string; primary_path: string | null }[];
-}) {
-  const { t } = useTranslation();
-  return (
-    <div className="space-y-2">
-      <Select
-        value={value ?? "__none"}
-        onValueChange={(v) => onChange(v === "__none" ? null : v)}
-      >
-        <SelectTrigger className="h-10 rounded-xl bg-muted/50">
-          <SelectValue placeholder={t("studio.labels.select")} />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="__none">{t("studio.labels.none")}</SelectItem>
-          {characters.map((c) => (
-            <SelectItem key={c.id} value={c.id}>
-              {c.display_name}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      {characters.length === 0 && (
-        <p className="text-[11px] leading-tight text-muted-foreground">
-          {t("studio.labels.no_characters_hint")}{" "}
-          <Link to="/groups" className="font-semibold text-primary underline">
-            {t("studio.labels.characters_link")}
-          </Link>{" "}
-          {t("studio.labels.page_suffix")}
-        </p>
-      )}
-      {value && (
-        <SignedImage
-          bucket="character-refs"
-          path={characters.find((c) => c.id === value)?.primary_path}
-          alt="char"
-          className="aspect-square w-full rounded-xl border border-border object-cover"
-        />
-      )}
-    </div>
-  );
-}
-
-function RefUpload({
-  label,
-  value,
-  onFile,
-  onClear,
-}: {
-  label: string;
-  value: RefState;
-  onFile: (f: File) => void;
-  onClear: () => void;
-}) {
-  const { t } = useTranslation();
-  return (
-    <div className="space-y-1.5">
-      <Label className="text-[11px] font-semibold text-muted-foreground">{label}</Label>
-      {value ? (
-        <div className="space-y-2">
-          <SignedImage
-            bucket="character-refs"
-            path={value.path}
-            alt={label}
-            className="aspect-square w-full rounded-xl border border-border object-cover"
-          />
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 w-full rounded-lg text-xs font-semibold text-muted-foreground hover:text-destructive"
-            onClick={onClear}
-          >
-            <X className="mr-1 h-3.5 w-3.5" /> {t("common.remove")}
-          </Button>
-        </div>
-      ) : (
-        <label className="flex h-24 cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-border bg-muted/40 text-xs text-muted-foreground hover:bg-muted">
-          <ImagePlus className="mb-1 h-4 w-4" />
-          {t("studio.labels.choose_image")}
-          <input
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) onFile(f);
-              e.currentTarget.value = "";
-            }}
-          />
-        </label>
-      )}
-    </div>
   );
 }
 

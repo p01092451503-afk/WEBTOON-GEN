@@ -276,6 +276,40 @@
       "bad_response": "이미지 API 응답을 해석할 수 없습니다. ARK 주소 설정을 확인해 주세요.",
       "auth_failed": "이미지 API 인증에 실패했습니다. ARK API 키를 확인해 주세요.",
       "api_failed": "이미지 API 요청에 실패했습니다. 다시 시도해 주세요."
+    },
+    "make_image": "이미지 만들기",
+    "credits_estimate": "예상 소진 {{count}} CR",
+    "context_refs": "컨텍스트로만 사용: {{list}}",
+    "prompt": {
+      "title": "프롬프트"
+    },
+    "roles": {
+      "character": "캐릭터",
+      "background": "배경",
+      "costume": "의상",
+      "pose": "포즈",
+      "composition": "구도",
+      "style": "스타일",
+      "prop": "소품",
+      "etc": "기타"
+    },
+    "refs": {
+      "title": "레퍼런스 이미지",
+      "dropzone": "이미지를 끌어다 놓거나 붙여넣기 (최대 10개)",
+      "upload": "컴퓨터에서 업로드",
+      "from_group": "이미지 그룹에서 선택",
+      "max_reached": "레퍼런스는 최대 10개까지 추가할 수 있습니다.",
+      "cam_char": "카메라 캐릭터"
+    },
+    "camera": {
+      "title": "카메라",
+      "preset": "카메라 프리셋",
+      "presets": {
+        "dialogue_close": "대화 클로즈업",
+        "intro_full": "전신 소개컷",
+        "tense_low": "긴장감 로우앵글",
+        "high_wide": "하이앵글 와이드"
+      }
     }
   },
   "image_health": {
