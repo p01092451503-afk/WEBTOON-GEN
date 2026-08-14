@@ -103,5 +103,5 @@ export function buildStudioFigures(opts: {
   return { figureMap, imagePaths, contextRefs };
 }
 
-/** 이미지 1장당 예상 크레딧 (P7 정식 과금 전 임시 값) */
-export const CR_PER_IMAGE = 10;
+/** 이미지 1장당 예상 크레딧 — 단일 소스는 @/lib/credits */
+export { CR_PER_IMAGE } from "@/lib/credits";
