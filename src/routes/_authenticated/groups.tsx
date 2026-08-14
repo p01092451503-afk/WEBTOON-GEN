@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ImagePlus, Trash2, Users } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/characters")({
+export const Route = createFileRoute("/_authenticated/groups")({
   component: CharactersPage,
   head: () => ({ meta: [{ title: "Character library · pilottoon" }] }),
 });
