@@ -344,161 +344,68 @@ function GeneratePage() {
         </div>
       )}
 
-      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-start overflow-visible pt-4">
-        {/* Panel 1: References */}
-        <Panel step={1} title={t("studio.panels.references")} className="lg:col-span-3">
-          <div className="space-y-4">
-            <FieldGroup label={t("studio.labels.character_a")}>
-              <CharacterPicker value={charAId} onChange={setCharAId} characters={characters} />
-            </FieldGroup>
-            <FieldGroup label={t("studio.labels.character_b")}>
-              <CharacterPicker value={charBId} onChange={setCharBId} characters={characters} />
-            </FieldGroup>
-            <RefUpload
-              label={t("studio.labels.background")}
-              value={bgRef}
-              onFile={(f) => uploadRef(f, "bg")}
-              onClear={() => setBgRef(null)}
-            />
-            <RefUpload
-              label={t("studio.labels.pose")}
-              value={poseRef}
-              onFile={(f) => uploadRef(f, "pose")}
-              onClear={() => setPoseRef(null)}
-            />
-            <RefUpload
-              label={t("studio.labels.style")}
-              value={styleRef}
-              onFile={(f) => uploadRef(f, "style")}
-              onClear={() => setStyleRef(null)}
-            />
-          </div>
-        </Panel>
+      <div className="mt-6 grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(380px,440px)_1fr]">
+        {/* 좌측: 컨트롤 패널 */}
+        <aside className="rounded-3xl bg-card p-5 shadow-toss lg:sticky lg:top-24 lg:max-h-[calc(100vh-8rem)] lg:overflow-y-auto [scrollbar-width:thin]">
+          <StudioControlPanel
+            tenantId={tenantId}
+            cfg={cfg}
+            refs={refs}
+            setRefs={(next) => setRefs(next)}
+            charARefId={charARefId}
+            setCharARefId={setCharARefId}
+            charBRefId={charBRefId}
+            setCharBRefId={setCharBRefId}
+            work={work}
+            setWork={(patch) => setWork((prev) => ({ ...prev, ...patch }))}
+            cameraPresetKey={cameraPresetKey}
+            setCameraPresetKey={setCameraPresetKey}
+            aspectRatio={aspectRatio}
+            setAspectRatio={setAspectRatio}
+            batchCount={batchCount}
+            setBatchCount={setBatchCount}
+            prompt={work.actionText}
+            setPrompt={(v) => setWork((prev) => ({ ...prev, actionText: v }))}
+            onGenerate={() => handleGenerate()}
+            generating={gen.running}
+          />
+        </aside>
 
-        {/* Panel 2: Prompt Controls */}
-        <Panel step={2} title={t("studio.panels.controls")} className="lg:col-span-4">
-          <div className="space-y-5">
-            <PresetGallery
-              label={t("studio.labels.pose_strength")} sheet="PoseStrength" cfg={cfg}
-              value={work.poseStrengthId} onChange={(v) => setWork({ ...work, poseStrengthId: v })}
-              variant="chip"
-            />
-            <PresetGallery
-              label={t("studio.labels.camera_angle")} sheet="CameraAngle" cfg={cfg}
-              value={work.cameraAngleId} onChange={(v) => setWork({ ...work, cameraAngleId: v })}
-              variant="card"
-            />
-            <PresetGallery
-              label={t("studio.labels.camera_distance")} sheet="CameraDistance" cfg={cfg}
-              value={work.cameraDistanceId} onChange={(v) => setWork({ ...work, cameraDistanceId: v })}
-              variant="card"
-            />
-            <PresetGallery
-              label={t("studio.labels.camera_position")} sheet="CameraPosition" cfg={cfg}
-              value={work.cameraPositionId} onChange={(v) => setWork({ ...work, cameraPositionId: v })}
-              variant="card"
-            />
-            <PresetGallery
-              label={t("studio.labels.emotion")} sheet="Emotion" cfg={cfg}
-              value={work.emotionId} onChange={(v) => setWork({ ...work, emotionId: v })}
-              variant="face"
-            />
-
-            <div className="grid grid-cols-2 gap-2 pt-1">
-              <PresetSelect label={t("studio.labels.bg_strength")} sheet="BgStrength" cfg={cfg} value={work.bgStrengthId} onChange={(v) => setWork({ ...work, bgStrengthId: v })} />
-              <PresetSelect label={t("studio.labels.body_source")} sheet="BodySource" cfg={cfg} value={work.bodySourceId} onChange={(v) => setWork({ ...work, bodySourceId: v })} />
-              <PresetSelect label={t("studio.labels.focus")} sheet="FocusTarget" cfg={cfg} value={work.focusTargetId} onChange={(v) => setWork({ ...work, focusTargetId: v })} />
-              <PresetSelect label={t("studio.labels.bg_style")} sheet="BgStyle" cfg={cfg} value={work.bgStyleId} onChange={(v) => setWork({ ...work, bgStyleId: v })} />
-              <PresetSelect label={t("studio.labels.costume")} sheet="CostumeMode" cfg={cfg} value={work.costumeModeId} onChange={(v) => setWork({ ...work, costumeModeId: v })} />
-              <PresetSelect label={t("studio.labels.style_finish")} sheet="StyleFinish" cfg={cfg} value={work.styleFinishId} onChange={(v) => setWork({ ...work, styleFinishId: v })} />
-            </div>
-
-            <FieldGroup label={t("studio.labels.action")}>
-              <AutoResizeTextarea
-                minHeight={110}
-                maxHeight={480}
-                value={work.actionText}
-                onChange={(e) => setWork({ ...work, actionText: e.target.value })}
-                placeholder={t("studio.labels.action_placeholder")}
-                className="rounded-xl bg-muted/50 leading-relaxed"
-              />
-            </FieldGroup>
-            <FieldGroup label={t("studio.labels.direction_memo")}>
-              <AutoResizeTextarea
-                minHeight={90}
-                maxHeight={400}
-                value={work.directionMemo}
-                onChange={(e) => setWork({ ...work, directionMemo: e.target.value })}
-                className="rounded-xl bg-muted/50 leading-relaxed"
-              />
-            </FieldGroup>
-
-
-            <div className="flex items-center justify-between rounded-xl bg-muted/50 px-4 py-3">
-              <div>
-                <div className="text-sm font-semibold">{t("studio.labels.photopose")}</div>
-                <div className="text-xs text-muted-foreground">{t("studio.labels.photopose_hint")}</div>
+        {/* 우측: 피규어 맵 + 최종 프롬프트 + 결과 */}
+        <section className="space-y-4">
+          <div className="rounded-3xl bg-card p-5 shadow-toss">
+            <h2 className="mb-3 text-sm font-bold">{t("studio.panels.figure_map")}</h2>
+            {figureMap.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-border p-4 text-center text-xs text-muted-foreground">
+                {t("studio.labels.figure_hint")}
               </div>
-              <Switch
-                checked={work.isPhotopose}
-                onCheckedChange={(v) => setWork({ ...work, isPhotopose: v })}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-2">
-              <FieldGroup label={t("studio.labels.aspect_ratio")}>
-                <Select value={aspectRatio} onValueChange={setAspectRatio}>
-                  <SelectTrigger className="h-10 rounded-xl bg-muted/50">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {["1:1", "4:3", "3:4", "16:9", "9:16", "3:2", "2:3"].map((r) => (
-                      <SelectItem key={r} value={r}>{r}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FieldGroup>
-              <FieldGroup label={t("studio.labels.batch")}>
-                <Input
-                  type="number"
-                  min={1}
-                  max={4}
-                  value={batchCount}
-                  onChange={(e) =>
-                    setBatchCount(Math.max(1, Math.min(4, Number(e.target.value) || 1)))
-                  }
-                  className="h-10 rounded-xl bg-muted/50 px-3"
-                />
-              </FieldGroup>
-            </div>
+            ) : (
+              <div className="grid gap-2 sm:grid-cols-2">
+                {figureMap.map((f) => (
+                  <div key={f.figNo} className="flex items-center gap-2 rounded-xl bg-muted/60 px-3 py-2">
+                    <span className="grid h-6 w-6 shrink-0 place-items-center rounded-md bg-primary text-[10px] font-black text-primary-foreground">
+                      {f.figNo}
+                    </span>
+                    <span className="truncate text-xs font-medium">{f.label}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {studioFigures.contextRefs.length > 0 && (
+              <p className="mt-3 text-[11px] text-muted-foreground">
+                {t("studio.context_refs", {
+                  defaultValue: "컨텍스트로만 사용: {{list}}",
+                  list: studioFigures.contextRefs
+                    .map((r) => `@image${refs.findIndex((x) => x.id === r.id) + 1}`)
+                    .join(", "),
+                })}
+              </p>
+            )}
           </div>
-        </Panel>
 
-        {/* Panel 3: Figure Map */}
-        <Panel step={3} title={t("studio.panels.figure_map")} className="lg:col-span-2">
-          {figureMap.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-border p-4 text-center text-xs text-muted-foreground">
-              {t("studio.labels.figure_hint")}
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {figureMap.map((f) => (
-                <div
-                  key={f.figNo}
-                  className="flex items-center gap-2 rounded-xl bg-muted/60 px-3 py-2"
-                >
-                  <span className="grid h-6 w-6 shrink-0 place-items-center rounded-md bg-primary text-[10px] font-black text-primary-foreground">
-                    {f.figNo}
-                  </span>
-                  <span className="truncate text-xs font-medium">{f.label}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </Panel>
+          <div className="rounded-3xl bg-card p-5 shadow-toss">
+            <h2 className="mb-3 text-sm font-bold">{t("studio.panels.final_prompt")}</h2>
 
-        {/* Panel 4: Final Prompt & Result */}
-        <Panel step={4} title={t("studio.panels.final_prompt")} className="lg:col-span-3">
           <div className="space-y-3">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 text-[11px]">
