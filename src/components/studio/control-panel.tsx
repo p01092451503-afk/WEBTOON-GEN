@@ -96,7 +96,9 @@ export function StudioControlPanel(props: ControlPanelProps) {
   }
 
   const credits = props.batchCount * CR_PER_IMAGE;
-  const canGenerate = prompt.trim().length > 0 && !props.generating;
+  const { enabled: creditsEnabled, balance } = useCredits();
+  const insufficient = creditsEnabled && balance != null && balance < credits;
+  const canGenerate = prompt.trim().length > 0 && !props.generating && !insufficient;
 
   return (
     <div className="space-y-6">
