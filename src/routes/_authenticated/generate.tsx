@@ -468,8 +468,35 @@ function GeneratePage() {
           />
         </aside>
 
-        {/* 우측: 피규어 맵 + 최종 프롬프트 + 결과 */}
+        {/* 우측: 출력 패널 + (고급) 피규어 맵/최종 프롬프트 */}
         <section className="space-y-4">
+          {editImagePath && (
+            <NoticeBar tone="info" onClose={() => setEditImagePath(null)}>
+              {t("studio.output.edit_mode_note", "이미지 수정 모드 — 선택한 이미지를 원본으로 다시 생성합니다.")}
+            </NoticeBar>
+          )}
+
+          <StudioOutputPanel
+            tenantId={tenantId}
+            lineItems={lineItems}
+            running={gen.running || gen.row?.status === "queued" || gen.row?.status === "running"}
+            pendingCount={batchCount}
+            statusRow={gen.row ? { status: gen.row.status, error_message: gen.row.error_message } : null}
+            lockedSeeds={lockedSeeds}
+            onToggleLock={toggleLock}
+            compareIds={compareIds}
+            onToggleCompare={toggleCompare}
+            onClearLine={() => {
+              setLineItems([]);
+              setCompareIds([]);
+              setLockedSeeds({});
+            }}
+            onUseAsReference={(it) => void useAsReference(it)}
+            onEditImage={(it) => void editImage(it)}
+            onSetAsPanel={panelId ? setAsPanel : null}
+            onVaryRest={() => handleGenerate({ keepLocks: true })}
+          />
+
           <div className="rounded-3xl bg-card p-5 shadow-toss">
             <h2 className="mb-3 text-sm font-bold">{t("studio.panels.figure_map")}</h2>
             {figureMap.length === 0 ? (
@@ -662,63 +689,6 @@ function GeneratePage() {
               {gen.running ? t("common.generating_image") : t("common.generate")}
             </Button>
 
-            {gen.row && (
-              <div className="space-y-3 border-t border-border pt-3">
-                <div className="flex items-center justify-between">
-                  <StatusPill status={gen.row.status} />
-                  <span className="truncate text-[11px] text-muted-foreground">
-                    {gen.currentId?.slice(0, 8)}
-                  </span>
-                </div>
-                {gen.row.error_message && (
-                  <p className="rounded-xl bg-destructive/10 p-2 text-xs text-destructive break-all">
-                    {gen.row.error_message}
-                  </p>
-                )}
-
-                {gen.row.results.length > 0 && (
-                  <>
-                    <VariationGrid
-                      results={gen.row.results}
-                      lockedSeeds={lockedSeeds}
-                      compareIds={compareIds}
-                      onToggleLock={toggleLock}
-                      onToggleCompare={toggleCompare}
-                      onSetAsPanel={panelId ? setAsPanel : null}
-                    />
-                    <div className="flex items-center gap-2 pt-1">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleGenerate({ keepLocks: true })}
-                        disabled={gen.running || Object.keys(lockedSeeds).length === 0}
-                        className="flex-1 rounded-lg text-xs font-semibold"
-                      >
-                        <Lock className="mr-1 h-3.5 w-3.5" />
-                        {t("studio.labels.vary_the_rest", { count: Object.keys(lockedSeeds).length })}
-                      </Button>
-                      {Object.keys(lockedSeeds).length > 0 && (
-                        <Button
-                          variant="ghost" size="sm"
-                          onClick={() => setLockedSeeds({})}
-                          className="rounded-lg text-xs text-muted-foreground"
-                        >
-                          {t("studio.labels.clear_locks")}
-                        </Button>
-                      )}
-                    </div>
-
-                    {compareIds.length === 2 && (
-                      <CompareView
-                        results={gen.row.results}
-                        ids={compareIds}
-                        onClose={() => setCompareIds([])}
-                      />
-                    )}
-                  </>
-                )}
-              </div>
-            )}
           </div>
           </div>
         </section>
