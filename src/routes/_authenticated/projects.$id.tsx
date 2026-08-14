@@ -177,7 +177,7 @@ function ProjectDetail() {
               <UserPlus className="mr-1 h-4 w-4" /> {t("project_detail.add_to_cast")}
             </Button>
             {characters.length === 0 && (
-              <Link to="/characters" className="block pt-1 text-xs text-primary hover:underline">
+              <Link to="/groups" className="block pt-1 text-xs text-primary hover:underline">
                 {t("project_detail.create_character_first")}
               </Link>
             )}

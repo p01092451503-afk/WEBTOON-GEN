@@ -27,7 +27,7 @@ const PAGE_META_KEYS: Record<string, string> = {
   "/studio": "header.studio_hub",
   "/projects": "header.projects",
   "/episodes": "header.episodes",
-  "/characters": "header.characters",
+  "/groups": "header.characters",
   "/generate": "header.generate",
   "/history": "header.history",
   "/usage": "header.usage",

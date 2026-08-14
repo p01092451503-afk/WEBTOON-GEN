@@ -47,7 +47,7 @@ function ProjectsIndex() {
           <p className="mt-1 text-sm text-muted-foreground">{t("projects.sub")}</p>
         </div>
         <Link
-          to="/characters"
+          to="/groups"
           className="inline-flex h-10 shrink-0 items-center justify-center rounded-full bg-primary-soft px-4 text-sm font-semibold text-primary hover:bg-primary-soft/70"
         >
           {t("projects.manage_cast")}

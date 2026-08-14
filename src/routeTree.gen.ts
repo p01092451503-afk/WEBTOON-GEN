@@ -16,8 +16,8 @@ import { Route as AuthenticatedVideoRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedUsageRouteImport } from './routes/_authenticated/usage'
 import { Route as AuthenticatedStudioRouteImport } from './routes/_authenticated/studio'
 import { Route as AuthenticatedHistoryRouteImport } from './routes/_authenticated/history'
+import { Route as AuthenticatedGroupsRouteImport } from './routes/_authenticated/groups'
 import { Route as AuthenticatedGenerateRouteImport } from './routes/_authenticated/generate'
-import { Route as AuthenticatedCharactersRouteImport } from './routes/_authenticated/characters'
 import { Route as AuthenticatedProjectsIndexRouteImport } from './routes/_authenticated/projects.index'
 import { Route as AuthenticatedProjectsIdRouteImport } from './routes/_authenticated/projects.$id'
 import { Route as AuthenticatedEpisodesIdRouteImport } from './routes/_authenticated/episodes.$id'
@@ -56,14 +56,14 @@ const AuthenticatedHistoryRoute = AuthenticatedHistoryRouteImport.update({
   path: '/history',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedGroupsRoute = AuthenticatedGroupsRouteImport.update({
+  id: '/groups',
+  path: '/groups',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedGenerateRoute = AuthenticatedGenerateRouteImport.update({
   id: '/generate',
   path: '/generate',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedCharactersRoute = AuthenticatedCharactersRouteImport.update({
-  id: '/characters',
-  path: '/characters',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedProjectsIndexRoute =
@@ -86,8 +86,8 @@ const AuthenticatedEpisodesIdRoute = AuthenticatedEpisodesIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/characters': typeof AuthenticatedCharactersRoute
   '/generate': typeof AuthenticatedGenerateRoute
+  '/groups': typeof AuthenticatedGroupsRoute
   '/history': typeof AuthenticatedHistoryRoute
   '/studio': typeof AuthenticatedStudioRoute
   '/usage': typeof AuthenticatedUsageRoute
@@ -99,8 +99,8 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/characters': typeof AuthenticatedCharactersRoute
   '/generate': typeof AuthenticatedGenerateRoute
+  '/groups': typeof AuthenticatedGroupsRoute
   '/history': typeof AuthenticatedHistoryRoute
   '/studio': typeof AuthenticatedStudioRoute
   '/usage': typeof AuthenticatedUsageRoute
@@ -114,8 +114,8 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
-  '/_authenticated/characters': typeof AuthenticatedCharactersRoute
   '/_authenticated/generate': typeof AuthenticatedGenerateRoute
+  '/_authenticated/groups': typeof AuthenticatedGroupsRoute
   '/_authenticated/history': typeof AuthenticatedHistoryRoute
   '/_authenticated/studio': typeof AuthenticatedStudioRoute
   '/_authenticated/usage': typeof AuthenticatedUsageRoute
@@ -129,8 +129,8 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
-    | '/characters'
     | '/generate'
+    | '/groups'
     | '/history'
     | '/studio'
     | '/usage'
@@ -142,8 +142,8 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
-    | '/characters'
     | '/generate'
+    | '/groups'
     | '/history'
     | '/studio'
     | '/usage'
@@ -156,8 +156,8 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
-    | '/_authenticated/characters'
     | '/_authenticated/generate'
+    | '/_authenticated/groups'
     | '/_authenticated/history'
     | '/_authenticated/studio'
     | '/_authenticated/usage'
@@ -224,18 +224,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedHistoryRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/groups': {
+      id: '/_authenticated/groups'
+      path: '/groups'
+      fullPath: '/groups'
+      preLoaderRoute: typeof AuthenticatedGroupsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/generate': {
       id: '/_authenticated/generate'
       path: '/generate'
       fullPath: '/generate'
       preLoaderRoute: typeof AuthenticatedGenerateRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/characters': {
-      id: '/_authenticated/characters'
-      path: '/characters'
-      fullPath: '/characters'
-      preLoaderRoute: typeof AuthenticatedCharactersRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/projects/': {
@@ -263,8 +263,8 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
-  AuthenticatedCharactersRoute: typeof AuthenticatedCharactersRoute
   AuthenticatedGenerateRoute: typeof AuthenticatedGenerateRoute
+  AuthenticatedGroupsRoute: typeof AuthenticatedGroupsRoute
   AuthenticatedHistoryRoute: typeof AuthenticatedHistoryRoute
   AuthenticatedStudioRoute: typeof AuthenticatedStudioRoute
   AuthenticatedUsageRoute: typeof AuthenticatedUsageRoute
@@ -275,8 +275,8 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
-  AuthenticatedCharactersRoute: AuthenticatedCharactersRoute,
   AuthenticatedGenerateRoute: AuthenticatedGenerateRoute,
+  AuthenticatedGroupsRoute: AuthenticatedGroupsRoute,
   AuthenticatedHistoryRoute: AuthenticatedHistoryRoute,
   AuthenticatedStudioRoute: AuthenticatedStudioRoute,
   AuthenticatedUsageRoute: AuthenticatedUsageRoute,
