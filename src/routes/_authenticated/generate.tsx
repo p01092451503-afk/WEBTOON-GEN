@@ -200,30 +200,55 @@ function GeneratePage() {
     });
   }, [gen.row]);
 
-  function useAsReference(item: OutputItem) {
+  /** 생성 결과(generation-outputs)를 레퍼런스 버킷(character-refs)으로 복사한다. */
+  async function copyOutputToRefs(path: string): Promise<string | null> {
+    if (!tenantId) return null;
+    const { data, error } = await supabase.storage.from("generation-outputs").download(path);
+    if (error || !data) {
+      toast.error(error?.message ?? "download failed");
+      return null;
+    }
+    const ext = path.split(".").pop()?.toLowerCase() || "png";
+    const dest = `${tenantId}/refs/out-${crypto.randomUUID()}.${ext}`;
+    const { error: upErr } = await supabase.storage
+      .from("character-refs")
+      .upload(dest, data, { contentType: data.type || "image/png" });
+    if (upErr) {
+      toast.error(upErr.message);
+      return null;
+    }
+    return dest;
+  }
+
+  async function useAsReference(item: OutputItem) {
     if (!item.path) return;
-    setRefs((prev) => {
-      if (prev.length >= MAX_REFS) {
-        toast.error(t("studio.refs.max_reached", "레퍼런스는 최대 10개까지 추가할 수 있습니다."));
-        return prev;
-      }
-      return [
-        ...prev,
-        {
-          id: crypto.randomUUID(),
-          path: item.path as string,
-          bucket: "generation-outputs",
-          sourceName: `#${item.seq + 1}`,
-          roles: ["character"],
-        } as StudioRef,
-      ];
-    });
+    if (refs.length >= MAX_REFS) {
+      toast.error(t("studio.refs.max_reached", "레퍼런스는 최대 10개까지 추가할 수 있습니다."));
+      return;
+    }
+    const dest = await copyOutputToRefs(item.path);
+    if (!dest) return;
+    setRefs((prev) =>
+      prev.length >= MAX_REFS
+        ? prev
+        : [
+            ...prev,
+            {
+              id: crypto.randomUUID(),
+              path: dest,
+              sourceName: `#${item.seq + 1}`,
+              roles: ["character"],
+            } as StudioRef,
+          ],
+    );
     toast.success(t("studio.output.added_ref", "레퍼런스에 추가했습니다."));
   }
 
-  function editImage(item: OutputItem) {
+  async function editImage(item: OutputItem) {
     if (!item.path) return;
-    setEditImagePath(item.path);
+    const dest = await copyOutputToRefs(item.path);
+    if (!dest) return;
+    setEditImagePath(dest);
     if (item.options && typeof item.options === "object") {
       setWork((prev) => {
         const merged: WorkInput = { ...prev };
