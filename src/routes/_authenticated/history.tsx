@@ -154,27 +154,6 @@ async function deleteVideoGenerations(rows: VideoRow[]) {
   if (error) throw new Error(error.message);
 }
 
-type ImageHistoryRow = {
-  id: string;
-  status: string;
-  mode: string;
-  work_label: string;
-  aspect_ratio: string | null;
-  api_model: string | null;
-  seed: number | null;
-  final_prompt: string | null;
-  raw_prompt: string | null;
-  prompt_edited: boolean;
-  compiled_prompt: string | null;
-  options: any;
-  figure_map: any;
-  warnings: any;
-  batch_count: number;
-  error_message: string | null;
-  created_at: string;
-  completed_at: string | null;
-  results: { id: string; seq: number; storage_path: string | null; thumb_path: string | null }[];
-};
 
 function HistoryPage() {
   const { t, i18n } = useTranslation();
