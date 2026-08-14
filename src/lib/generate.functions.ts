@@ -72,6 +72,25 @@ export const generate = createServerFn({ method: "POST" })
       }
     }
 
+    // 2-1) 크레딧 사전 검증 (서버 신뢰 경계) — 부족하면 생성 자체를 거부
+    const { data: tenantRow } = await supabase
+      .from("tenants")
+      .select("credit_balance, credits_enabled")
+      .eq("id", tenantId)
+      .maybeSingle();
+    const creditsEnabled = (tenantRow as { credits_enabled?: boolean } | null)?.credits_enabled === true;
+    const plannedCount = Math.max(
+      1,
+      Math.min(4, data.seeds && data.seeds.length > 0 ? data.seeds.length : (data.batchCount ?? 1)),
+    );
+    const plannedCost = plannedCount * CR_PER_IMAGE;
+    if (creditsEnabled) {
+      const balance = (tenantRow as { credit_balance?: number } | null)?.credit_balance ?? 0;
+      if (balance < plannedCost) {
+        throw new Error(`INSUFFICIENT_CREDITS: need ${plannedCost}, have ${balance}`);
+      }
+    }
+
     // 3) generations row 생성
     const { aspectRatioToSize, callArk, makeThumbnailWebp } = await import("@/lib/generate.server");
     const size = aspectRatioToSize(data.aspectRatio);
