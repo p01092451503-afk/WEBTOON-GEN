@@ -85,6 +85,7 @@ const DEFAULT_WORK: WorkInput = {
 function GeneratePage() {
   const { t } = useTranslation();
   const { tenantId } = useTenant();
+  const { refresh: refreshCredits } = useCredits();
   const { data: characters = [] } = useCharacters();
   const { data: cfg = {} } = usePresets(tenantId);
   const gen = useGeneration(tenantId);
