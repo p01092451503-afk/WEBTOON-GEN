@@ -15,6 +15,7 @@ import { generateErrorKey } from "@/lib/generate-error";
 import { buildPrompt, WARN, type WorkInput, type PresetItem } from "@/lib/promptEngine";
 import { buildStudioFigures, MAX_REFS, type StudioRef } from "@/lib/studioRefs";
 import { StudioControlPanel } from "@/components/studio/control-panel";
+import { StudioOutputPanel, type OutputItem } from "@/components/studio/output-panel";
 import { updatePanel } from "@/lib/projects.functions";
 import { translatePrompt } from "@/lib/translate.functions";
 import { Languages, Loader2 } from "lucide-react";
@@ -98,6 +99,8 @@ function GeneratePage() {
   const [panelId, setPanelId] = useState<string | null>(null);
   const [backEpisodeId, setBackEpisodeId] = useState<string | null>(null);
   const [lockedSeeds, setLockedSeeds] = useState<Record<number, number>>({});
+  const [lineItems, setLineItems] = useState<OutputItem[]>([]);
+  const [editImagePath, setEditImagePath] = useState<string | null>(null);
   const [compareIds, setCompareIds] = useState<string[]>([]);
   const updatePanelFn = useServerFn(updatePanel);
   const translateFn = useServerFn(translatePrompt);
@@ -173,6 +176,72 @@ function GeneratePage() {
     setPendingCharIds([]);
   }, [pendingCharIds, characters]);
 
+  // 세션 "라인": 생성 결과가 realtime 으로 채워질 때마다 누적한다.
+  useEffect(() => {
+    const row = gen.row;
+    if (!row || row.results.length === 0) return;
+    setLineItems((prev) => {
+      const known = new Set(prev.map((x) => x.id));
+      const added = row.results
+        .filter((r) => !known.has(r.id))
+        .map<OutputItem>((r) => ({
+          id: r.id,
+          generationId: row.id,
+          seq: r.seq,
+          path: r.storage_path ?? r.thumb_path,
+          seed: r.seed,
+          createdAt: new Date().toISOString(),
+          prompt: row.final_prompt,
+          aspectRatio,
+          status: row.status,
+          errorMessage: row.error_message,
+        }));
+      return added.length ? [...added, ...prev] : prev;
+    });
+  }, [gen.row]);
+
+  function useAsReference(item: OutputItem) {
+    if (!item.path) return;
+    setRefs((prev) => {
+      if (prev.length >= MAX_REFS) {
+        toast.error(t("studio.refs.max_reached", "레퍼런스는 최대 10개까지 추가할 수 있습니다."));
+        return prev;
+      }
+      return [
+        ...prev,
+        {
+          id: crypto.randomUUID(),
+          path: item.path as string,
+          bucket: "generation-outputs",
+          sourceName: `#${item.seq + 1}`,
+          roles: ["character"],
+        } as StudioRef,
+      ];
+    });
+    toast.success(t("studio.output.added_ref", "레퍼런스에 추가했습니다."));
+  }
+
+  function editImage(item: OutputItem) {
+    if (!item.path) return;
+    setEditImagePath(item.path);
+    if (item.options && typeof item.options === "object") {
+      setWork((prev) => {
+        const merged: WorkInput = { ...prev };
+        for (const k of Object.keys(prev) as (keyof WorkInput)[]) {
+          if (item.options[k] !== undefined) (merged as any)[k] = item.options[k];
+        }
+        return merged;
+      });
+      if (typeof item.options.aspectRatio === "string") setAspectRatio(item.options.aspectRatio);
+    }
+    if (item.prompt) {
+      setEditedPrompt(item.prompt);
+      setPromptEditMode(true);
+    }
+    toast.success(t("studio.output.edit_loaded", "수정 모드로 불러왔습니다."));
+    if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
   const studioFigures = useMemo(
     () =>
       buildStudioFigures({
@@ -245,7 +314,8 @@ function GeneratePage() {
     try {
       await gen.run({
         workLabel: "W1",
-        mode: "new",
+        mode: editImagePath ? "edit" : "new",
+        editImagePath: editImagePath ?? undefined,
         aspectRatio,
         finalPrompt: effectivePrompt,
         rawPrompt: rawMode ? effectivePrompt : built.prompt,
