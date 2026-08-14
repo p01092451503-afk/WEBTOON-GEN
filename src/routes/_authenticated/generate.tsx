@@ -57,7 +57,7 @@ export const Route = createFileRoute("/_authenticated/generate")({
   head: () => ({ meta: [{ title: "Studio · pilottoon" }] }),
 });
 
-type RefState = { path: string; url?: string } | null;
+
 
 const DEFAULT_WORK: WorkInput = {
   poseStrengthId: "POS_002",
@@ -83,14 +83,15 @@ function GeneratePage() {
   const { data: cfg = {} } = usePresets(tenantId);
   const gen = useGeneration(tenantId);
 
-  const [charAId, setCharAId] = useState<string | null>(null);
-  const [charBId, setCharBId] = useState<string | null>(null);
-  const [bgRef, setBgRef] = useState<RefState>(null);
-  const [poseRef, setPoseRef] = useState<RefState>(null);
-  const [styleRef, setStyleRef] = useState<RefState>(null);
+  const [refs, setRefs] = useState<StudioRef[]>([]);
+  const [charARefId, setCharARefId] = useState<string | null>(null);
+  const [charBRefId, setCharBRefId] = useState<string | null>(null);
+  const [cameraPresetKey, setCameraPresetKey] = useState<string | null>(null);
+  const [pendingCharIds, setPendingCharIds] = useState<string[]>([]);
   const [aspectRatio, setAspectRatio] = useState<string>("1:1");
   const [batchCount, setBatchCount] = useState<number>(1);
   const [work, setWork] = useState<WorkInput>(DEFAULT_WORK);
+
   const [restoredNote, setRestoredNote] = useState<string | null>(null);
   const [panelId, setPanelId] = useState<string | null>(null);
   const [backEpisodeId, setBackEpisodeId] = useState<string | null>(null);
@@ -118,9 +119,9 @@ function GeneratePage() {
     const back = q.get("back");
     if (panel) setPanelId(panel);
     if (back) setBackEpisodeId(back);
-    if (chA) setCharAId(chA);
-    if (chB) setCharBId(chB);
+    setPendingCharIds([chA, chB].filter(Boolean) as string[]);
   }, []);
+
 
   useEffect(() => {
     if (typeof window === "undefined") return;
