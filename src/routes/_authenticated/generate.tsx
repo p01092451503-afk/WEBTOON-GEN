@@ -149,22 +149,39 @@ function GeneratePage() {
     }
   }, []);
 
-  const charA = characters.find((c) => c.id === charAId) || null;
-  const charB = characters.find((c) => c.id === charBId) || null;
+  // 쿼리 파라미터(charA/charB)로 들어온 캐릭터를 레퍼런스로 승격
+  useEffect(() => {
+    if (pendingCharIds.length === 0 || characters.length === 0) return;
+    const picked = pendingCharIds
+      .map((id) => characters.find((c) => c.id === id))
+      .filter((c): c is NonNullable<typeof c> => !!c && !!c.primary_path);
+    if (picked.length === 0) {
+      setPendingCharIds([]);
+      return;
+    }
+    const added: StudioRef[] = picked.map((c) => ({
+      id: crypto.randomUUID(),
+      path: c.primary_path as string,
+      sourceName: c.display_name,
+      roles: ["character"],
+    }));
+    setRefs((prev) => [...prev, ...added].slice(0, MAX_REFS));
+    if (added[0]) setCharARefId(added[0].id);
+    if (added[1]) setCharBRefId(added[1].id);
+    setPendingCharIds([]);
+  }, [pendingCharIds, characters]);
 
-  const figureMap = useMemo(
+  const studioFigures = useMemo(
     () =>
-      buildFigureMap({
-        hasCharA: !!charA,
-        hasCharB: !!charB,
-        hasBg: !!bgRef,
-        hasPose: !!poseRef,
-        hasStyle: !!styleRef,
-        charAName: charA?.display_name,
-        charBName: charB?.display_name,
+      buildStudioFigures({
+        refs,
+        charARefId,
+        charBRefId,
       }),
-    [charA, charB, bgRef, poseRef, styleRef],
+    [refs, charARefId, charBRefId],
   );
+  const figureMap = studioFigures.figureMap;
+
 
   const built = useMemo(() => buildPrompt(work, figureMap, cfg), [work, figureMap, cfg]);
 
