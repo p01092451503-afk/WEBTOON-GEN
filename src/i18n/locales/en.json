@@ -563,5 +563,66 @@
     "insufficient": "Not enough credits. Please check your balance.",
     "balance_title": "Remaining credits",
     "balance_short": "Balance {{n}} CR"
+  },
+  "support": {
+    "subtitle": "Find quick answers, or send us a direct inquiry.",
+    "recent_notices": "Recent notices",
+    "empty_notices": "No notices yet.",
+    "empty_faqs": "No questions yet.",
+    "pinned": "Pinned",
+    "my_tickets": "My inquiries",
+    "menu": {
+      "home": "Support home",
+      "faq": "FAQ",
+      "notice": "Notices",
+      "guide": "Service guide",
+      "ticket": "New inquiry"
+    },
+    "type": {
+      "service": "Service",
+      "billing": "Billing & credits",
+      "bug": "Bug report"
+    },
+    "form": {
+      "type": "Inquiry type",
+      "title": "Subject",
+      "body": "Message",
+      "submit": "Submit inquiry",
+      "required": "Please fill in the subject and message.",
+      "submitted": "Your inquiry was submitted. Replies appear on My page.",
+      "failed": "Could not submit. Please try again.",
+      "login_required": "Sign in to submit an inquiry."
+    },
+    "guide": {
+      "step1_t": "1. Prepare references",
+      "step1_b": "Collect frequently used character and background images in Image groups, then pull them into Create. Up to 10 per generation.",
+      "step2_t": "2. Tag roles",
+      "step2_b": "Tag each reference as Character A/B, background, pose, or style and the prompt engine applies them in order.",
+      "step3_t": "3. Generate and credits",
+      "step3_b": "Credits are charged per produced image on success. Failed jobs are not charged.",
+      "step4_t": "4. Storage and deletion",
+      "step4_b": "Images are kept in private storage behind short-lived links, and can be permanently deleted from History."
+    }
+  },
+  "account": {
+    "menu": {
+      "profile": "Account info",
+      "tickets": "My inquiries",
+      "credits": "Credit history",
+      "payments": "Payments & refunds",
+      "refund": "Refund account",
+      "sign_out": "Sign out"
+    },
+    "email": "Email",
+    "joined": "Joined",
+    "new_ticket": "New inquiry",
+    "no_tickets": "No inquiries yet.",
+    "no_usage": "No usage yet.",
+    "status_open": "Received",
+    "status_done": "Answered",
+    "reply": "Reply",
+    "images_n": "{{n}} image(s)",
+    "payments_soon": "Payment and refund history will appear once billing launches.",
+    "refund_soon": "Refund account registration arrives with billing. Until then, contact support."
   }
 }
