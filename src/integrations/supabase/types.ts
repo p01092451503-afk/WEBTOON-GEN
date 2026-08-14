@@ -18,24 +18,33 @@ export type Database = {
         Row: {
           character_id: string
           created_at: string
+          created_by: string | null
+          display_name: string | null
           id: string
           is_primary: boolean
+          roles: string[]
           seq: number
           storage_path: string
         }
         Insert: {
           character_id: string
           created_at?: string
+          created_by?: string | null
+          display_name?: string | null
           id?: string
           is_primary?: boolean
+          roles?: string[]
           seq?: number
           storage_path: string
         }
         Update: {
           character_id?: string
           created_at?: string
+          created_by?: string | null
+          display_name?: string | null
           id?: string
           is_primary?: boolean
+          roles?: string[]
           seq?: number
           storage_path?: string
         }
@@ -55,6 +64,7 @@ export type Database = {
           created_by: string | null
           display_name: string
           id: string
+          is_default: boolean
           tenant_id: string
         }
         Insert: {
@@ -62,6 +72,7 @@ export type Database = {
           created_by?: string | null
           display_name: string
           id?: string
+          is_default?: boolean
           tenant_id: string
         }
         Update: {
@@ -69,6 +80,7 @@ export type Database = {
           created_by?: string | null
           display_name?: string
           id?: string
+          is_default?: boolean
           tenant_id?: string
         }
         Relationships: [
