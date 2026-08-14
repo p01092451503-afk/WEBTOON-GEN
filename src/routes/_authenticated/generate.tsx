@@ -5,6 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/hooks/useTenant";
+import { useCredits } from "@/hooks/useCredits";
 import { useCharacters } from "@/hooks/useCharacters";
 import { usePresets } from "@/hooks/usePresets";
 import { useGeneration } from "@/hooks/useGeneration";
@@ -401,6 +402,7 @@ function GeneratePage() {
         panelId: panelId ?? undefined,
       });
       setCompareIds([]);
+      refreshCredits();
       toast.success(panelId ? t("studio.submitted_panel") : t("studio.submitted"));
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
