@@ -166,6 +166,7 @@ function useVideoHistory(tenantId: string | null) {
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tenantId]);
   return { rows, setRows };
 }
