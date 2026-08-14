@@ -9,6 +9,8 @@ export type LightboxItem = {
   bucket: string;
   path: string | null;
   alt: string;
+  /** optional metadata shown in the dark viewer info rail */
+  info?: { label: string; value: string }[];
 };
 
 const MIN_ZOOM = 0.25;
@@ -21,11 +23,14 @@ export function ImageLightbox({
   index,
   onIndexChange,
   onClose,
+  renderActions,
 }: {
   items: LightboxItem[];
   index: number;
   onIndexChange: (i: number) => void;
   onClose: () => void;
+  /** action buttons rendered in the viewer footer (use-as-ref / edit / download / delete) */
+  renderActions?: (item: LightboxItem) => React.ReactNode;
 }) {
   const { t } = useTranslation();
   const item = items[index];
@@ -128,15 +133,15 @@ export function ImageLightbox({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex flex-col bg-background/95 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex flex-col bg-neutral-950/97 text-neutral-100 backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
       aria-label={t("lightbox.title")}
     >
-      <header className="flex items-center justify-between gap-3 border-b border-border/60 px-4 py-2">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+      <header className="flex items-center justify-between gap-3 border-b border-white/10 px-4 py-2">
+        <div className="flex items-center gap-2 text-xs text-neutral-400">
           <Maximize2 className="h-4 w-4" aria-hidden="true" />
-          <span className="font-medium text-foreground">{item.alt}</span>
+          <span className="font-medium text-neutral-100">{item.alt}</span>
           {items.length > 1 && (
             <span className="font-mono">
               {index + 1} / {items.length}
@@ -193,7 +198,7 @@ export function ImageLightbox({
                 className="max-h-full max-w-full object-contain"
               />
             ) : (
-              <div className="text-sm text-muted-foreground">…</div>
+              <div className="text-sm text-neutral-500">…</div>
             )}
           </div>
         </div>
@@ -215,7 +220,7 @@ export function ImageLightbox({
       </div>
 
       {items.length > 1 && (
-        <div className="flex gap-2 overflow-x-auto border-t border-border/60 p-2">
+        <div className="flex gap-2 overflow-x-auto border-t border-white/10 p-2">
           {items.map((it, i) => (
             <button
               key={it.id}
@@ -225,7 +230,7 @@ export function ImageLightbox({
               aria-current={i === index}
               className={cn(
                 "h-14 w-14 shrink-0 overflow-hidden rounded-md border",
-                i === index ? "border-primary ring-2 ring-primary" : "border-border opacity-70",
+                i === index ? "border-primary ring-2 ring-primary" : "border-white/15 opacity-60 hover:opacity-100",
               )}
             >
               <Thumb bucket={it.bucket} path={it.path} alt={it.alt} />
@@ -234,7 +239,27 @@ export function ImageLightbox({
         </div>
       )}
 
-      <p className="px-4 pb-2 text-center text-[11px] text-muted-foreground">
+      {(item.info?.length || renderActions) && (
+        <div className="flex flex-col gap-3 border-t border-white/10 px-4 py-3 lg:flex-row lg:items-start lg:justify-between">
+          {item.info?.length ? (
+            <dl className="grid min-w-0 flex-1 grid-cols-2 gap-x-6 gap-y-1 text-[11px] sm:grid-cols-3">
+              {item.info.map((row) => (
+                <div key={row.label} className="min-w-0">
+                  <dt className="text-neutral-500">{row.label}</dt>
+                  <dd className="truncate font-medium text-neutral-200" title={row.value}>
+                    {row.value}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          ) : null}
+          {renderActions && (
+            <div className="flex shrink-0 flex-wrap items-center gap-2">{renderActions(item)}</div>
+          )}
+        </div>
+      )}
+
+      <p className="px-4 pb-2 text-center text-[11px] text-neutral-500">
         {t("lightbox.hint")}
       </p>
     </div>
@@ -243,7 +268,7 @@ export function ImageLightbox({
 
 function Thumb({ bucket, path, alt }: { bucket: string; path: string | null; alt: string }) {
   const url = useSignedUrl(bucket, path, 600);
-  if (!url) return <div className="h-full w-full animate-pulse bg-muted" />;
+  if (!url) return <div className="h-full w-full animate-pulse bg-white/10" />;
   return <img src={url} alt={alt} className="h-full w-full object-cover" />;
 }
 
@@ -262,7 +287,7 @@ function LightboxButton({
       onClick={onClick}
       aria-label={label}
       title={label}
-      className="grid h-8 w-8 place-items-center rounded-md border border-border bg-card text-foreground hover:bg-accent"
+      className="grid h-8 w-8 place-items-center rounded-lg border border-white/15 bg-white/5 text-neutral-100 transition hover:bg-white/15"
     >
       {children}
     </button>
@@ -284,7 +309,7 @@ function LightboxNav({
       onClick={onClick}
       aria-label={label}
       className={cn(
-        "absolute top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full border border-border bg-card/90 text-foreground shadow hover:bg-accent",
+        "absolute top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full border border-white/15 bg-white/10 text-neutral-100 shadow backdrop-blur transition hover:bg-white/20",
         side === "left" ? "left-3" : "right-3",
       )}
     >

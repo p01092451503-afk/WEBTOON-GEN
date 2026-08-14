@@ -310,6 +310,26 @@
         "tense_low": "Tense low angle",
         "high_wide": "High-angle wide"
       }
+    },
+    "output": {
+      "tab_line": "Line",
+      "tab_history": "History",
+      "clear_line": "Clear line",
+      "zoom": "Display size",
+      "use_as_ref": "Use as reference",
+      "edit_image": "Edit image",
+      "added_ref": "Added to references.",
+      "edit_loaded": "Loaded into edit mode.",
+      "edit_mode_note": "Edit mode — the selected image is used as the source.",
+      "deleted": "Deleted.",
+      "empty_line": "No images generated yet.",
+      "empty_history": "History is empty.",
+      "empty_hint": "Set your options on the left and create an image.",
+      "info_format": "Format",
+      "info_ratio": "Ratio",
+      "info_created": "Created",
+      "info_seed": "Seed",
+      "info_prompt": "Prompt"
     }
   },
   "image_health": {
