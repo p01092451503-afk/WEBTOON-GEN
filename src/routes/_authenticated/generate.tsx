@@ -181,7 +181,7 @@ function GeneratePage() {
   useEffect(() => {
     const pending = consumePendingRefs();
     if (pending.length === 0) return;
-    const added: StudioRef[] = pending.map((p) => ({
+    const added: StudioRef[] = pending.map((p: PendingRef) => ({
       id: crypto.randomUUID(),
       path: p.path,
       sourceName: p.name,
