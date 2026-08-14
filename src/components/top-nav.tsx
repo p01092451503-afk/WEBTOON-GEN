@@ -5,6 +5,8 @@ import { Home, Sparkles, Images, History, LifeBuoy, LogOut, Menu, User as UserIc
 
 import { useAuth } from "@/hooks/useAuth";
 import { useTenant } from "@/hooks/useTenant";
+import { useCredits } from "@/hooks/useCredits";
+import { formatCredits } from "@/lib/credits";
 import { supabase } from "@/integrations/supabase/client";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { Button } from "@/components/ui/button";
