@@ -31,6 +31,7 @@ export function TopNav() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { tenantId } = useTenant();
+  const { enabled: creditsEnabled, balance, loading: creditsLoading } = useCredits();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [openMobile, setOpenMobile] = useState(false);
 
