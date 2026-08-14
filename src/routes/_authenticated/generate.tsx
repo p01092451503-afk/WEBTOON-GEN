@@ -623,8 +623,10 @@ function GeneratePage() {
               </div>
             )}
           </div>
-        </Panel>
+          </div>
+        </section>
       </div>
+
     </main>
   );
 }
