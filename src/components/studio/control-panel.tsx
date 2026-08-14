@@ -265,9 +265,16 @@ export function StudioControlPanel(props: ControlPanelProps) {
           placeholder={t("studio.labels.action_placeholder")}
           className="min-h-[140px] resize-y rounded-2xl bg-muted/50 text-sm leading-relaxed"
         />
-        <p className="text-[11px] font-semibold text-muted-foreground">
-          {t("studio.credits_estimate", { defaultValue: "예상 소진 {{count}} CR", count: credits })}
-        </p>
+        {creditsEnabled && (
+          <p className="flex items-center justify-between gap-2 text-[11px] font-semibold text-muted-foreground">
+            <span className={insufficient ? "text-destructive" : undefined}>
+              {t("studio.credits_estimate", { defaultValue: "예상 소진 {{count}} CR", count: credits })}
+            </span>
+            <span>
+              {t("credits.balance_short", { defaultValue: "잔액 {{n}} CR", n: formatCredits(balance) })}
+            </span>
+          </p>
+        )}
       </section>
 
       {/* 7. 생성 버튼 */}
