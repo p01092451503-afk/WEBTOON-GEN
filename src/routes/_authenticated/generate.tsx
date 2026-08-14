@@ -176,6 +176,25 @@ function GeneratePage() {
     setPendingCharIds([]);
   }, [pendingCharIds, characters]);
 
+  // 이미지 그룹(/groups)에서 "레퍼런스로 사용"으로 넘어온 이미지 주입
+  useEffect(() => {
+    const pending = consumePendingRefs();
+    if (pending.length === 0) return;
+    const added: StudioRef[] = pending.map((p) => ({
+      id: crypto.randomUUID(),
+      path: p.path,
+      sourceName: p.name,
+      roles: (p.roles?.length ? p.roles : ["character"]) as StudioRef["roles"],
+    }));
+    setRefs((prev) => [...prev, ...added].slice(0, MAX_REFS));
+    toast.success(
+      t("studio.refs.injected", {
+        defaultValue: "{{n}}개를 레퍼런스로 불러왔습니다.",
+        n: added.length,
+      }),
+    );
+  }, []);
+
   // 세션 "라인": 생성 결과가 realtime 으로 채워질 때마다 누적한다.
   useEffect(() => {
     const row = gen.row;
