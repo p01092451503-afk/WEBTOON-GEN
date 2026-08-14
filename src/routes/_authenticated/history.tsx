@@ -138,8 +138,7 @@ type SortKey = "newest" | "oldest" | "prompt_asc" | "prompt_desc" | "label_asc";
 
 function useVideoHistory(tenantId: string | null) {
   const [rows, setRows] = useState<VideoRow[] | null>(null);
-  useState<(() => void) | undefined>(undefined);
-  useMemo(() => {
+  useEffect(() => {
     if (!tenantId) return;
     let cancelled = false;
     (async () => {
@@ -166,7 +165,6 @@ function useVideoHistory(tenantId: string | null) {
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tenantId]);
   return { rows, setRows };
 }
