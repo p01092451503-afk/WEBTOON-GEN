@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { CR_PER_IMAGE } from "@/lib/credits";
 import {
   sanitizePrompt,
   checkFigureN,
