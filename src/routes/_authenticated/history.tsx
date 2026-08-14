@@ -3,6 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/hooks/useTenant";
+import { useImageHistory, type ImageHistoryRow } from "@/hooks/useImageHistory";
 import { SignedImage } from "@/components/SignedImage";
 import { ImageDownloadMenu } from "@/components/image-download-menu";
 import { ImageLightbox } from "@/components/image-lightbox";
@@ -153,7 +154,7 @@ async function deleteVideoGenerations(rows: VideoRow[]) {
   if (error) throw new Error(error.message);
 }
 
-type Row = {
+type ImageHistoryRow = {
   id: string;
   status: string;
   mode: string;
@@ -175,43 +176,10 @@ type Row = {
   results: { id: string; seq: number; storage_path: string | null; thumb_path: string | null }[];
 };
 
-function useHistory(tenantId: string | null) {
-  const [rows, setRows] = useState<Row[] | null>(null);
-  useEffect(() => {
-    if (!tenantId) return;
-    let cancelled = false;
-    (async () => {
-      const { data, error } = await supabase
-        .from("generations")
-        .select(
-          "id, status, mode, work_label, aspect_ratio, api_model, seed, final_prompt, raw_prompt, prompt_edited, compiled_prompt, options, figure_map, warnings, batch_count, error_message, created_at, completed_at, generation_results(id, seq, storage_path, thumb_path)",
-        )
-        .order("created_at", { ascending: false })
-        .limit(100);
-      if (cancelled) return;
-      if (error) {
-        toast.error(error.message);
-        setRows([]);
-        return;
-      }
-      setRows(
-        (data ?? []).map((r: any) => ({
-          ...r,
-          results: (r.generation_results ?? []).sort((a: any, b: any) => a.seq - b.seq),
-        })),
-      );
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [tenantId]);
-  return rows;
-}
-
 function HistoryPage() {
   const { t, i18n } = useTranslation();
   const { tenantId } = useTenant();
-  const rows = useHistory(tenantId);
+  const { rows } = useImageHistory(tenantId);
   const { rows: videoRows, setRows: setVideoRows } = useVideoHistory(tenantId);
   const [busy, setBusy] = useState(false);
   const { id, tab } = Route.useSearch();
@@ -220,7 +188,7 @@ function HistoryPage() {
   const selectedVideo = tab === "video" ? (videoRows?.find((r) => r.id === id) ?? null) : null;
   const locale = i18n.language.startsWith("ko") ? "ko-KR" : "en-US";
 
-  const list: Row[] | VideoRow[] | null = tab === "video" ? videoRows : rows;
+  const list: ImageHistoryRow[] | VideoRow[] | null = tab === "video" ? videoRows : rows;
   const failedCount = (videoRows ?? []).filter((r) => r.status === "error").length;
 
   async function removeVideos(targets: VideoRow[]) {
@@ -387,7 +355,7 @@ function HistoryPage() {
         </div>
       ) : (
         <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-          {(list as Row[]).map((r) => {
+          {(list as ImageHistoryRow[]).map((r) => {
             const first = r.results[0];
             return (
               <div
@@ -581,7 +549,7 @@ function StatusPill({ status }: { status: string }) {
   );
 }
 
-function DetailCard({ row, onClose, locale }: { row: Row; onClose: () => void; locale: string }) {
+function DetailCard({ row, onClose, locale }: { row: ImageHistoryRow; onClose: () => void; locale: string }) {
   const { t } = useTranslation();
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const lightboxItems = row.results.map((res) => ({
