@@ -238,12 +238,28 @@ export const generate = createServerFn({ method: "POST" })
       }
 
 
+      // 크레딧 차감 (성공한 이미지 수 기준) — DB 함수 안에서 원자적으로 처리
+      let creditCost = 0;
+      if (creditsEnabled && savedResults.length > 0) {
+        creditCost = savedResults.length * CR_PER_IMAGE;
+        const { error: debitErr } = await supabaseAdmin.rpc("debit_tenant_credits", {
+          _tenant_id: tenantId,
+          _amount: creditCost,
+        });
+        if (debitErr) {
+          // 잔액이 사후에 부족해진 경우에도 결과는 보존하고 기록만 남긴다.
+          console.warn("CREDIT_DEBIT_FAILED", debitErr.message);
+          creditCost = 0;
+        }
+      }
+
       await supabaseAdmin.from("usage_events").insert({
         tenant_id: tenantId,
         user_id: userId,
         generation_id: generationId,
         image_count: savedResults.length,
         est_api_cost: savedResults.length * 0.03,
+        credit_cost: creditCost,
       });
 
       await supabaseAdmin
