@@ -125,6 +125,42 @@ export type Database = {
           },
         ]
       }
+      faqs: {
+        Row: {
+          active: boolean
+          answer_en: string | null
+          answer_ko: string
+          category: string
+          created_at: string
+          id: string
+          question_en: string | null
+          question_ko: string
+          sort_order: number
+        }
+        Insert: {
+          active?: boolean
+          answer_en?: string | null
+          answer_ko: string
+          category?: string
+          created_at?: string
+          id?: string
+          question_en?: string | null
+          question_ko: string
+          sort_order?: number
+        }
+        Update: {
+          active?: boolean
+          answer_en?: string | null
+          answer_ko?: string
+          category?: string
+          created_at?: string
+          id?: string
+          question_en?: string | null
+          question_ko?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
       generation_results: {
         Row: {
           created_at: string
@@ -264,6 +300,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      notices: {
+        Row: {
+          active: boolean
+          body_en: string | null
+          body_ko: string
+          created_at: string
+          id: string
+          pinned: boolean
+          published_at: string
+          title_en: string | null
+          title_ko: string
+        }
+        Insert: {
+          active?: boolean
+          body_en?: string | null
+          body_ko: string
+          created_at?: string
+          id?: string
+          pinned?: boolean
+          published_at?: string
+          title_en?: string | null
+          title_ko: string
+        }
+        Update: {
+          active?: boolean
+          body_en?: string | null
+          body_ko?: string
+          created_at?: string
+          id?: string
+          pinned?: boolean
+          published_at?: string
+          title_en?: string | null
+          title_ko?: string
+        }
+        Relationships: []
       }
       panels: {
         Row: {
@@ -463,6 +535,53 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "projects_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_tickets: {
+        Row: {
+          admin_reply: string | null
+          body: string
+          created_at: string
+          id: string
+          status: string
+          tenant_id: string
+          title: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_reply?: string | null
+          body: string
+          created_at?: string
+          id?: string
+          status?: string
+          tenant_id: string
+          title: string
+          type?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_reply?: string | null
+          body?: string
+          created_at?: string
+          id?: string
+          status?: string
+          tenant_id?: string
+          title?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_tickets_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
