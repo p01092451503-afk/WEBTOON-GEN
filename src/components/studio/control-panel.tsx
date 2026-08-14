@@ -12,7 +12,9 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { ReferenceManager } from "@/components/studio/reference-manager";
-import { CR_PER_IMAGE, type StudioRef } from "@/lib/studioRefs";
+import { type StudioRef } from "@/lib/studioRefs";
+import { CR_PER_IMAGE, formatCredits } from "@/lib/credits";
+import { useCredits } from "@/hooks/useCredits";
 import { PROMPT_MAX_CHARS, type PresetItem, type PromptConfig, type WorkInput } from "@/lib/promptEngine";
 
 const ASPECT_RATIOS = ["1:1", "4:3", "3:4", "16:9", "9:16", "3:2", "2:3"];
