@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { SignedImage } from "@/components/SignedImage";
@@ -20,7 +21,7 @@ import {
   type StudioRef,
 } from "@/lib/studioRefs";
 
-export function roleLabel(t: (k: string, d?: string) => string, role: RoleTag) {
+export function roleLabel(t: TFunction, role: RoleTag) {
   const fallback: Record<RoleTag, string> = {
     character: "캐릭터",
     background: "배경",
@@ -31,7 +32,7 @@ export function roleLabel(t: (k: string, d?: string) => string, role: RoleTag) {
     prop: "소품",
     etc: "기타",
   };
-  return t(`studio.roles.${role}`, fallback[role]);
+  return t(`studio.roles.${role}`, { defaultValue: fallback[role] });
 }
 
 export function ReferenceManager({
