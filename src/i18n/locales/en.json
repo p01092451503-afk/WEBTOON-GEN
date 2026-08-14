@@ -375,6 +375,23 @@
     "load_settings": "Load settings",
     "restore_toast": "Options will be restored on the studio page",
     "restore_fail": "Failed to save restore data",
+    "search_placeholder": "Search prompt, date or label",
+    "zoom": "Zoom",
+    "retention_policy": "Generated results may be removed automatically after the service retention period.",
+    "tab_image": "Image",
+    "tab_video": "Video",
+    "use_as_ref": "Use as reference",
+    "edit_image": "Edit image",
+    "delete_result": "Delete result",
+    "delete_result_desc": "This result and its stored file will be permanently deleted.",
+    "sort": {
+      "label": "Sort",
+      "newest": "Newest",
+      "oldest": "Oldest",
+      "prompt_asc": "Prompt A–Z",
+      "prompt_desc": "Prompt Z–A",
+      "label_asc": "Label A–Z"
+    },
     "meta": {
       "mode": "Mode",
       "ratio": "Ratio",
