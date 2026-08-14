@@ -15,6 +15,7 @@ import { generateErrorKey } from "@/lib/generate-error";
 import { buildPrompt, WARN, type WorkInput, type PresetItem } from "@/lib/promptEngine";
 import { buildStudioFigures, MAX_REFS, type StudioRef } from "@/lib/studioRefs";
 import { consumePendingRefs, type PendingRef } from "@/lib/pendingRefs";
+import { consumeEditRestore } from "@/lib/historyActions";
 import { StudioControlPanel } from "@/components/studio/control-panel";
 import { StudioOutputPanel, type OutputItem } from "@/components/studio/output-panel";
 import { updatePanel } from "@/lib/projects.functions";
