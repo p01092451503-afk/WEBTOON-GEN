@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { CR_PER_IMAGE } from "@/lib/credits";
 import {
   sanitizePrompt,
   checkFigureN,
@@ -69,6 +70,25 @@ export const generate = createServerFn({ method: "POST" })
         if (typeof actionText === "string" && checkActionMissing(cleanPrompt, actionText)) {
           throw new Error("ACTION_TEXT_MISSING");
         }
+      }
+    }
+
+    // 2-1) 크레딧 사전 검증 (서버 신뢰 경계) — 부족하면 생성 자체를 거부
+    const { data: tenantRow } = await supabase
+      .from("tenants")
+      .select("credit_balance, credits_enabled")
+      .eq("id", tenantId)
+      .maybeSingle();
+    const creditsEnabled = (tenantRow as { credits_enabled?: boolean } | null)?.credits_enabled === true;
+    const plannedCount = Math.max(
+      1,
+      Math.min(4, data.seeds && data.seeds.length > 0 ? data.seeds.length : (data.batchCount ?? 1)),
+    );
+    const plannedCost = plannedCount * CR_PER_IMAGE;
+    if (creditsEnabled) {
+      const balance = (tenantRow as { credit_balance?: number } | null)?.credit_balance ?? 0;
+      if (balance < plannedCost) {
+        throw new Error(`INSUFFICIENT_CREDITS: need ${plannedCost}, have ${balance}`);
       }
     }
 
@@ -218,12 +238,28 @@ export const generate = createServerFn({ method: "POST" })
       }
 
 
+      // 크레딧 차감 (성공한 이미지 수 기준) — DB 함수 안에서 원자적으로 처리
+      let creditCost = 0;
+      if (creditsEnabled && savedResults.length > 0) {
+        creditCost = savedResults.length * CR_PER_IMAGE;
+        const { error: debitErr } = await supabaseAdmin.rpc("debit_tenant_credits", {
+          _tenant_id: tenantId,
+          _amount: creditCost,
+        });
+        if (debitErr) {
+          // 잔액이 사후에 부족해진 경우에도 결과는 보존하고 기록만 남긴다.
+          console.warn("CREDIT_DEBIT_FAILED", debitErr.message);
+          creditCost = 0;
+        }
+      }
+
       await supabaseAdmin.from("usage_events").insert({
         tenant_id: tenantId,
         user_id: userId,
         generation_id: generationId,
         image_count: savedResults.length,
         est_api_cost: savedResults.length * 0.03,
+        credit_cost: creditCost,
       });
 
       await supabaseAdmin

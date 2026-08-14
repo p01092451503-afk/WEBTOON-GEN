@@ -558,5 +558,10 @@
     "account": "마이페이지",
     "sign_in": "로그인 / 회원가입",
     "advanced": "고급 기능 바로가기"
+  },
+  "credits": {
+    "insufficient": "크레딧이 부족합니다. 잔액을 확인해 주세요.",
+    "balance_title": "남은 크레딧",
+    "balance_short": "잔액 {{n}} CR"
   }
 }

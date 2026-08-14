@@ -5,6 +5,8 @@ import { Home, Sparkles, Images, History, LifeBuoy, LogOut, Menu, User as UserIc
 
 import { useAuth } from "@/hooks/useAuth";
 import { useTenant } from "@/hooks/useTenant";
+import { useCredits } from "@/hooks/useCredits";
+import { formatCredits } from "@/lib/credits";
 import { supabase } from "@/integrations/supabase/client";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { Button } from "@/components/ui/button";
@@ -29,6 +31,7 @@ export function TopNav() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { tenantId } = useTenant();
+  const { enabled: creditsEnabled, balance, loading: creditsLoading } = useCredits();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [openMobile, setOpenMobile] = useState(false);
 
@@ -71,11 +74,15 @@ export function TopNav() {
         </nav>
 
         <div className="flex flex-1 items-center justify-end gap-2 md:flex-none">
-          {tenantId && (
-            <span className="hidden items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground sm:inline-flex">
+          {tenantId && creditsEnabled && (
+            <Link
+              to="/usage"
+              title={t("credits.balance_title", "남은 크레딧")}
+              className="hidden items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:bg-muted sm:inline-flex"
+            >
               <Coins className="h-3.5 w-3.5 text-primary" strokeWidth={2} />
-              10,000 CR
-            </span>
+              {creditsLoading ? "…" : `${formatCredits(balance)} CR`}
+            </Link>
           )}
 
           <Link

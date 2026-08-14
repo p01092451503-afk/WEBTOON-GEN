@@ -473,18 +473,24 @@ export type Database = {
       tenants: {
         Row: {
           created_at: string
+          credit_balance: number
+          credits_enabled: boolean
           id: string
           name: string
           plan: string
         }
         Insert: {
           created_at?: string
+          credit_balance?: number
+          credits_enabled?: boolean
           id?: string
           name: string
           plan?: string
         }
         Update: {
           created_at?: string
+          credit_balance?: number
+          credits_enabled?: boolean
           id?: string
           name?: string
           plan?: string
@@ -494,6 +500,7 @@ export type Database = {
       usage_events: {
         Row: {
           created_at: string
+          credit_cost: number
           est_api_cost: number | null
           est_storage_bytes: number | null
           generation_id: string | null
@@ -504,6 +511,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          credit_cost?: number
           est_api_cost?: number | null
           est_storage_bytes?: number | null
           generation_id?: string | null
@@ -514,6 +522,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          credit_cost?: number
           est_api_cost?: number | null
           est_storage_bytes?: number | null
           generation_id?: string | null
@@ -688,6 +697,10 @@ export type Database = {
     }
     Functions: {
       current_tenant_id: { Args: never; Returns: string }
+      debit_tenant_credits: {
+        Args: { _amount: number; _tenant_id: string }
+        Returns: number
+      }
     }
     Enums: {
       [_ in never]: never

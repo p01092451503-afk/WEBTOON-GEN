@@ -558,5 +558,10 @@
     "account": "My page",
     "sign_in": "Sign in",
     "advanced": "Advanced tools"
+  },
+  "credits": {
+    "insufficient": "Not enough credits. Please check your balance.",
+    "balance_title": "Remaining credits",
+    "balance_short": "Balance {{n}} CR"
   }
 }

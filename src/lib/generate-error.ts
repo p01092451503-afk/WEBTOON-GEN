@@ -1,5 +1,6 @@
 /** Maps raw ARK/server error messages to i18n keys shown to the user. */
 export function generateErrorKey(message: string): string | null {
+  if (message.includes("INSUFFICIENT_CREDITS")) return "credits.insufficient";
   if (message.includes("ARK_SENSITIVE_CONTENT") || message.includes("SensitiveContentDetected"))
     return "studio.errors.sensitive_content";
   if (message.includes("ARK_RATE_LIMITED")) return "studio.errors.rate_limited";
