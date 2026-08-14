@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SupportRouteImport } from './routes/support'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
@@ -18,10 +19,17 @@ import { Route as AuthenticatedStudioRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedHistoryRouteImport } from './routes/_authenticated/history'
 import { Route as AuthenticatedGroupsRouteImport } from './routes/_authenticated/groups'
 import { Route as AuthenticatedGenerateRouteImport } from './routes/_authenticated/generate'
+import { Route as AuthenticatedCharactersRouteImport } from './routes/_authenticated/characters'
+import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
 import { Route as AuthenticatedProjectsIndexRouteImport } from './routes/_authenticated/projects.index'
 import { Route as AuthenticatedProjectsIdRouteImport } from './routes/_authenticated/projects.$id'
 import { Route as AuthenticatedEpisodesIdRouteImport } from './routes/_authenticated/episodes.$id'
 
+const SupportRoute = SupportRouteImport.update({
+  id: '/support',
+  path: '/support',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -66,6 +74,16 @@ const AuthenticatedGenerateRoute = AuthenticatedGenerateRouteImport.update({
   path: '/generate',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedCharactersRoute = AuthenticatedCharactersRouteImport.update({
+  id: '/characters',
+  path: '/characters',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAccountRoute = AuthenticatedAccountRouteImport.update({
+  id: '/account',
+  path: '/account',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedProjectsIndexRoute =
   AuthenticatedProjectsIndexRouteImport.update({
     id: '/projects/',
@@ -86,6 +104,9 @@ const AuthenticatedEpisodesIdRoute = AuthenticatedEpisodesIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/support': typeof SupportRoute
+  '/account': typeof AuthenticatedAccountRoute
+  '/characters': typeof AuthenticatedCharactersRoute
   '/generate': typeof AuthenticatedGenerateRoute
   '/groups': typeof AuthenticatedGroupsRoute
   '/history': typeof AuthenticatedHistoryRoute
@@ -99,6 +120,9 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/support': typeof SupportRoute
+  '/account': typeof AuthenticatedAccountRoute
+  '/characters': typeof AuthenticatedCharactersRoute
   '/generate': typeof AuthenticatedGenerateRoute
   '/groups': typeof AuthenticatedGroupsRoute
   '/history': typeof AuthenticatedHistoryRoute
@@ -114,6 +138,9 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/support': typeof SupportRoute
+  '/_authenticated/account': typeof AuthenticatedAccountRoute
+  '/_authenticated/characters': typeof AuthenticatedCharactersRoute
   '/_authenticated/generate': typeof AuthenticatedGenerateRoute
   '/_authenticated/groups': typeof AuthenticatedGroupsRoute
   '/_authenticated/history': typeof AuthenticatedHistoryRoute
@@ -129,6 +156,9 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/support'
+    | '/account'
+    | '/characters'
     | '/generate'
     | '/groups'
     | '/history'
@@ -142,6 +172,9 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/support'
+    | '/account'
+    | '/characters'
     | '/generate'
     | '/groups'
     | '/history'
@@ -156,6 +189,9 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/support'
+    | '/_authenticated/account'
+    | '/_authenticated/characters'
     | '/_authenticated/generate'
     | '/_authenticated/groups'
     | '/_authenticated/history'
@@ -171,10 +207,18 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  SupportRoute: typeof SupportRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/support': {
+      id: '/support'
+      path: '/support'
+      fullPath: '/support'
+      preLoaderRoute: typeof SupportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -238,6 +282,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedGenerateRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/characters': {
+      id: '/_authenticated/characters'
+      path: '/characters'
+      fullPath: '/characters'
+      preLoaderRoute: typeof AuthenticatedCharactersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/account': {
+      id: '/_authenticated/account'
+      path: '/account'
+      fullPath: '/account'
+      preLoaderRoute: typeof AuthenticatedAccountRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/projects/': {
       id: '/_authenticated/projects/'
       path: '/projects'
@@ -263,6 +321,8 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAccountRoute: typeof AuthenticatedAccountRoute
+  AuthenticatedCharactersRoute: typeof AuthenticatedCharactersRoute
   AuthenticatedGenerateRoute: typeof AuthenticatedGenerateRoute
   AuthenticatedGroupsRoute: typeof AuthenticatedGroupsRoute
   AuthenticatedHistoryRoute: typeof AuthenticatedHistoryRoute
@@ -275,6 +335,8 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAccountRoute: AuthenticatedAccountRoute,
+  AuthenticatedCharactersRoute: AuthenticatedCharactersRoute,
   AuthenticatedGenerateRoute: AuthenticatedGenerateRoute,
   AuthenticatedGroupsRoute: AuthenticatedGroupsRoute,
   AuthenticatedHistoryRoute: AuthenticatedHistoryRoute,
@@ -293,6 +355,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  SupportRoute: SupportRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
