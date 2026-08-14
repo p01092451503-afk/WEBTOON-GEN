@@ -221,43 +221,17 @@ function GeneratePage() {
     }
   }
 
-  const uploadRef = useCallback(
-    async (file: File, kind: "bg" | "pose" | "style") => {
-      if (!tenantId) return;
-      const ext = file.name.split(".").pop()?.toLowerCase() || "png";
-      const path = `${tenantId}/refs/${kind}-${crypto.randomUUID()}.${ext}`;
-      const { error } = await supabase.storage
-        .from("character-refs")
-        .upload(path, file, { contentType: file.type });
-      if (error) {
-        toast.error(t("studio.upload_failed", { msg: error.message }));
-        return;
-      }
-      const setter = kind === "bg" ? setBgRef : kind === "pose" ? setPoseRef : setStyleRef;
-      setter({ path });
-    },
-    [tenantId],
-  );
-
   async function handleGenerate(opts?: { keepLocks?: boolean }) {
-    if (rawMode && !effectivePrompt.trim()) {
+    if (!effectivePrompt.trim()) {
       toast.error(t("studio.labels.raw_empty", "Enter a prompt to send."));
-      return;
-    }
-    if (!rawMode && !charA?.primary_path && !charB?.primary_path) {
-      toast.error(t("studio.select_character_error"));
       return;
     }
     if (overLimit) {
       toast.error(t("studio.labels.prompt_too_long", { max: 4000 }));
       return;
     }
-    const imagePaths: string[] = [];
-    if (charA?.primary_path) imagePaths.push(charA.primary_path);
-    if (charB?.primary_path) imagePaths.push(charB.primary_path);
-    if (bgRef) imagePaths.push(bgRef.path);
-    if (poseRef) imagePaths.push(poseRef.path);
-    if (styleRef) imagePaths.push(styleRef.path);
+    const imagePaths: string[] = studioFigures.imagePaths;
+
 
     const useLocks = opts?.keepLocks && Object.keys(lockedSeeds).length > 0;
     const seeds: number[] | undefined = useLocks
