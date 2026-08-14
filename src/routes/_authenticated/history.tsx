@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,14 +6,25 @@ import { useTenant } from "@/hooks/useTenant";
 import { useImageHistory, type ImageHistoryRow } from "@/hooks/useImageHistory";
 import { SignedImage } from "@/components/SignedImage";
 import { ImageDownloadMenu } from "@/components/image-download-menu";
-import { ImageLightbox } from "@/components/image-lightbox";
+import { ImageLightbox, type LightboxItem } from "@/components/image-lightbox";
 import { SignedVideo } from "@/components/SignedVideo";
 import { Button } from "@/components/ui/button";
 import { IconTooltip } from "@/components/icon-tooltip";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Clock, X, Film, Trash2 } from "lucide-react";
+import {
+  Clock,
+  Film,
+  Trash2,
+  Search,
+  ImagePlus,
+  Pencil,
+  X,
+  Maximize2,
+} from "lucide-react";
 import { getKoreanVideoErrorSummary } from "@/lib/video-errors";
 import { generateErrorKey } from "@/lib/generate-error";
+import { copyOutputToRefs, pushEditAndGo, pushReferenceAndGo } from "@/lib/historyActions";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,6 +36,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 function ConfirmDelete({
   title,
@@ -67,8 +85,7 @@ export const Route = createFileRoute("/_authenticated/history")({
   component: HistoryPage,
   validateSearch: (s: Record<string, unknown>) => ({
     id: typeof s.id === "string" ? s.id : undefined,
-    // 동영상 기능은 숨김 상태이므로 히스토리는 항상 이미지 탭을 보여준다.
-    tab: "image" as "image" | "video",
+    tab: s.tab === "video" ? "video" : "image",
   }),
   head: () => ({ meta: [{ title: "History · pilottoon" }] }),
 });
@@ -102,9 +119,27 @@ type VideoRow = {
   }[];
 };
 
+type ResultItem = {
+  id: string;
+  generationId: string;
+  workLabel: string;
+  seq: number;
+  path: string | null;
+  seed: number | null;
+  createdAt: string;
+  prompt: string | null;
+  aspectRatio: string | null;
+  status: string;
+  errorMessage: string | null;
+  options?: any;
+};
+
+type SortKey = "newest" | "oldest" | "prompt_asc" | "prompt_desc" | "label_asc";
+
 function useVideoHistory(tenantId: string | null) {
   const [rows, setRows] = useState<VideoRow[] | null>(null);
-  useEffect(() => {
+  useState<(() => void) | undefined>(undefined);
+  useMemo(() => {
     if (!tenantId) return;
     let cancelled = false;
     (async () => {
@@ -154,7 +189,6 @@ async function deleteVideoGenerations(rows: VideoRow[]) {
   if (error) throw new Error(error.message);
 }
 
-
 function HistoryPage() {
   const { t, i18n } = useTranslation();
   const { tenantId } = useTenant();
@@ -163,12 +197,104 @@ function HistoryPage() {
   const [busy, setBusy] = useState(false);
   const { id, tab } = Route.useSearch();
   const navigate = Route.useNavigate();
-  const selected = tab === "image" ? (rows?.find((r) => r.id === id) ?? null) : null;
-  const selectedVideo = tab === "video" ? (videoRows?.find((r) => r.id === id) ?? null) : null;
   const locale = i18n.language.startsWith("ko") ? "ko-KR" : "en-US";
 
-  const list: ImageHistoryRow[] | VideoRow[] | null = tab === "video" ? videoRows : rows;
-  const failedCount = (videoRows ?? []).filter((r) => r.status === "error").length;
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sort, setSort] = useState<SortKey>("newest");
+  const [cols, setCols] = useState(3);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [deleted, setDeleted] = useState<string[]>([]);
+
+  const resultItems: ResultItem[] = useMemo(() => {
+    if (!rows) return [];
+    return rows.flatMap((r) =>
+      r.results.map((res) => ({
+        id: res.id,
+        generationId: r.id,
+        workLabel: r.work_label,
+        seq: res.seq,
+        path: res.storage_path ?? res.thumb_path,
+        seed: r.seed,
+        createdAt: r.created_at,
+        prompt: r.final_prompt,
+        aspectRatio: r.aspect_ratio,
+        status: r.status,
+        errorMessage: r.error_message,
+        options: r.options,
+      })),
+    );
+  }, [rows]);
+
+  const filtered = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return resultItems;
+    return resultItems.filter(
+      (it) =>
+        (it.prompt ?? "").toLowerCase().includes(q) ||
+        it.createdAt.includes(q) ||
+        (it.workLabel ?? "").toLowerCase().includes(q),
+    );
+  }, [resultItems, searchQuery]);
+
+  const sorted = useMemo(() => {
+    const list = [...filtered];
+    switch (sort) {
+      case "oldest":
+        return list.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+      case "prompt_asc":
+        return list.sort((a, b) => (a.prompt ?? "").localeCompare(b.prompt ?? ""));
+      case "prompt_desc":
+        return list.sort((a, b) => (b.prompt ?? "").localeCompare(a.prompt ?? ""));
+      case "label_asc":
+        return list.sort((a, b) => a.workLabel.localeCompare(b.workLabel));
+      case "newest":
+      default:
+        return list.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    }
+  }, [filtered, sort]);
+
+  const visible = sorted.filter((it) => !deleted.includes(it.id));
+
+  const lightboxItems: LightboxItem[] = visible.map((it) => ({
+    id: it.id,
+    bucket: "generation-outputs",
+    path: it.path,
+    alt: `#${it.seq + 1}`,
+    info: [
+      { label: t("history.meta.mode"), value: it.status },
+      { label: t("history.meta.ratio"), value: it.aspectRatio ?? "—" },
+      { label: t("history.meta.created"), value: formatTime(it.createdAt, locale) },
+      { label: t("history.meta.seed"), value: it.seed != null ? String(it.seed) : "—" },
+      { label: t("history.final_prompt"), value: it.prompt ?? "—" },
+    ],
+  }));
+
+  async function handleDelete(item: ResultItem) {
+    try {
+      if (item.path) await supabase.storage.from("generation-outputs").remove([item.path]);
+      const { error } = await supabase.from("generation_results").delete().eq("id", item.id);
+      if (error) throw new Error(error.message);
+      setDeleted((prev) => [...prev, item.id]);
+      setLightboxIndex(null);
+      toast.success(t("common.delete", "삭제"));
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : String(e));
+    }
+  }
+
+  async function handleUseAsReference(item: ResultItem) {
+    if (!item.path) return;
+    const dest = await copyOutputToRefs(tenantId, item.path);
+    if (!dest) return;
+    pushReferenceAndGo(dest, `#${item.seq + 1}`);
+  }
+
+  async function handleEditImage(item: ResultItem) {
+    if (!item.path) return;
+    const dest = await copyOutputToRefs(tenantId, item.path);
+    if (!dest) return;
+    pushEditAndGo(dest, item.options, item.aspectRatio, item.prompt);
+  }
 
   async function removeVideos(targets: VideoRow[]) {
     if (targets.length === 0) return;
@@ -186,8 +312,48 @@ function HistoryPage() {
     }
   }
 
+  const failedCount = (videoRows ?? []).filter((r) => r.status === "error").length;
+
   return (
-    <main className="max-w-6xl px-5 py-8 sm:py-10">
+    <main className="max-w-[1400px] px-5 py-8 sm:py-10">
+      {lightboxIndex !== null && lightboxItems[lightboxIndex] && (
+        <ImageLightbox
+          items={lightboxItems}
+          index={lightboxIndex}
+          onIndexChange={setLightboxIndex}
+          onClose={() => setLightboxIndex(null)}
+          renderActions={(li) => {
+            const it = visible.find((x) => x.id === li.id);
+            if (!it) return null;
+            return (
+              <>
+                <HistoryAction onClick={() => handleUseAsReference(it)} icon={<ImagePlus className="h-3.5 w-3.5" />}>
+                  {t("history.use_as_ref", "레퍼런스로 사용")}
+                </HistoryAction>
+                <HistoryAction onClick={() => handleEditImage(it)} icon={<Pencil className="h-3.5 w-3.5" />}>
+                  {t("history.edit_image", "이미지 수정")}
+                </HistoryAction>
+                <ImageDownloadMenu
+                  bucket="generation-outputs"
+                  path={it.path}
+                  baseName={`${it.workLabel}-${it.seq + 1}`}
+                  size="sm"
+                  variant="secondary"
+                  buttonClassName="h-8 rounded-lg"
+                />
+                <HistoryAction
+                  onClick={() => handleDelete(it)}
+                  icon={<Trash2 className="h-3.5 w-3.5" />}
+                  tone="danger"
+                >
+                  {t("common.delete", "삭제")}
+                </HistoryAction>
+              </>
+            );
+          }}
+        />
+      )}
+
       <header className="min-w-0 sm:flex sm:items-end sm:justify-between sm:gap-4">
         <div className="min-w-0">
           <div className="text-xs font-semibold text-primary">{t("history.eyebrow")}</div>
@@ -196,83 +362,220 @@ function HistoryPage() {
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">{t("history.sub")}</p>
         </div>
-        {tab === "video" && (videoRows?.length ?? 0) > 0 && (
-          <div className="mt-4 flex shrink-0 gap-2 sm:mt-0">
-            {failedCount > 0 && (
-              <ConfirmDelete
-                title="Delete failed items?"
-                description={`${failedCount} failed generation${failedCount > 1 ? "s" : ""} will be permanently removed.`}
-                disabled={busy}
-                onConfirm={() =>
-                  removeVideos((videoRows ?? []).filter((r) => r.status === "error"))
-                }
-              >
-                <Button size="sm" variant="outline" className="rounded-full">
-                  <Trash2 className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
-                  Clear failed ({failedCount})
-                </Button>
-              </ConfirmDelete>
-            )}
-            <ConfirmDelete
-              title="Delete all history?"
-              description="Every video in your history and its stored file will be permanently removed."
-              disabled={busy}
-              onConfirm={() => removeVideos(videoRows ?? [])}
-            >
-              <Button size="sm" variant="outline" className="rounded-full text-destructive">
-                <Trash2 className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
-                Delete all
-              </Button>
-            </ConfirmDelete>
-          </div>
-        )}
       </header>
 
-      {/* Image history is hidden while the platform demos video generation only. */}
+      <div className="mt-6 flex flex-col gap-4 rounded-3xl border border-border bg-card p-4 shadow-toss sm:flex-row sm:items-center sm:justify-between">
+        <div className="inline-flex rounded-full bg-muted p-1">
+          {(["image", "video"] as const).map((k) => (
+            <button
+              key={k}
+              type="button"
+              onClick={() => navigate({ search: { tab: k, id: undefined } })}
+              className={
+                "rounded-full px-4 py-1.5 text-xs font-bold transition " +
+                (tab === k
+                  ? "bg-card text-foreground shadow-toss-sm"
+                  : "text-muted-foreground hover:text-foreground")
+              }
+            >
+              {k === "image" ? t("history.tab_image", "이미지") : t("history.tab_video", "영상")}
+            </button>
+          ))}
+        </div>
 
-      {selected && (
-        <div className="mt-6">
-          <DetailCard
-            row={selected}
-            onClose={() => navigate({ search: { tab, id: undefined } })}
-            locale={locale}
-          />
+        {tab === "image" && (
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                type="search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={t("history.search_placeholder", "프롬프트, 날짜, 작업명 검색")}
+                className="h-9 rounded-full pl-9 text-sm"
+              />
+            </div>
+            <Select value={sort} onValueChange={(v) => setSort(v as SortKey)}>
+              <SelectTrigger className="h-9 w-40 rounded-full text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="newest">{t("history.sort.newest", "최신순")}</SelectItem>
+                <SelectItem value="oldest">{t("history.sort.oldest", "오래된순")}</SelectItem>
+                <SelectItem value="prompt_asc">{t("history.sort.prompt_asc", "프롬프트 오름차순")}</SelectItem>
+                <SelectItem value="prompt_desc">{t("history.sort.prompt_desc", "프롬프트 내림차순")}</SelectItem>
+                <SelectItem value="label_asc">{t("history.sort.label_asc", "작업명 순")}</SelectItem>
+              </SelectContent>
+            </Select>
+            <label className="flex items-center gap-2 text-[11px] font-semibold text-muted-foreground">
+              <Maximize2 className="h-3.5 w-3.5" />
+              <input
+                type="range"
+                min={1}
+                max={5}
+                step={1}
+                value={6 - cols}
+                onChange={(e) => setCols(6 - Number(e.target.value))}
+                aria-label={t("history.zoom", "표시 크기")}
+                className="h-1 w-24 cursor-pointer accent-[var(--primary)]"
+              />
+            </label>
+          </div>
+        )}
+      </div>
+
+      {tab === "image" && (
+        <p className="mt-3 text-[11px] text-muted-foreground">
+          {t("history.retention_policy", "생성 결과는 서비스 보관 정책에 따라 일정 기간 후 자동 삭제될 수 있습니다.")}
+        </p>
+      )}
+
+      {tab === "video" && (videoRows?.length ?? 0) > 0 && (
+        <div className="mt-4 flex gap-2">
+          {failedCount > 0 && (
+            <ConfirmDelete
+              title="Delete failed items?"
+              description={`${failedCount} failed generation${failedCount > 1 ? "s" : ""} will be permanently removed.`}
+              disabled={busy}
+              onConfirm={() => removeVideos((videoRows ?? []).filter((r) => r.status === "error"))}
+            >
+              <Button size="sm" variant="outline" className="rounded-full">
+                <Trash2 className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
+                Clear failed ({failedCount})
+              </Button>
+            </ConfirmDelete>
+          )}
+          <ConfirmDelete
+            title="Delete all history?"
+            description="Every video in your history and its stored file will be permanently removed."
+            disabled={busy}
+            onConfirm={() => removeVideos(videoRows ?? [])}
+          >
+            <Button size="sm" variant="outline" className="rounded-full text-destructive">
+              <Trash2 className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
+              Delete all
+            </Button>
+          </ConfirmDelete>
         </div>
       )}
 
-      {selectedVideo && (
-        <div className="mt-6">
-          <VideoDetailCard
-            row={selectedVideo}
-            onClose={() => navigate({ search: { tab, id: undefined } })}
-            onDelete={() => removeVideos([selectedVideo])}
-            locale={locale}
-          />
-        </div>
-      )}
+      {tab === "image" ? (
+        rows === null ? (
+          <p className="mt-8 text-sm text-muted-foreground">{t("common.loading")}</p>
+        ) : visible.length === 0 ? (
+          <div className="mt-8 flex flex-col items-center rounded-3xl border border-dashed border-border bg-card p-12 text-center">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-soft text-primary">
+              <Clock className="h-6 w-6" />
+            </div>
+            <p className="mt-4 text-sm font-semibold">{t("history.empty_title")}</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {t("history.empty_hint_before")}{" "}
+              <Link to="/generate" className="font-semibold text-primary underline">
+                {t("history.empty_hint_link")}
+              </Link>
+              {t("history.empty_hint_after")}
+            </p>
+          </div>
+        ) : (
+          <div
+            className="mt-6 grid gap-4"
+            style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
+          >
+            {visible.map((it) => (
+              <figure
+                key={it.id}
+                className="group relative overflow-hidden rounded-2xl border border-border bg-card shadow-toss-sm transition hover:shadow-toss"
+              >
+                <button
+                  type="button"
+                  onClick={() => setLightboxIndex(visible.findIndex((x) => x.id === it.id))}
+                  aria-label={t("lightbox.open")}
+                  className="block w-full cursor-zoom-in"
+                >
+                  <div className="relative aspect-square overflow-hidden bg-muted">
+                    {it.path ? (
+                      <SignedImage
+                        bucket="generation-outputs"
+                        path={it.path}
+                        alt={`${it.workLabel}-${it.seq + 1}`}
+                        className="h-full w-full object-cover transition group-hover:scale-[1.02]"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
+                        {it.status === "error" ? t("history.failed") : it.status}
+                      </div>
+                    )}
+                  </div>
+                </button>
 
-      {list === null ? (
+                <figcaption className="space-y-2 border-t border-border p-3">
+                  <div className="flex items-center justify-between gap-2 text-[10px] text-muted-foreground">
+                    <span>{formatTime(it.createdAt, locale)}</span>
+                    <span className="rounded-full bg-muted px-2 py-0.5 font-mono">
+                      #{it.seq + 1}
+                    </span>
+                  </div>
+                  {it.prompt && (
+                    <p
+                      className="line-clamp-2 text-[11px] leading-tight text-muted-foreground"
+                      title={it.prompt}
+                    >
+                      {it.prompt}
+                    </p>
+                  )}
+                  <div className="flex items-center gap-1">
+                    <CardAction onClick={() => handleUseAsReference(it)} icon={<ImagePlus className="h-3 w-3" />}>
+                      {t("history.use_as_ref", "레퍼런스로 사용")}
+                    </CardAction>
+                    <CardAction onClick={() => handleEditImage(it)} icon={<Pencil className="h-3 w-3" />}>
+                      {t("history.edit_image", "이미지 수정")}
+                    </CardAction>
+                    <ImageDownloadMenu
+                      bucket="generation-outputs"
+                      path={it.path}
+                      baseName={`${it.workLabel}-${it.seq + 1}`}
+                      size="icon"
+                      variant="secondary"
+                      buttonClassName="h-7 w-7 shrink-0 rounded-lg"
+                    />
+                    <ConfirmDelete
+                      title={t("history.delete_result", "결과 삭제")}
+                      description={t("history.delete_result_desc", "이 결과와 저장된 파일이 영구 삭제됩니다.")}
+                      onConfirm={() => handleDelete(it)}
+                    >
+                      <button
+                        type="button"
+                        aria-label={t("common.delete")}
+                        className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-muted text-foreground transition hover:bg-destructive/10 hover:text-destructive"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </button>
+                    </ConfirmDelete>
+                  </div>
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+        )
+      ) : videoRows === null ? (
         <p className="mt-8 text-sm text-muted-foreground">{t("common.loading")}</p>
-      ) : list.length === 0 ? (
+      ) : videoRows.length === 0 ? (
         <div className="mt-8 flex flex-col items-center rounded-3xl border border-dashed border-border bg-card p-12 text-center">
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-soft text-primary">
-            {tab === "video" ? <Film className="h-6 w-6" /> : <Clock className="h-6 w-6" />}
+            <Film className="h-6 w-6" />
           </div>
           <p className="mt-4 text-sm font-semibold">{t("history.empty_title")}</p>
           <p className="mt-1 text-xs text-muted-foreground">
             {t("history.empty_hint_before")}{" "}
-            <Link
-              to={tab === "video" ? "/video" : "/generate"}
-              className="font-semibold text-primary underline"
-            >
+            <Link to="/video" className="font-semibold text-primary underline">
               {t("history.empty_hint_link")}
             </Link>
             {t("history.empty_hint_after")}
           </p>
         </div>
-      ) : tab === "video" ? (
+      ) : (
         <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {(list as VideoRow[]).map((r) => {
+          {videoRows.map((r) => {
             const first = r.results[0];
             return (
               <div
@@ -332,387 +635,76 @@ function HistoryPage() {
             );
           })}
         </div>
-      ) : (
-        <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-          {(list as ImageHistoryRow[]).map((r) => {
-            const first = r.results[0];
-            return (
-              <div
-                key={r.id}
-                className="group relative overflow-hidden rounded-2xl border border-border bg-card text-left shadow-toss-sm transition hover:shadow-toss"
-              >
-                <button
-                  type="button"
-                  onClick={() => navigate({ search: { id: r.id, tab: "image" } })}
-                  className="block w-full text-left"
-                >
-                  <div className="relative aspect-square overflow-hidden bg-muted">
-                    {first?.thumb_path || first?.storage_path ? (
-                      <SignedImage
-                        bucket="generation-outputs"
-                        path={(first.thumb_path ?? first.storage_path) as string}
-                        alt={r.work_label}
-                        className="h-full w-full object-cover transition group-hover:scale-[1.02]"
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
-                        {r.status === "error" ? t("history.failed") : r.status}
-                      </div>
-                    )}
-                    <div className="absolute left-2 top-2">
-                      <StatusPill status={r.status} />
-                    </div>
-                  </div>
-                  <div className="space-y-1 p-3">
-                    <div className="truncate text-sm font-bold">{r.work_label}</div>
-                    <div className="text-[11px] text-muted-foreground">
-                      {new Date(r.created_at).toLocaleString(locale)}
-                    </div>
-                  </div>
-                </button>
-                {first?.storage_path && (
-                  <ImageDownloadMenu
-                    bucket="generation-outputs"
-                    path={first.storage_path}
-                    baseName={`${r.work_label}-1`}
-                    className="absolute right-2 top-2"
-                    size="icon"
-                    variant="secondary"
-                  />
-                )}
-              </div>
-            );
-
-          })}
-        </div>
       )}
     </main>
   );
 }
 
-function VideoDetailCard({
-  row,
-  onClose,
-  onDelete,
-  locale,
+function CardAction({
+  onClick,
+  icon,
+  children,
 }: {
-  row: VideoRow;
-  onClose: () => void;
-  onDelete: () => void;
-  locale: string;
+  onClick: () => void;
+  icon: React.ReactNode;
+  children: React.ReactNode;
 }) {
-  const { t } = useTranslation();
   return (
-    <section className="rounded-3xl border border-border bg-card p-6 shadow-toss">
-      <header className="mb-4 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 sm:flex sm:justify-between">
-        <div className="flex min-w-0 items-center gap-2">
-          <h3 className="truncate text-base font-bold">{row.work_label}</h3>
-          <StatusPill status={row.status} />
-        </div>
-        <div className="flex shrink-0 gap-2">
-          <Button size="sm" variant="outline" asChild className="rounded-full">
-            <Link to="/video">{t("nav.video", "Video studio")}</Link>
-          </Button>
-          <ConfirmDelete
-            title="Delete this video?"
-            description="This generation and its stored video file will be permanently removed."
-            onConfirm={onDelete}
-          >
-            <Button
-              size="sm"
-              variant="ghost"
-              aria-label="Delete generation"
-              className="rounded-full text-destructive hover:bg-destructive/10"
-            >
-              <Trash2 className="h-4 w-4" aria-hidden="true" />
-            </Button>
-          </ConfirmDelete>
-          <IconTooltip label={t("common.close_details")}>
-            <Button size="sm" variant="ghost" className="rounded-full" onClick={onClose}>
-              <X className="h-4 w-4" aria-hidden="true" />
-            </Button>
-          </IconTooltip>
-        </div>
-      </header>
+    <button
+      type="button"
+      onClick={onClick}
+      className="inline-flex h-7 min-w-0 flex-1 items-center justify-center gap-1 rounded-lg bg-muted px-2 text-[10px] font-bold text-foreground transition hover:bg-primary-soft hover:text-primary"
+    >
+      {icon}
+      <span className="truncate">{children}</span>
+    </button>
+  );
+}
 
-      <div className="space-y-5">
-        {row.results.map((res) => (
-          <SignedVideo
-            key={res.id}
-            bucket="generation-outputs"
-            path={res.storage_path}
-            posterPath={res.poster_path}
-            className="aspect-video w-full rounded-xl border border-border bg-black"
-          />
-        ))}
-
-        <div className="grid grid-cols-2 gap-3 text-xs md:grid-cols-4">
-          <Meta label={t("history.meta.mode")} value={row.mode} />
-          <Meta label={t("history.meta.ratio")} value={row.aspect_ratio ?? "-"} />
-          <Meta label="Resolution" value={row.actual_resolution ?? row.resolution ?? "-"} />
-          <Meta
-            label="Duration"
-            value={
-              row.actual_duration_seconds
-                ? `${row.actual_duration_seconds}s`
-                : row.duration_seconds
-                  ? `${row.duration_seconds}s`
-                  : "-"
-            }
-          />
-          <Meta
-            label={t("history.meta.model")}
-            value={
-              row.api_model_version
-                ? `${row.api_model ?? "-"} · ${row.api_model_version.slice(0, 8)}`
-                : (row.api_model ?? "-")
-            }
-          />
-          <Meta label="Safety" value={row.moderation_status} />
-          <Meta label={t("history.meta.seed")} value={row.seed?.toString() ?? "-"} />
-          <Meta
-            label={t("history.meta.created")}
-            value={new Date(row.created_at).toLocaleString(locale)}
-          />
-          <Meta
-            label={t("history.meta.completed")}
-            value={row.completed_at ? new Date(row.completed_at).toLocaleString(locale) : "-"}
-          />
-        </div>
-
-        {row.error_message && (
-          <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-xs text-destructive">
-            <p className="font-semibold">실패 사유 (한글 상세)</p>
-            <p className="mt-1 whitespace-pre-wrap leading-relaxed text-foreground/90">
-              {row.error_message.includes("실패 원인:")
-                ? row.error_message.split("(raw:")[0]?.trim()
-                : getKoreanVideoErrorSummary(row.error_message)}
-            </p>
-            <details className="mt-3">
-              <summary className="cursor-pointer font-medium">기술 정보 보기</summary>
-              <pre className="mt-2 max-h-48 overflow-auto whitespace-pre-wrap text-[11px] text-muted-foreground">
-                {row.error_message}
-              </pre>
-            </details>
-          </div>
-        )}
-
-
-        {row.final_prompt && (
-          <div>
-            <div className="mb-1 text-[11px] font-semibold text-muted-foreground">
-              {t("history.final_prompt")}
-            </div>
-            <pre className="max-h-64 overflow-auto whitespace-pre-wrap rounded-xl bg-muted/60 p-3 text-xs">
-              {row.final_prompt}
-            </pre>
-          </div>
-        )}
-      </div>
-    </section>
+function HistoryAction({
+  onClick,
+  icon,
+  children,
+  tone,
+}: {
+  onClick: () => void;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+  tone?: "danger";
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={
+        "inline-flex h-8 items-center gap-1.5 rounded-lg border px-3 text-xs font-semibold transition " +
+        (tone === "danger"
+          ? "border-red-400/30 bg-red-500/10 text-red-300 hover:bg-red-500/20"
+          : "border-white/15 bg-white/5 text-neutral-100 hover:bg-white/15")
+      }
+    >
+      {icon}
+      {children}
+    </button>
   );
 }
 
 function StatusPill({ status }: { status: string }) {
-  const styles: Record<string, string> = {
-    done: "bg-emerald-100 text-emerald-700",
-    error: "bg-destructive/10 text-destructive",
-    queued: "bg-white/90 text-muted-foreground",
-    running: "bg-primary-soft text-primary",
-  };
-  const cls = styles[status] ?? "bg-white/90 text-muted-foreground";
+  const tone =
+    status === "done"
+      ? "bg-emerald-500/90 text-white"
+      : status === "error"
+        ? "bg-destructive/90 text-white"
+        : "bg-amber-500/90 text-white";
   return (
-    <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold shadow-toss-sm ${cls}`}>
+    <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${tone}`}>
       {status}
     </span>
   );
 }
 
-function DetailCard({ row, onClose, locale }: { row: ImageHistoryRow; onClose: () => void; locale: string }) {
-  const { t } = useTranslation();
-  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
-  const lightboxItems = row.results.map((res) => ({
-    id: res.id,
-    bucket: "generation-outputs",
-    path: (res.storage_path ?? res.thumb_path) as string | null,
-    alt: `${row.work_label} #${res.seq + 1}`,
-  }));
-  function loadIntoGenerate() {
-    try {
-      sessionStorage.setItem(
-        "toonpilot:restore",
-        JSON.stringify({
-          workLabel: row.work_label,
-          mode: row.mode,
-          aspectRatio: row.aspect_ratio,
-          batchCount: row.batch_count,
-          options: row.options,
-          figureMap: row.figure_map,
-          finalPrompt: row.final_prompt,
-        }),
-      );
-      toast.success(t("history.restore_toast"));
-    } catch {
-      toast.error(t("history.restore_fail"));
-    }
-  }
-
-  return (
-    <section className="rounded-3xl border border-border bg-card p-6 shadow-toss">
-      <header className="mb-4 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 sm:flex sm:justify-between">
-        <div className="flex min-w-0 items-center gap-2">
-          <h3 className="truncate text-base font-bold">{row.work_label}</h3>
-          <StatusPill status={row.status} />
-          {row.prompt_edited && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
-              {t("history.edited_badge", "Edited")}
-            </span>
-          )}
-        </div>
-        <div className="flex shrink-0 gap-2">
-          <Button size="sm" variant="outline" asChild className="rounded-full">
-            <Link to="/generate" onClick={loadIntoGenerate}>
-              {t("history.load_settings")}
-            </Link>
-          </Button>
-          <IconTooltip label={t("common.close_details")}>
-            <Button size="sm" variant="ghost" className="rounded-full" onClick={onClose}>
-              <X className="h-4 w-4" aria-hidden="true" />
-            </Button>
-          </IconTooltip>
-        </div>
-      </header>
-
-      <div className="space-y-5">
-        {lightboxIndex !== null && (
-          <ImageLightbox
-            items={lightboxItems}
-            index={lightboxIndex}
-            onIndexChange={setLightboxIndex}
-            onClose={() => setLightboxIndex(null)}
-          />
-        )}
-        {row.results.length > 0 && (
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            {row.results.map((res, i) => (
-              <div
-                key={res.id}
-                className="group relative overflow-hidden rounded-xl border border-border bg-muted"
-              >
-                {(res.thumb_path || res.storage_path) && (
-                  <button
-                    type="button"
-                    onClick={() => setLightboxIndex(i)}
-                    aria-label={t("lightbox.open")}
-                    className="block w-full cursor-zoom-in"
-                  >
-                    <SignedImage
-                      bucket="generation-outputs"
-                      path={(res.thumb_path ?? res.storage_path) as string}
-                      alt={`result-${res.seq}`}
-                      className="aspect-square w-full object-cover"
-                    />
-                  </button>
-                )}
-                {res.storage_path && (
-                  <>
-                    <ImageDownloadMenu
-                      bucket="generation-outputs"
-                      path={res.storage_path}
-                      baseName={`${row.work_label}-${res.seq + 1}`}
-                      className="absolute right-2 top-2"
-                      size="icon"
-                      variant="secondary"
-                    />
-                    <div className="border-t border-border bg-background/80 p-2">
-                      <ImageDownloadMenu
-                        bucket="generation-outputs"
-                        path={res.storage_path}
-                        baseName={`${row.work_label}-${res.seq + 1}`}
-                        className="w-full"
-                        buttonClassName="w-full"
-                        size="sm"
-                        variant="outline"
-                      />
-                    </div>
-                  </>
-                )}
-
-              </div>
-            ))}
-          </div>
-        )}
-
-
-        <div className="grid grid-cols-2 gap-3 text-xs md:grid-cols-4">
-          <Meta label={t("history.meta.mode")} value={row.mode} />
-          <Meta label={t("history.meta.ratio")} value={row.aspect_ratio ?? "-"} />
-          <Meta label={t("history.meta.model")} value={row.api_model ?? "-"} />
-          <Meta label={t("history.meta.seed")} value={row.seed?.toString() ?? "-"} />
-          <Meta label={t("history.meta.batch")} value={String(row.batch_count)} />
-          <Meta
-            label={t("history.meta.created")}
-            value={new Date(row.created_at).toLocaleString(locale)}
-          />
-          <Meta
-            label={t("history.meta.completed")}
-            value={row.completed_at ? new Date(row.completed_at).toLocaleString(locale) : "-"}
-          />
-          <Meta
-            label={t("history.meta.warnings")}
-            value={
-              Array.isArray(row.warnings) && row.warnings.length ? String(row.warnings.length) : "0"
-            }
-          />
-        </div>
-
-        {row.error_message && (
-          <div className="space-y-2 rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-xs text-destructive">
-            <p className="font-medium">
-              {t(generateErrorKey(row.error_message) ?? "studio.errors.api_failed")}
-            </p>
-            <details>
-              <summary className="cursor-pointer opacity-70">{t("history.raw_error")}</summary>
-              <p className="mt-1 whitespace-pre-wrap opacity-80">{row.error_message}</p>
-            </details>
-          </div>
-        )}
-
-
-        {row.final_prompt && (
-          <div>
-            <div className="mb-1 flex items-center gap-2 text-[11px] font-semibold text-muted-foreground">
-              <span>{t("history.final_prompt")}</span>
-              {row.prompt_edited && (
-                <span className="text-amber-700">· {t("history.edited_badge", "Edited")}</span>
-              )}
-            </div>
-            <pre className="max-h-64 overflow-auto whitespace-pre-wrap rounded-xl bg-muted/60 p-3 text-xs">
-              {row.final_prompt}
-            </pre>
-          </div>
-        )}
-
-        {row.prompt_edited && row.raw_prompt && (
-          <div>
-            <div className="mb-1 text-[11px] font-semibold text-muted-foreground">
-              {t("history.raw_prompt", "Original auto-prompt")}
-            </div>
-            <pre className="max-h-48 overflow-auto whitespace-pre-wrap rounded-xl border border-dashed border-border bg-muted/30 p-3 text-xs text-muted-foreground">
-              {row.raw_prompt}
-            </pre>
-          </div>
-        )}
-      </div>
-    </section>
-  );
-}
-
-function Meta({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-xl bg-muted/50 px-3 py-2">
-      <div className="text-[10px] font-semibold uppercase text-muted-foreground">{label}</div>
-      <div className="truncate text-xs font-medium">{value}</div>
-    </div>
-  );
+function formatTime(iso: string, locale: string) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleString(locale);
 }
