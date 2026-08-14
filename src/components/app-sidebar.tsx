@@ -36,7 +36,7 @@ export function AppSidebar() {
       label: t("sidebar.group_assets"),
       items: [
         { title: t("sidebar.projects"), url: "/projects", icon: FolderKanban },
-        { title: t("sidebar.characters"), url: "/characters", icon: Users },
+        { title: t("sidebar.characters"), url: "/groups", icon: Users },
       ],
     },
     {

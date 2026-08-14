@@ -477,5 +477,15 @@
   "download": {
     "button": "Download",
     "format": "Format"
+  },
+  "nav": {
+    "home": "Home",
+    "create": "Create",
+    "groups": "Image groups",
+    "history": "History",
+    "support": "Support",
+    "account": "My page",
+    "sign_in": "Sign in",
+    "advanced": "Advanced tools"
   }
 }

@@ -1,9 +1,8 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
+import { TopNav } from "@/components/top-nav";
 import { Button } from "@/components/ui/button";
-import { LanguageSwitcher } from "@/components/language-switcher";
 import { Image as ImageIcon, History, Sparkles } from "lucide-react";
 
 
@@ -28,19 +27,13 @@ export const Route = createFileRoute("/")({
 
 function Index() {
   const { t } = useTranslation();
-  const { user, loading } = useAuth();
-  const navigate = useNavigate();
+  const { user } = useAuth();
 
-  useEffect(() => {
-    if (!loading && user) navigate({ to: "/studio", replace: true });
-  }, [user, loading, navigate]);
 
   return (
     <main className="min-h-screen bg-background">
-      <div className="absolute right-5 top-5">
-        <LanguageSwitcher />
-      </div>
-      <div className="mx-auto flex min-h-screen max-w-5xl flex-col items-center justify-center px-6 py-16 text-center">
+      <TopNav />
+      <div className="mx-auto flex max-w-5xl flex-col items-center justify-center px-6 py-16 text-center">
         
         <span className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-1.5 text-xs font-semibold tracking-wide text-foreground/80">
           <span className="relative flex h-1.5 w-1.5">
@@ -60,13 +53,13 @@ function Index() {
 
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
           <Button asChild size="lg" className="h-12 rounded-full px-7 text-base font-semibold shadow-toss">
-            <Link to="/auth">
+            <Link to={user ? "/generate" : "/auth"}>
               <ImageIcon className="mr-2 h-4 w-4" strokeWidth={2} />
               {t("landing.start_image")}
             </Link>
           </Button>
           <Button asChild size="lg" variant="ghost" className="h-12 rounded-full px-6 text-base font-semibold">
-            <Link to="/auth">{t("landing.sign_in")}</Link>
+            <Link to={user ? "/groups" : "/auth"}>{user ? t("nav.groups") : t("landing.sign_in")}</Link>
           </Button>
         </div>
 

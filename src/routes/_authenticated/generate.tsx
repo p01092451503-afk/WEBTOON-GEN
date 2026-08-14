@@ -315,7 +315,7 @@ function GeneratePage() {
           </p>
         </div>
         <Link
-          to="/characters"
+          to="/groups"
           className="inline-flex h-10 shrink-0 items-center justify-center rounded-full bg-primary-soft px-4 text-sm font-semibold text-primary hover:bg-primary-soft/70"
         >
           {t("studio.manage_characters")}
@@ -847,7 +847,7 @@ function CharacterPicker({
       {characters.length === 0 && (
         <p className="text-[11px] leading-tight text-muted-foreground">
           {t("studio.labels.no_characters_hint")}{" "}
-          <Link to="/characters" className="font-semibold text-primary underline">
+          <Link to="/groups" className="font-semibold text-primary underline">
             {t("studio.labels.characters_link")}
           </Link>{" "}
           {t("studio.labels.page_suffix")}

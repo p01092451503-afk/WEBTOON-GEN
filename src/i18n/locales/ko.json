@@ -477,5 +477,15 @@
   "download": {
     "button": "다운로드",
     "format": "형식"
+  },
+  "nav": {
+    "home": "홈",
+    "create": "만들기",
+    "groups": "이미지 그룹",
+    "history": "히스토리",
+    "support": "고객센터",
+    "account": "마이페이지",
+    "sign_in": "로그인 / 회원가입",
+    "advanced": "고급 기능 바로가기"
   }
 }
