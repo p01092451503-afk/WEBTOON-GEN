@@ -1,5 +1,5 @@
-import { createFileRoute, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,16 +11,6 @@ export const Route = createFileRoute("/_authenticated")({
   ssr: false,
   component: AuthenticatedLayout,
 });
-
-const PAGE_META_KEYS: Record<string, string> = {
-  "/studio": "header.studio_hub",
-  "/projects": "header.projects",
-  "/episodes": "header.episodes",
-  "/groups": "header.characters",
-  "/generate": "header.generate",
-  "/history": "header.history",
-  "/usage": "header.usage",
-};
 
 // Session + tenant bootstrap only needs to happen once per browser session.
 // Caching it prevents a full-screen loading flash (and state loss) whenever the
@@ -36,16 +26,6 @@ function AuthenticatedLayout() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [email, setEmail] = useState<string>(bootstrapCache?.email ?? "");
   const bootstrap = useServerFn(bootstrapTenant);
-  const pathname = useRouterState({ select: (s) => s.location.pathname });
-
-  const meta = useMemo(() => {
-    const key = Object.keys(PAGE_META_KEYS).find((k) => pathname === k || pathname.startsWith(k + "/"));
-    if (!key) return { title: t("brand.name"), sub: "" };
-    return {
-      title: t(`${PAGE_META_KEYS[key]}.title`),
-      sub: t(`${PAGE_META_KEYS[key]}.sub`),
-    };
-  }, [pathname, t]);
 
   useEffect(() => {
     if (bootstrapCache) return;
