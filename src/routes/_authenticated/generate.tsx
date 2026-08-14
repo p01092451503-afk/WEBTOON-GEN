@@ -14,6 +14,7 @@ import { ImageLightbox } from "@/components/image-lightbox";
 import { generateErrorKey } from "@/lib/generate-error";
 import { buildPrompt, WARN, type WorkInput, type PresetItem } from "@/lib/promptEngine";
 import { buildStudioFigures, MAX_REFS, type StudioRef } from "@/lib/studioRefs";
+import { consumePendingRefs, type PendingRef } from "@/lib/pendingRefs";
 import { StudioControlPanel } from "@/components/studio/control-panel";
 import { StudioOutputPanel, type OutputItem } from "@/components/studio/output-panel";
 import { updatePanel } from "@/lib/projects.functions";
@@ -175,6 +176,25 @@ function GeneratePage() {
     if (added[1]) setCharBRefId(added[1].id);
     setPendingCharIds([]);
   }, [pendingCharIds, characters]);
+
+  // 이미지 그룹(/groups)에서 "레퍼런스로 사용"으로 넘어온 이미지 주입
+  useEffect(() => {
+    const pending = consumePendingRefs();
+    if (pending.length === 0) return;
+    const added: StudioRef[] = pending.map((p: PendingRef) => ({
+      id: crypto.randomUUID(),
+      path: p.path,
+      sourceName: p.name,
+      roles: (p.roles?.length ? p.roles : ["character"]) as StudioRef["roles"],
+    }));
+    setRefs((prev) => [...prev, ...added].slice(0, MAX_REFS));
+    toast.success(
+      t("studio.refs.injected", {
+        defaultValue: "{{n}}개를 레퍼런스로 불러왔습니다.",
+        n: added.length,
+      }),
+    );
+  }, []);
 
   // 세션 "라인": 생성 결과가 realtime 으로 채워질 때마다 누적한다.
   useEffect(() => {
