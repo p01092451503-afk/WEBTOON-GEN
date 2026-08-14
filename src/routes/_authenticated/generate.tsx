@@ -12,7 +12,9 @@ import { SignedImage } from "@/components/SignedImage";
 import { ImageDownloadMenu } from "@/components/image-download-menu";
 import { ImageLightbox } from "@/components/image-lightbox";
 import { generateErrorKey } from "@/lib/generate-error";
-import { buildFigureMap, buildPrompt, WARN, type WorkInput, type PresetItem } from "@/lib/promptEngine";
+import { buildPrompt, WARN, type WorkInput, type PresetItem } from "@/lib/promptEngine";
+import { buildStudioFigures, MAX_REFS, type StudioRef } from "@/lib/studioRefs";
+import { StudioControlPanel } from "@/components/studio/control-panel";
 import { updatePanel } from "@/lib/projects.functions";
 import { translatePrompt } from "@/lib/translate.functions";
 import { Languages, Loader2 } from "lucide-react";
@@ -714,107 +716,6 @@ function StatusPill({ status }: { status: string }) {
   const cls = styles[status] ?? "bg-muted text-muted-foreground";
   return (
     <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${cls}`}>{status}</span>
-  );
-}
-
-function CharacterPicker({
-  value,
-  onChange,
-  characters,
-}: {
-  value: string | null;
-  onChange: (id: string | null) => void;
-  characters: { id: string; display_name: string; primary_path: string | null }[];
-}) {
-  const { t } = useTranslation();
-  return (
-    <div className="space-y-2">
-      <Select
-        value={value ?? "__none"}
-        onValueChange={(v) => onChange(v === "__none" ? null : v)}
-      >
-        <SelectTrigger className="h-10 rounded-xl bg-muted/50">
-          <SelectValue placeholder={t("studio.labels.select")} />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="__none">{t("studio.labels.none")}</SelectItem>
-          {characters.map((c) => (
-            <SelectItem key={c.id} value={c.id}>
-              {c.display_name}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      {characters.length === 0 && (
-        <p className="text-[11px] leading-tight text-muted-foreground">
-          {t("studio.labels.no_characters_hint")}{" "}
-          <Link to="/groups" className="font-semibold text-primary underline">
-            {t("studio.labels.characters_link")}
-          </Link>{" "}
-          {t("studio.labels.page_suffix")}
-        </p>
-      )}
-      {value && (
-        <SignedImage
-          bucket="character-refs"
-          path={characters.find((c) => c.id === value)?.primary_path}
-          alt="char"
-          className="aspect-square w-full rounded-xl border border-border object-cover"
-        />
-      )}
-    </div>
-  );
-}
-
-function RefUpload({
-  label,
-  value,
-  onFile,
-  onClear,
-}: {
-  label: string;
-  value: RefState;
-  onFile: (f: File) => void;
-  onClear: () => void;
-}) {
-  const { t } = useTranslation();
-  return (
-    <div className="space-y-1.5">
-      <Label className="text-[11px] font-semibold text-muted-foreground">{label}</Label>
-      {value ? (
-        <div className="space-y-2">
-          <SignedImage
-            bucket="character-refs"
-            path={value.path}
-            alt={label}
-            className="aspect-square w-full rounded-xl border border-border object-cover"
-          />
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 w-full rounded-lg text-xs font-semibold text-muted-foreground hover:text-destructive"
-            onClick={onClear}
-          >
-            <X className="mr-1 h-3.5 w-3.5" /> {t("common.remove")}
-          </Button>
-        </div>
-      ) : (
-        <label className="flex h-24 cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-border bg-muted/40 text-xs text-muted-foreground hover:bg-muted">
-          <ImagePlus className="mb-1 h-4 w-4" />
-          {t("studio.labels.choose_image")}
-          <input
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) onFile(f);
-              e.currentTarget.value = "";
-            }}
-          />
-        </label>
-      )}
-    </div>
   );
 }
 
