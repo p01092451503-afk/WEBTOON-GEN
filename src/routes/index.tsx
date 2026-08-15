@@ -1,107 +1,88 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
+import { Image as ImageIcon, Images, History, Sparkles } from "lucide-react";
+
 import { useAuth } from "@/hooks/useAuth";
 import { TopNav } from "@/components/top-nav";
 import { Button } from "@/components/ui/button";
-import { Image as ImageIcon, History, Sparkles } from "lucide-react";
-
 
 export const Route = createFileRoute("/")({
   ssr: false,
-  component: Index,
+  component: HomePage,
   head: () => ({
     meta: [
-      { title: "pilottoon — AI image generation studio" },
+      { title: "홈 — webtoon-gen AI 웹툰 이미지 생성 서비스" },
       {
         name: "description",
-        content: "Turn a written scene into character-consistent images, with every result saved to your history.",
+        content: "웹툰 이미지 생성 워크스페이스 홈. 만들기·이미지 그룹·히스토리로 바로 이동하세요.",
       },
-      { property: "og:title", content: "pilottoon" },
-      { property: "og:description", content: "AI image generation studio" },
+      { property: "og:title", content: "홈 — webtoon-gen" },
+      { property: "og:description", content: "AI 웹툰 이미지 생성 서비스 홈" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
 });
 
-
-function Index() {
+function HomePage() {
   const { t } = useTranslation();
   const { user } = useAuth();
 
-
   return (
-    <main className="min-h-screen bg-background">
+    <div className="flex min-h-screen flex-col bg-muted/40">
       <TopNav />
-      <div className="mx-auto flex max-w-5xl flex-col items-center justify-center px-6 py-16 text-center">
-        
-        <span className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-1.5 text-xs font-semibold tracking-wide text-foreground/80">
-          <span className="relative flex h-1.5 w-1.5">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-60" />
-            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-primary" />
-          </span>
-          {t("landing.badge")}
-        </span>
-        <h1 className="mt-6 text-5xl font-extrabold tracking-tight text-foreground sm:text-6xl">
-          {t("landing.headline_1")}
-          <br />
-          {t("landing.headline_2")}<span className="text-primary">{t("brand.name")}</span>.
-        </h1>
-        <p className="mt-5 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
-          {t("landing.subtitle")}
+
+      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-6">
+        <section className="flex min-h-[520px] flex-col items-center justify-center rounded-3xl border border-border bg-card px-6 py-20 text-center shadow-toss">
+          <p className="text-sm font-medium text-muted-foreground">
+            {t("home.kicker", "AI 웹툰 이미지 생성 서비스")}
+          </p>
+          <h1 className="mt-3 text-5xl font-black tracking-tight text-foreground sm:text-6xl">
+            {t("brand.name")}
+          </h1>
+          <p className="mt-4 max-w-lg text-sm leading-relaxed text-muted-foreground sm:text-base">
+            {t("home.sub", "레퍼런스를 올리고 프롬프트만 적으면, 캐릭터 일관성을 지킨 이미지를 바로 만들 수 있어요.")}
+          </p>
+
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            <Button asChild size="lg" className="h-12 rounded-full px-7 text-base font-semibold shadow-toss">
+              <Link to={user ? "/generate" : "/auth"}>
+                <ImageIcon className="mr-2 h-4 w-4" strokeWidth={2} />
+                {t("home.cta", "이미지 만들기")}
+              </Link>
+            </Button>
+            <Button asChild size="lg" variant="ghost" className="h-12 rounded-full px-6 text-base font-semibold">
+              <Link to={user ? "/groups" : "/auth"}>
+                {t("nav.groups")}
+              </Link>
+            </Button>
+          </div>
+
+          <div className="mt-14 grid w-full max-w-3xl grid-cols-1 gap-3 sm:grid-cols-3">
+            <QuickCard to={user ? "/generate" : "/auth"} icon={<Sparkles className="h-4 w-4" strokeWidth={1.75} />} label={t("nav.create")} />
+            <QuickCard to={user ? "/groups" : "/auth"} icon={<Images className="h-4 w-4" strokeWidth={1.75} />} label={t("nav.groups")} />
+            <QuickCard to={user ? "/history" : "/auth"} icon={<History className="h-4 w-4" strokeWidth={1.75} />} label={t("nav.history")} />
+          </div>
+        </section>
+      </main>
+
+      <footer className="border-t border-border bg-background py-6">
+        <p className="px-4 text-center text-xs text-muted-foreground">
+          {t("footer.terms", "이용약관")} · {t("footer.privacy", "개인정보처리방침")} · © 2026 STUDIO 0103 Co., Ltd. &amp; CHILBOK Corp.
         </p>
-
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-          <Button asChild size="lg" className="h-12 rounded-full px-7 text-base font-semibold shadow-toss">
-            <Link to={user ? "/generate" : "/auth"}>
-              <ImageIcon className="mr-2 h-4 w-4" strokeWidth={2} />
-              {t("landing.start_image")}
-            </Link>
-          </Button>
-          <Button asChild size="lg" variant="ghost" className="h-12 rounded-full px-6 text-base font-semibold">
-            <Link to={user ? "/groups" : "/auth"}>{user ? t("nav.groups") : t("landing.sign_in")}</Link>
-          </Button>
-        </div>
-
-
-        <div className="mt-16 grid w-full max-w-3xl grid-cols-1 gap-4 sm:grid-cols-3">
-          <FeatureCard
-            index="01"
-            icon={<ImageIcon className="h-4 w-4" strokeWidth={1.75} />}
-            title={t("landing.feature_image")}
-            body={t("landing.feature_image_body")}
-          />
-          <FeatureCard
-            index="02"
-            icon={<Sparkles className="h-4 w-4" strokeWidth={1.75} />}
-            title="Presets & seed lock"
-            body="Preset gallery, seed lock and up to 4 variations at once."
-          />
-
-          <FeatureCard
-            index="03"
-            icon={<History className="h-4 w-4" strokeWidth={1.75} />}
-            title={t("landing.feature_history")}
-            body={t("landing.feature_history_body")}
-          />
-        </div>
-      </div>
-    </main>
+      </footer>
+    </div>
   );
 }
 
-function FeatureCard({ index, icon, title, body }: { index: string; icon: React.ReactNode; title: string; body: string }) {
+function QuickCard({ to, icon, label }: { to: string; icon: React.ReactNode; label: string }) {
   return (
-    <div className="group relative rounded-2xl border border-border bg-card p-6 text-left transition-colors hover:border-foreground/20">
-      <div className="flex items-center justify-between">
-        <span className="inline-flex items-center gap-1.5 text-[11px] font-mono font-medium uppercase tracking-[0.14em] text-muted-foreground">
-          {icon}
-          {index}
-        </span>
-        <span className="h-px w-8 bg-border" />
-      </div>
-      <div className="mt-6 text-sm font-bold text-foreground">{title}</div>
-      <div className="mt-1.5 text-xs leading-relaxed text-muted-foreground">{body}</div>
-    </div>
+    <Link
+      to={to}
+      className="flex items-center justify-center gap-2 rounded-2xl border border-border bg-background px-4 py-4 text-sm font-semibold text-foreground transition-colors hover:border-primary/40 hover:bg-primary-soft/40"
+    >
+      <span className="text-primary">{icon}</span>
+      {label}
+    </Link>
   );
 }
