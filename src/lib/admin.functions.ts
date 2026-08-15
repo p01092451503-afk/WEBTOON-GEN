@@ -52,7 +52,7 @@ export const updateTenantCreditsAdmin = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context as any);
-    const patch: Record<string, unknown> = {};
+    const patch: { credit_balance?: number; credits_enabled?: boolean } = {};
     if (data.creditBalance !== undefined) patch.credit_balance = data.creditBalance;
     if (data.creditsEnabled !== undefined) patch.credits_enabled = data.creditsEnabled;
     if (Object.keys(patch).length === 0) throw new Error("NO_CHANGES");
