@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 const NAV = [
-  { to: "/home", key: "nav.home", icon: Home, exact: true },
+  { to: "/", key: "nav.home", icon: Home, exact: true },
   { to: "/generate", key: "nav.create", icon: Sparkles },
   { to: "/groups", key: "nav.groups", icon: Images },
   { to: "/history", key: "nav.history", icon: History },
