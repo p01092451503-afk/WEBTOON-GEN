@@ -18,6 +18,7 @@ import {
   LogOut,
   MessageSquare,
   Receipt,
+  ShieldCheck,
   User as UserIcon,
   Wallet,
 } from "lucide-react";
@@ -72,6 +73,16 @@ function AccountPage() {
   const credits = useCredits();
   const tickets = useMyTickets();
   const history = useCreditHistory(tenantId);
+  const roleQ = useQuery({
+    queryKey: ["my_role", user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("profiles").select("role").eq("id", user!.id).maybeSingle();
+      if (error) throw error;
+      return data?.role ?? "member";
+    },
+  });
+  const isAdmin = roleQ.data === "admin";
   const [section, setSection] = useState<Section>("profile");
 
   const MENU: { key: Section; label: string; icon: typeof UserIcon }[] = useMemo(
@@ -144,6 +155,15 @@ function AccountPage() {
                 </Link>
               );
             })}
+            {isAdmin && (
+              <Link
+                to="/admin"
+                className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-bold text-primary transition-colors hover:bg-primary/10"
+              >
+                <ShieldCheck className="h-4 w-4" />
+                {t("nav.admin", "관리자 대시보드")}
+              </Link>
+            )}
           </div>
         </div>
 
