@@ -73,6 +73,16 @@ function AccountPage() {
   const credits = useCredits();
   const tickets = useMyTickets();
   const history = useCreditHistory(tenantId);
+  const roleQ = useQuery({
+    queryKey: ["my_role", user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("profiles").select("role").eq("id", user!.id).maybeSingle();
+      if (error) throw error;
+      return data?.role ?? "member";
+    },
+  });
+  const isAdmin = roleQ.data === "admin";
   const [section, setSection] = useState<Section>("profile");
 
   const MENU: { key: Section; label: string; icon: typeof UserIcon }[] = useMemo(
