@@ -314,7 +314,7 @@ function HistoryPage() {
   const failedCount = (videoRows ?? []).filter((r) => r.status === "error").length;
 
   return (
-    <main className="max-w-[1400px] px-5 py-8 sm:py-10">
+    <main className="mx-auto max-w-7xl px-5 py-8 sm:py-10">
       {lightboxIndex !== null && lightboxItems[lightboxIndex] && (
         <ImageLightbox
           items={lightboxItems}

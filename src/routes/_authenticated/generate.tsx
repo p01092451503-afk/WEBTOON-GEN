@@ -441,7 +441,7 @@ function GeneratePage() {
   const hasPresets = Object.keys(cfg).length > 0;
 
   return (
-    <main className="max-w-[1400px] px-5 py-6 sm:py-8">
+    <main className="mx-auto max-w-7xl px-5 py-6 sm:py-8">
       <StudioSwitcher active="image" />
       <header className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-4 sm:flex sm:flex-wrap sm:justify-between">
 
