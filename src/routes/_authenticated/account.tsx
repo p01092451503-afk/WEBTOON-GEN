@@ -155,6 +155,15 @@ function AccountPage() {
                 </Link>
               );
             })}
+            {isAdmin && (
+              <Link
+                to="/admin"
+                className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-bold text-primary transition-colors hover:bg-primary/10"
+              >
+                <ShieldCheck className="h-4 w-4" />
+                {t("nav.admin", "관리자 대시보드")}
+              </Link>
+            )}
           </div>
         </div>
 
