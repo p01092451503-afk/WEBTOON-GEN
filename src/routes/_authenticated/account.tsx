@@ -18,6 +18,7 @@ import {
   LogOut,
   MessageSquare,
   Receipt,
+  ShieldCheck,
   User as UserIcon,
   Wallet,
 } from "lucide-react";
