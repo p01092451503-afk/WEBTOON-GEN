@@ -11,12 +11,12 @@ export const Route = createFileRoute("/")({
   component: HomePage,
   head: () => ({
     meta: [
-      { title: "홈 — webtoon-gen AI 웹툰 이미지 생성 서비스" },
+      { title: "홈 — pilottoon AI 웹툰 이미지 생성 서비스" },
       {
         name: "description",
         content: "웹툰 이미지 생성 워크스페이스 홈. 만들기·이미지 그룹·히스토리로 바로 이동하세요.",
       },
-      { property: "og:title", content: "홈 — webtoon-gen" },
+      { property: "og:title", content: "홈 — pilottoon" },
       { property: "og:description", content: "AI 웹툰 이미지 생성 서비스 홈" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

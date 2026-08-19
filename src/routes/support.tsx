@@ -19,9 +19,9 @@ export const Route = createFileRoute("/support")({
   component: SupportPage,
   head: () => ({
     meta: [
-      { title: "고객센터 · webtoon-gen" },
-      { name: "description", content: "webtoon-gen 이용 중 궁금한 점, 공지사항, 1:1 문의를 한 곳에서 해결하세요." },
-      { property: "og:title", content: "고객센터 · webtoon-gen" },
+      { title: "고객센터 · pilottoon" },
+      { name: "description", content: "pilottoon 이용 중 궁금한 점, 공지사항, 1:1 문의를 한 곳에서 해결하세요." },
+      { property: "og:title", content: "고객센터 · pilottoon" },
       { property: "og:description", content: "자주 묻는 질문, 공지사항, 서비스 이용안내, 1:1 문의 등록." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
