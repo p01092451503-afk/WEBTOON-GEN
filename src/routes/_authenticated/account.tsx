@@ -28,9 +28,9 @@ export const Route = createFileRoute("/_authenticated/account")({
   component: AccountPage,
   head: () => ({
     meta: [
-      { title: "마이페이지 · webtoon-gen" },
+      { title: "마이페이지 · pilottoon" },
       { name: "description", content: "회원정보, 문의 내역, 크레딧 사용 내역과 고급 도구를 한 곳에서 관리하세요." },
-      { property: "og:title", content: "마이페이지 · webtoon-gen" },
+      { property: "og:title", content: "마이페이지 · pilottoon" },
       { property: "og:description", content: "회원정보, 문의 내역, 크레딧 사용 내역 관리." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
